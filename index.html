@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="description" content="Blood Network Barailhali — জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
+<title>B.N.B</title>
+<link rel="apple-touch-icon" href="fav.jpeg">
+<link rel="icon" type="image/x-icon" href="fav.jpeg">
+<meta name="theme-color" content="#9E1B32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Warm up connections early so the Firebase data (donors/donations/lives/visitors) starts arriving as soon as possible -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://blood-network-a851b-default-rtdb.asia-southeast1.firebasedatabase.app" crossorigin>
+<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<style>
+  :root {
+    --ink: #211613;
+    --muted: #7C6F68;
+    --crimson: #9E1B32;
+    --crimson-dark: #6E1220;
+    --crimson-tint: #F7E3E6;
+    --cream: #FBF7F2;
+    --paper: #FFFFFF;
+    --line: #E7DCD4;
+    --amber: #B9722E;
+    --amber-tint: #F7EAD8;
+    --sage: #3F7A5D;
+    --sage-tint: #E1EFE7;
+    --shadow: 0 6px 20px rgba(33,22,19,0.055);
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-sm: 7px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', Arial, Helvetica, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+    --font-bn: 'Noto Sans Bengali', 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+  a, button, .aboutTag, .statCard, .featureCard, .teamCard, .donationItem, .imgEditBtn,
+  .btnPrimary, .btnGhost, .callFabBtn, .callFabItem, .adminTinyBtn, .editable-field {
+    transition: background .22s var(--ease), color .22s var(--ease), border-color .22s var(--ease),
+                box-shadow .22s var(--ease), transform .22s var(--ease), opacity .22s var(--ease);
+  }
+  .featureCard, .teamCard, .donationItem, .statCard, .btnPrimary, .btnGhost, .callFabBtn, .callFabItem {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  body {
+    margin: 0; padding: 0 ;
+    font-family: var(--font-bn);
+    background-color: var(--cream);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(158,27,50,0.05), transparent 42%),
+      radial-gradient(circle at 88% 0%, rgba(63,122,93,0.045), transparent 40%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.13  0 0 0 0 0.09  0 0 0 0 0.08  0 0 0 0.018 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 100% 900px, 100% 900px, 180px 180px;
+    background-repeat: no-repeat, no-repeat, repeat;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  .container { max-width: 1120px; margin: 0 auto; }
+  .sectionEyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--crimson);
+  }
+  .sectionEyebrow::before { content: ""; width: 16px; height: 1.5px; background: var(--crimson); display: inline-block; }
+  .sectionEyebrow.light { color: #E7B9C1; }
+  .sectionEyebrow.light::before { background: #E7B9C1; }
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal {
+    opacity: 0; transform: translate3d(0, 22px, 0);
+    transition: opacity .5s var(--ease), transform .5s var(--ease);
+    will-change: opacity, transform;
+  }
+  .reveal.inView { opacity: 1; transform: translate3d(0, 0, 0); }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    * { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* ============================================================
+     ADMIN EDIT BAR
+     ============================================================ */
+  .adminBar {
+    position: sticky; top: 0; z-index: 300;
+    background: var(--ink); color: var(--cream);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 16px; font-size: 13px; font-weight: 600;
+  }
+  .adminBar .adminBarLabel { display: flex; align-items: center; gap: 8px; }
+  .adminBar .adminBarLabel svg, .adminBar .adminBarLabel i { width: 15px; height: 15px; flex-shrink: 0; color: #F0C9CE; font-size: 14px; }
+  .adminBarBtns { display: flex; gap: 8px; flex-shrink: 0; }
+  .adminBarBtns button {
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 700;
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; border: 1px solid transparent;
+  }
+  #saveEditsBtn { background: var(--crimson); color: #fff; }
+  #saveEditsBtn:hover { background: var(--crimson-dark); }
+  #exitEditBtn { background: transparent; color: var(--cream); border-color: rgba(251,247,242,0.35); }
+  #exitEditBtn:hover { border-color: var(--cream); }
+
+  body.adminMode .editable-field {
+    outline: 1.5px dashed rgba(158,27,50,0.55);
+    outline-offset: 3px;
+    border-radius: 4px;
+    cursor: text;
+    transition: background .15s ease;
+  }
+  body.adminMode .editable-field:hover { background: rgba(158,27,50,0.06); }
+  body.adminMode .editable-field:focus { background: rgba(158,27,50,0.1); outline-style: solid; }
+  .imgEditBtn {
+    display: none; position: absolute; bottom: 10px; right: 10px; z-index: 5;
+    align-items: center; gap: 6px; background: rgba(33,22,19,0.82); color: #fff;
+    border: none; border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 700;
+    font-family: var(--font-body); cursor: pointer;
+  }
+  body.adminMode .imgEditBtn { display: inline-flex; }
+  .imgEditBtn:hover { background: var(--crimson); }
+
+  /* Remove/reset button — only shown in admin mode, and only on a slot
+     that actually has an image saved (controlled per-section below). */
+  .imgRemoveBtn {
+    display: none; position: absolute; bottom: 10px; left: 10px; z-index: 6;
+    align-items: center; justify-content: center; width: 33px; height: 33px;
+    background: rgba(33,22,19,0.82); color: #fff; border: none; border-radius: 50%;
+    font-size: 13px; cursor: pointer;
+  }
+  .imgRemoveBtn:hover { background: #B23A3A; }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero {
+    position: relative; overflow: hidden; background: var(--cream);
+    background-size: cover; background-position: center;
+  }
+  .hero.hasImage { background-blend-mode: multiply; }
+  body.adminMode .hero.hasImage .imgRemoveBtn { display: inline-flex; }
+  .heroBgOverlay {
+    display: none; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(251,247,242,0.94) 0%, rgba(251,247,242,0.86) 55%, rgba(251,247,242,0.96) 100%);
+  }
+  .hero.hasImage .heroBgOverlay { display: block; }
+  .heroNav {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: flex-start;
+    max-width: 1120px; margin: 0 auto; padding: 18px 22px 0;
+  }
+  .heroBrand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+  .heroBrandLogo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--crimson); }
+  .heroNavLinks { display: flex; align-items: center; gap: 10px; }
+  .adminTinyBtn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--paper); color: var(--muted); display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .adminTinyBtn:hover { border-color: var(--crimson); color: var(--crimson); }
+  .adminTinyBtn svg, .adminTinyBtn i { width: 15px; height: 15px; font-size: 14px; }
+
+  .heroContent {
+    position: relative; z-index: 1;
+    max-width: 760px; margin: 0 auto; padding: 40px 22px 22px; text-align: center;
+  }
+  .heroEyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--crimson); background: var(--crimson-tint);
+    border-radius: 999px; padding: 6px 14px 6px 10px; margin-bottom: 20px;
+  }
+  .pulseDot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--crimson); flex-shrink: 0; }
+  .pulseDot::after {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid var(--crimson);
+    animation: pulseRing 1.8s ease-out infinite;
+  }
+  @keyframes pulseRing { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.1); opacity: 0; } }
+
+  .heroTitle {
+    font-size: clamp(30px, 5.4vw, 50px); font-weight: 600; line-height: 1.16; color: var(--ink);
+  }
+  .heroSubtitle {
+    font-family: var(--font-bn); font-size: 16px; line-height: 1.7; color: var(--muted);
+    margin: 20px auto 0; max-width: 560px;
+  }
+  .heroCtas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+  .heroPhoneRow { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 20px; }
+  .heroPhoneChip {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 7px 16px 7px 7px;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  }
+  .heroPhoneChip:hover { background: var(--crimson-tint); border-color: var(--crimson); transform: translateY(-2px); }
+  .heroPhoneChip i {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--crimson); color: #fff; font-size: 11px;
+  }
+  .heroPhoneChipText { display: flex; flex-direction: column; gap: 1px; line-height: 1.25; text-align: left; }
+  .heroPhoneChipText span:first-child { font-family: var(--font-bn); font-size: 11px; color: var(--muted); }
+  .heroPhoneChipText span:last-child { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--ink); }
+  @media (max-width: 640px) {
+    .heroPhoneRow {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; flex-wrap: nowrap;
+    }
+    .heroPhoneChip {
+      flex-direction: column; justify-content: center; gap: 5px; padding: 9px 4px; min-width: 0;
+    }
+    .heroPhoneChip i { width: 22px; height: 22px; font-size: 9.5px; }
+    .heroPhoneChipText { align-items: center; text-align: center; }
+    .heroPhoneChipText span:first-child { font-size: 9.5px; }
+    .heroPhoneChipText span:last-child { font-size: 11.5px; white-space: nowrap; }
+  }
+  @media (max-width: 360px) {
+    .heroPhoneChipText span:last-child { font-size: 10.5px; }
+  }
+  .btnPrimary, .btnGhost {
+    font-family: var(--font-body); font-weight: 700; font-size: 14.5px;
+    border-radius: 999px; padding: 13px 26px; display: inline-flex; align-items: center; gap: 8px;
+    border: 1.5px solid transparent; cursor: pointer;
+  }
+  .btnPrimary { background: var(--crimson); color: #fff; box-shadow: 0 10px 22px rgba(158,27,50,0.28); }
+  .btnPrimary:hover { background: var(--crimson-dark); }
+  .btnGhost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btnGhost:hover { border-color: var(--crimson); color: var(--crimson); }
+  .btnPrimary.light { background: var(--cream); color: var(--crimson-dark); box-shadow: none; }
+  .btnPrimary.light:hover { background: #fff; }
+
+  .heroPulseWrap { position: relative; z-index: 1; width: 100%; margin-top: 8px; line-height: 0; overflow: hidden; }
+  .heroPulseCanvas { width: 100%; height: 70px; display: block; }
+
+  /* ============================================================
+     ABOUT
+     ============================================================ */
+  .about {
+    max-width: 1120px; margin: 10px auto 0; padding: 22px 0;
+  }
+  .aboutCard {
+    display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 44px; align-items: center;
+    background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 70%);
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 32px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .aboutCard::before {
+    content: ""; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px;
+    border-radius: 50%; background: radial-gradient(circle, rgba(158,27,50,0.10), transparent 70%);
+    pointer-events: none;
+  }
+  .aboutImageFrame {
+    position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 1/1;
+  }
+  .aboutImageFrame::before, .aboutImageFrame::after {
+    content: ""; position: absolute; inset: 0; border-radius: 24px;
+  }
+  .aboutImageFrame::before {
+    background: linear-gradient(135deg, var(--sage-tint), var(--cream) 75%);
+    border: 1.5px dashed rgba(63,122,93,0.4);
+    transform: rotate(-7deg) translate(4%, 5%);
+    z-index: 0;
+  }
+  .aboutImageFrame::after {
+    background: linear-gradient(135deg, var(--crimson-tint), var(--cream) 75%);
+    border: 1.5px dashed rgba(158,27,50,0.32);
+    transform: rotate(5deg) translate(-4%, -3%);
+    z-index: 1;
+  }
+  .aboutImageWrap {
+    position: absolute; inset: 0; z-index: 2;
+    border-radius: 24px; overflow: hidden;
+    box-shadow: var(--shadow); border: 4px solid var(--paper);
+    background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 55%, var(--sage-tint) 100%);
+  }
+  .aboutStamp {
+    position: absolute; top: -16px; right: -14px; z-index: 3;
+    width: 62px; height: 62px; border-radius: 50%;
+    background: var(--paper); border: 1.5px dashed var(--crimson);
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-10deg); box-shadow: var(--shadow);
+  }
+  .aboutStamp i { color: var(--crimson); font-size: 20px; }
+  .aboutImage { width: 100%; height: 100%; object-fit: cover; }
+  .aboutImageWrap.placeholderMode .aboutImage { display: none; }
+  .aboutPlaceholderMark {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.5;
+  }
+  .aboutImageWrap:not(.placeholderMode) .aboutPlaceholderMark { display: none; }
+  body.adminMode .aboutImageWrap:not(.placeholderMode) .imgRemoveBtn { display: inline-flex; }
+  .aboutPlaceholderMark svg { width: 74px; height: 74px; color: var(--crimson); }
+  .aboutPlaceholderMark i { font-size: 68px; color: var(--crimson); }
+  .aboutTextCol { position: relative; display: flex; flex-direction: column; }
+  .aboutTitle { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; margin: 10px 0 16px; text-align: left; }
+  .aboutText { font-size: 15.5px; line-height: 1.85; color: var(--muted); text-align: left;}
+  .aboutTags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .aboutTag {
+    display: inline-flex; align-items: center; gap: 7px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
+    font-size: 12.5px; font-weight: 600; color: var(--ink); box-shadow: var(--shadow);
+  }
+  .aboutTag i { color: var(--crimson); font-size: 12px; }
+
+  /* ============================================================
+     DONATION GALLERY — unlimited, 2-row horizontal scroller
+     ============================================================ */
+  .donationGallery { max-width: 1120px; margin: 0 auto; padding: 15px 22px 12px; text-align: center; }
+  .donationGalleryHead {
+    display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+    margin: 10px 0 24px;
+  }
+  .donationGalleryHeading { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; margin: 0; }
+  .sectionAddBtn {
+    display: none; align-items: center; gap: 7px; font-family: var(--font-body); font-weight: 700; font-size: 13px;
+    background: var(--crimson); color: #fff; border: none; border-radius: 999px; padding: 10px 18px 10px 14px;
+    cursor: pointer; box-shadow: 0 8px 18px rgba(158,27,50,0.25); white-space: nowrap;
+  }
+  .sectionAddBtn:hover { background: var(--crimson-dark); }
+  .sectionAddBtn i { font-size: 12px; }
+  body.adminMode .sectionAddBtn { display: inline-flex; }
+
+  .scrollRowX {
+    overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scroll-padding-left: 4px;
+    scrollbar-width: thin; scrollbar-color: var(--crimson) var(--crimson-tint);
+  }
+  .scrollRowX::-webkit-scrollbar { height: 8px; }
+  .scrollRowX::-webkit-scrollbar-track { background: var(--crimson-tint); border-radius: 999px; }
+  .scrollRowX::-webkit-scrollbar-thumb { background: var(--crimson); border-radius: 999px; }
+  .scrollRowX::-webkit-scrollbar-thumb:hover { background: var(--crimson-dark); }
+
+  .donationGrid {
+    --rowH: 171px;
+    --gGap: 14px;
+    display: grid;
+    grid-auto-flow: column dense;
+    grid-template-rows: repeat(2, var(--rowH));
+    grid-auto-columns: var(--rowH);
+    gap: var(--gGap); text-align: left; padding-bottom: 14px;
+  }
+  /* Default bento pattern (repeats every 4 photos): a large square feature,
+     two stacked small squares, then a tall single-column card — so the
+     gallery always shows a mix of grid sizes instead of one uniform row. */
+  .donationItem {
+    position: relative; grid-row: span 1; grid-column: span 1;
+    border-radius: var(--radius-md); overflow: hidden;
+    box-shadow: var(--shadow); border: 1px solid var(--line);
+    background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 55%, var(--sage-tint) 100%);
+    scroll-snap-align: start;
+  }
+  .donationItem:nth-of-type(4n+1) { grid-row: span 2; grid-column: span 2; }
+  .donationItem:nth-of-type(4n)   { grid-row: span 2; grid-column: span 1; }
+  .donationItem:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(33,22,19,0.1); }
+  .donationImg { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .donationItem .imgEditBtn { padding: 6px 10px; font-size: 11px; bottom: 8px; right: 8px; }
+  .donationItem .imgEditBtn i { font-size: 12px; }
+  .donationItem .imgRemoveBtn { width: 26px; height: 26px; font-size: 11px; bottom: 8px; left: 8px; }
+  body.adminMode .donationItem .imgRemoveBtn { display: inline-flex; }
+  .donationEmptyState {
+    grid-column: span 3; grid-row: span 2; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; color: var(--muted); border: 1.5px dashed var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .donationEmptyState i { font-size: 30px; color: var(--crimson); opacity: 0.5; }
+  .donationEmptyState span { font-size: 13.5px; }
+  @media (max-width: 640px) {
+    .donationGrid { --rowH: 123px; }
+    .donationEmptyState { grid-column: span 2; }
+  }
+
+  /* ============================================================
+     TEAM — unlimited, single-row horizontal scroller
+     ============================================================ */
+  .team { max-width: 1120px; margin: 0 auto; padding: 20px 10px 12px; text-align: center; }
+  .teamHead {
+    display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 24px;
+  }
+  .teamHeading { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; margin: 0; }
+  .teamRow {
+    display: flex; flex-wrap: wrap; gap: 22px; text-align: left; padding-bottom: 4px; contain: layout style;
+    justify-content: center; justify-content: safe center;
+  }
+  @media (max-width: 640px) {
+    /* ---- Scroll-snap carousel (peek + center-snap), mobile only ---- */
+    .teamRow {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scroll-padding-inline: 24px;
+      gap: 16px;
+      scrollbar-width: none;
+    }
+    .teamRow::-webkit-scrollbar { display: none; }
+  }
+  .teamCard {
+    position: relative;
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 34px 26px 28px; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; text-align: center;
+    flex: 0 0 268px; scroll-snap-align: start; overflow: hidden;
+    transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
+  }
+  .teamCard::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--crimson) 0%, var(--amber) 50%, var(--sage) 100%);
+    opacity: 0; transition: opacity .35s var(--ease);
+  }
+  .teamCard:hover {
+    transform: translateY(-6px); box-shadow: 0 22px 42px rgba(158,27,50,0.15); border-color: var(--crimson-tint);
+  }
+  .teamCard:hover::before { opacity: 1; }
+  .teamRemoveBtn {
+    position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--paper); color: var(--muted);
+    display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; z-index: 6;
+  }
+  .teamRemoveBtn:hover { background: #B23A3A; color: #fff; border-color: #B23A3A; }
+  body.adminMode .teamRemoveBtn { display: inline-flex; }
+  @media (max-width: 640px) {
+    .teamCard {
+      flex: 0 0 85%;
+      width: auto;
+      max-width: 340px;
+      margin: 0;
+      scroll-snap-align: center;
+    }
+  }
+  .teamPhotoWrap {
+    position: relative; width: 114px; height: 114px; border-radius: 50%; overflow: hidden;
+    margin-bottom: 18px; padding: 3px; background: var(--crimson-tint);
+    box-shadow: 0 8px 20px rgba(158,27,50,0.16); transition: transform .35s var(--ease);
+  }
+  .teamCard:hover .teamPhotoWrap {
+    transform: scale(1.05); background: linear-gradient(135deg, var(--crimson) 0%, var(--amber) 50%, var(--sage) 100%);
+  }
+  .teamPhoto { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+  .teamPhotoWrap.placeholderMode .teamPhoto { display: none; }
+  .teamPlaceholderMark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .teamPlaceholderMark i { font-size: 40px; color: var(--crimson); }
+  .teamPhotoWrap:not(.placeholderMode) .teamPlaceholderMark { display: none; }
+  .teamPhotoWrap .imgEditBtn {
+    position: absolute; inset: 0; bottom: auto; right: auto; width: 100%; height: 100%;
+    border-radius: 50%; justify-content: center; font-size: 0; gap: 0; background: rgba(33,22,19,0.55);
+  }
+  .teamPhotoWrap .imgEditBtn i { font-size: 18px; }
+  .teamPhotoWrap .imgRemoveBtn { top: 2px; right: 2px; bottom: auto; left: auto; width: 26px; height: 26px; font-size: 11px; z-index: 6; }
+  body.adminMode .teamPhotoWrap:not(.placeholderMode) .imgRemoveBtn { display: inline-flex; }
+  .teamName { font-family: var(--font-display); font-size: 18.5px; font-weight: 700; color: var(--ink); }
+  .teamRole {
+    display: inline-block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--crimson);
+    background: var(--crimson-tint); border-radius: 999px; padding: 5px 14px; margin: 8px 0 16px;
+  }
+  .teamBio {
+    font-size: 14px; line-height: 1.7; color: var(--muted);
+    padding-top: 15px; border-top: 1px dashed var(--line); width: 100%;
+  }
+
+  /* ============================================================
+     STATS — "network monitor" band
+     ============================================================ */
+  .statsSection { background: var(--paper); padding: 12px 0 12px; position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .statsSection::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(0deg, rgba(158,27,50,0.05) 0px, rgba(158,27,50,0.05) 1px, transparent 1px, transparent 46px),
+                       repeating-linear-gradient(90deg, rgba(158,27,50,0.05) 0px, rgba(158,27,50,0.05) 1px, transparent 1px, transparent 46px),
+                       radial-gradient(circle at 50% 0%, rgba(158,27,50,0.05), transparent 60%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 100% at 50% 0%, #000 40%, transparent 95%);
+            mask-image: radial-gradient(ellipse 90% 100% at 50% 0%, #000 40%, transparent 95%);
+    pointer-events: none;
+  }
+  .statsSectionInner { position: relative; max-width: 1120px; margin: 0 auto; padding: 0 22px; text-align: center; }
+  .statsHeading { color: var(--ink); font-size: clamp(22px, 3.2vw, 30px); font-weight: 600; margin: 10px 0 26px; }
+  .statsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--line); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .statCard { background: var(--cream); padding: 28px 16px; border-top: 2.5px solid var(--accent, var(--crimson)); }
+  .statNumber { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 38px); font-weight: 600; color: var(--ink); letter-spacing: -0.02em; transition: color .3s ease; }
+  .statLabelBn { font-family: var(--font-bn); font-size: 13px; color: var(--ink); margin-top: 6px; font-weight: 600; }
+  .statLabelEn { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+  .statCard.flash .statNumber { color: var(--crimson); }
+
+  /* ---------- blood group breakdown ---------- */
+  .bloodGroupSection { margin-top: 28px; }
+  .bloodGroupTitle {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 14px; display: block;
+  }
+  .bloodGroupGrid {
+    display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(3px, 1.3vw, 6px);
+  }
+  .bloodGroupCard {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: transparent; border: none; border-radius: var(--radius-md);
+    padding: 6px 1px; min-width: 0;
+  }
+  .bloodGroupCard:hover { background: var(--crimson-tint); }
+  .bloodGroupIconWrap {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    width: clamp(30px, 9vw, 54px); height: clamp(30px, 9vw, 54px);
+  }
+  .bloodGroupIconWrap i { font-size: clamp(28px, 8.6vw, 52px); color: var(--crimson); }
+  .bloodGroupLetter {
+    position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);
+    font-family: var(--font-mono); font-size: clamp(9px, 2.6vw, 13px); font-weight: 700; color: #fff; letter-spacing: -0.02em;
+  }
+  .bloodGroupCount {
+    font-family: var(--font-mono); font-size: clamp(11px, 3vw, 15px); font-weight: 600; color: var(--ink);
+    transition: color .3s ease;
+  }
+  .bloodGroupCard.flash .bloodGroupCount { color: var(--crimson); }
+
+  /* ============================================================
+     FEATURES
+     ============================================================ */
+  .features { max-width: 1120px; margin: 0 auto; padding: 20px 10px 12px; text-align: center; }
+  .featuresHeading { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; margin: 10px 0 26px; }
+  .featuresGrid {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 22px;
+    text-align: left; padding-bottom: 16px; contain: layout style;
+  }
+  .featureCard {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 26px 22px; box-shadow: var(--shadow);
+    flex: 1 1 300px; max-width: 340px;
+  }
+  .featureCard:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(33,22,19,0.09); }
+  .featureIcon {
+    width: 42px; height: 42px; border-radius: 12px; background: var(--crimson-tint); color: var(--crimson);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+  }
+  .featureIcon svg { width: 21px; height: 21px; }
+  .featureIcon i { font-size: 19px; }
+  .featureCard:nth-child(2) .featureIcon { background: var(--sage-tint); color: var(--sage); }
+  .featureCard:nth-child(3) .featureIcon { background: var(--amber-tint); color: var(--amber); }
+  @media (max-width: 640px) {
+    /* ---- Scroll-snap carousel (peek + center-snap), mobile only ---- */
+    .featuresGrid {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scroll-padding-inline: 24px;
+      gap: 16px;
+      scrollbar-width: none;
+    }
+    .featuresGrid::-webkit-scrollbar { display: none; }
+    .featureCard {
+      flex: 0 0 85%;
+      width: auto;
+      max-width: 340px;
+      margin: 0;
+      scroll-snap-align: center;
+    }
+  }
+  .featureTitle { font-family: var(--font-display); font-size: 17.5px; font-weight: 600; margin-bottom: 8px; }
+  .featureText { font-size: 14px; line-height: 1.7; color: var(--muted); }
+
+  /* ============================================================
+     CTA BAND
+     ============================================================ */
+  .ctaBand {
+    position: relative; max-width: 1120px; margin: 40px auto 0;
+    overflow: hidden; padding: 50px 30px; text-align: center;
+    background: linear-gradient(150deg, var(--crimson-dark), var(--crimson) 65%);
+    background-size: cover; background-position: center;
+  }
+  .ctaBand.hasImage { background-blend-mode: multiply; }
+  body.adminMode .ctaBand.hasImage .imgRemoveBtn { display: inline-flex; }
+  .ctaBandOverlay { position: absolute; inset: 0; background: linear-gradient(150deg, rgb(110 18 32 / 69%), rgb(158 27 50 / 42%)); }
+  .ctaBandInner { position: relative; }
+  .ctaHeading { color: #fff; font-size: clamp(22px, 3.6vw, 32px); font-weight: 600; max-width: 620px; margin: 0 auto 26px; line-height: 1.3; }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .siteFooter { background: var(--ink); color: var(--cream); margin-top: 0; padding: 40px 0 0; }
+  .footerGrid {
+    max-width: 1120px; margin: 0 auto; padding: 0 22px 28px;
+    display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 34px;
+  }
+  .footerBrand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+  .footerBrandLogo { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--crimson); object-fit: cover; }
+  .footerTagline { font-size: 13.5px; color: #B6A9A2; line-height: 1.7; max-width: 280px; }
+  .footerColTitle { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #B6A9A2; margin-bottom: 14px; }
+  .footerRow { font-size: 13.5px; color: #E7DCD4; margin-bottom: 9px; line-height: 1.6; }
+  .footerRow i { width: 14px; text-align: center; color: #B6A9A2; margin-right: 2px; }
+  .footerRow a:hover { color: #fff; }
+
+  .footerPhoneRow {
+    display: flex; align-items: center; gap: 11px; margin-bottom: 9px;
+    padding: 6px 12px 6px 6px; border-radius: 999px; background: rgba(255,255,255,0.045);
+    transition: background .25s ease; max-width: fit-content;
+  }
+  .footerPhoneRow:hover { background: rgba(255,255,255,0.09); }
+  .footerPhoneIcon {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; background: var(--crimson); color: #fff; font-size: 12px;
+  }
+  .footerPhoneText { display: flex; flex-direction: column; gap: 1px; line-height: 1.3; }
+  .footerPhoneName { font-size: 11.5px; color: #B6A9A2; }
+  .footerPhoneNum { font-family: var(--font-mono); font-size: 14.5px; font-weight: 600; color: #fff; letter-spacing: 0.02em; }
+  .footerBottom {
+    border-top: 1px solid rgba(251,247,242,0.1); padding: 18px 22px 90px;
+    max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px;
+    font-size: 12px; color: #8C7E77;
+  }
+  .footerBottomRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .footerVersionRow { color: #6f625c; font-size: 11.5px; }
+  .footerVersionRow .footerDivider { margin: 0 6px; opacity: 0.6; }
+  .footerBottom u { text-decoration: none; border-bottom: 1px solid rgba(140,126,119,0.5); }
+  .footerAdminLink { display: inline-flex; align-items: center; gap: 5px; color: #8C7E77; cursor: pointer; background: none; border: none; font-family: var(--font-body); font-size: 12px; padding: 0; }
+  .footerAdminLink:hover { color: var(--cream); }
+  .footerAdminLink svg { width: 12px; height: 12px; }
+
+  /* ============================================================
+     PIN MODAL
+     ============================================================ */
+  .modalOverlay {
+    position: fixed; inset: 0; background: rgba(33,22,19,0.55); z-index: 500;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .pinModal {
+    background: var(--paper); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    width: 100%; max-width: 320px; padding: 26px 24px 22px; text-align: center;
+  }
+  .pinModal h3 { font-size: 19px; font-weight: 600; margin-bottom: 6px; }
+  .pinModal p { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+  .pinInput {
+    width: 100%; text-align: left; font-family: var(--font-body); font-size: 14.5px;
+    padding: 12px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--line); background: var(--cream);
+    color: var(--ink); margin-bottom: 10px;
+  }
+  .pinInput:focus { border-color: var(--crimson); outline: none; }
+  .pinError { color: var(--crimson); font-size: 12.5px; font-weight: 600; margin-bottom: 8px; display: none; }
+  .pinError.show { display: block; animation: shake .35s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+  .modalBtns { display: flex; gap: 10px; margin-top: 14px; }
+  .modalBtns button { flex: 1; padding: 11px; border-radius: 999px; font-family: var(--font-body); font-weight: 700; font-size: 13.5px; cursor: pointer; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
+  .modalBtns #pinSubmitBtn { background: var(--crimson); color: #fff; border-color: var(--crimson); }
+  .modalBtns #pinSubmitBtn:hover { background: var(--crimson-dark); }
+  .modalBtns #pinCancelBtn:hover { border-color: var(--muted); }
+
+  .joinCallList { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+  .joinCallRow {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px;
+    background: var(--crimson-tint); text-align: left;
+  }
+  .joinCallRow:hover { background: #F0D2D8; }
+  .joinCallIcon {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--crimson); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .joinCallText { display: flex; flex-direction: column; gap: 1px; }
+  .joinCallName { font-size: 12px; color: var(--muted); }
+  .joinCallNum { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+
+  /* ============================================================
+     IMAGE CROP MODAL
+     ============================================================ */
+  .cropModal {
+    background: var(--paper); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    width: 100%; max-width: 520px; padding: 22px 22px 20px; text-align: center;
+    max-height: 92vh; display: flex; flex-direction: column;
+  }
+  .cropModal h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; text-align: left; }
+  .cropModal p { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; text-align: left; line-height: 1.5; }
+  .cropperStage {
+    width: 100%; height: min(50vh, 380px); background: #16100e; border-radius: var(--radius-md);
+    overflow: hidden; margin-bottom: 14px;
+  }
+  .cropperStage img { display: block; max-width: 100%; }
+  .cropRatioRow {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px;
+  }
+  .cropRatioBtn {
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: var(--cream); border: 1.5px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .cropRatioBtn:hover { border-color: var(--crimson); color: var(--crimson); }
+  .cropRatioBtn.active { background: var(--crimson); border-color: var(--crimson); color: #fff; }
+  .cropSlotBadge {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; color: var(--crimson); background: var(--crimson-tint);
+    border-radius: 999px; padding: 5px 12px; margin: 0 0 12px;
+  }
+  .cropModalBtns { display: flex; gap: 10px; }
+  .cropModalBtns button {
+    flex: 1; padding: 12px; border-radius: 999px; font-family: var(--font-body); font-weight: 700;
+    font-size: 13.5px; cursor: pointer; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  .cropModalBtns #cropConfirmBtn { background: var(--crimson); color: #fff; border-color: var(--crimson); }
+  .cropModalBtns #cropConfirmBtn:hover { background: var(--crimson-dark); }
+  .cropModalBtns #cropCancelBtn:hover { border-color: var(--muted); }
+  @media (max-width: 480px) {
+    .cropModal { padding: 18px 16px 16px; }
+    .cropperStage { height: 44vh; }
+  }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--cream); font-size: 13.5px; font-weight: 600;
+    padding: 12px 20px; border-radius: 999px; box-shadow: var(--shadow); z-index: 600;
+    opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- floating call button ---------- */
+  .callFab { position: fixed; right: 20px; bottom: 26px; z-index: 400; }
+  .callFabBtn {
+    position: relative; width: 56px; height: 56px; border-radius: 50%; background: var(--crimson); color: #fff;
+    border: none; box-shadow: 0 10px 24px rgba(158,27,50,0.4); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .callFabBtn::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(158,27,50,0.55);
+    animation: fabRing 2.4s var(--ease) infinite;
+    will-change: transform, opacity;
+  }
+  .callFabBtn:hover { background: var(--crimson-dark); }
+  @keyframes fabRing {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+  .callFabMenu {
+    position: absolute; right: 0; bottom: 68px; width: 240px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); padding: 10px; display: flex; flex-direction: column; gap: 6px;
+    opacity: 0; pointer-events: none; transform: translate3d(0, 10px, 0) scale(0.96);
+    transform-origin: bottom right;
+    transition: opacity .22s var(--ease), transform .22s var(--ease);
+    will-change: opacity, transform;
+  }
+  .callFab.open .callFabMenu { opacity: 1; pointer-events: auto; transform: translate3d(0, 0, 0) scale(1); }
+  .callFabItem {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md);
+    color: var(--ink); font-size: 13.5px; font-weight: 600;
+  }
+  .callFabItem:hover { background: var(--crimson-tint); color: var(--crimson-dark); }
+  .callFabItem i { color: var(--crimson); font-size: 15px; width: 18px; text-align: center; }
+  .callFabItem > span { display: flex; flex-direction: column; gap: 1px; }
+  .callFabItem .callFabNum { display: block; font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; color: var(--muted); }
+  .callFabItem:hover .callFabNum { color: var(--crimson-dark); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 860px) {
+    .aboutCard { grid-template-columns: 1fr; gap: 26px; padding: 25px; text-align: center; }
+    .aboutTags { justify-content: center; }
+    .aboutImageFrame { max-width: 220px; }
+    .footerGrid { grid-template-columns: 1fr; gap: 26px; }
+  }
+  /* Only applies above the carousel breakpoint (>640px), so it never
+     fights with the mobile scroll-snap carousel rules for .featureCard. */
+  @media (min-width: 641px) and (max-width: 860px) {
+    .featureCard { flex-basis: 100%; max-width: 420px; }
+  }
+  @media (max-width: 480px) {
+    .statsGrid { grid-template-columns: repeat(2, 1fr); }
+    .callFab { right: 14px; bottom: 18px; }
+    .callFabBtn { width: 50px; height: 50px; font-size: 19px; }
+    .callFabMenu { width: 210px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="adminBar" id="adminBar" style="display:none;">
+  <span class="adminBarLabel">
+    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+    এডিট মোড চালু — টেক্সটে ক্লিক করে পরিবর্তন করুন
+  </span>
+  <span class="adminBarBtns">
+    <button type="button" id="saveEditsBtn">সংরক্ষণ করুন</button>
+    <button type="button" id="exitEditBtn">বন্ধ করুন</button>
+  </span>
+</div>
+
+<header class="hero" id="top">
+  <div class="heroBgOverlay" id="heroBgOverlay"></div>
+  <button type="button" class="imgEditBtn" data-img-key="heroBackgroundImage" style="top:14px; right:14px; bottom:auto;">
+    <i class="fa-solid fa-camera" aria-hidden="true"></i>
+    ব্যাকগ্রাউন্ড ছবি
+  </button>
+  <button type="button" class="imgRemoveBtn" data-img-key="heroBackgroundImage" style="top:14px; left:14px; bottom:auto;" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+  <nav class="heroNav">
+    <div class="heroBrand">
+      <img class="heroBrandLogo" id="heroBrandLogo" src="fav.jpeg" alt="Blood Donor Network">
+      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Donor Network</span>
+    </div>
+  </nav>
+
+  <div class="heroContent">
+    <h1 class="heroTitle editable-field" data-key="heroTitle" contenteditable="false">প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প</h1>
+    <p class="heroSubtitle editable-field" data-key="heroSubtitle" contenteditable="false">জরুরি মুহূর্তে নির্ভরযোগ্য রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়। বিনামূল্যে ও স্বেচ্ছাসেবী রক্তদাতাদের নেটওয়ার্কে আজই যুক্ত হোন, জীবন বাঁচাতে হাত বাড়ান।</p>
+    <div class="heroPhoneRow" id="heroPhoneRow">
+      <a class="heroPhoneChip" id="heroPhoneChip1" href="tel:">
+        <i class="fa-solid fa-phone" aria-hidden="true"></i>
+        <span class="heroPhoneChipText"><span id="heroPhoneChipName1">নাম ১</span><span id="heroPhoneChipText1">01XXXXXXXXX</span></span>
+      </a>
+      <a class="heroPhoneChip" id="heroPhoneChip2" href="tel:">
+        <i class="fa-solid fa-phone" aria-hidden="true"></i>
+        <span class="heroPhoneChipText"><span id="heroPhoneChipName2">নাম ২</span><span id="heroPhoneChipText2">01XXXXXXXXX</span></span>
+      </a>
+      <a class="heroPhoneChip" id="heroPhoneChip3" href="tel:">
+        <i class="fa-solid fa-phone" aria-hidden="true"></i>
+        <span class="heroPhoneChipText"><span id="heroPhoneChipName3">নাম ৩</span><span id="heroPhoneChipText3">01XXXXXXXXX</span></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="heroPulseWrap">
+    <canvas class="heroPulseCanvas" id="heroPulseCanvas" aria-hidden="true"></canvas>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="statsSection" id="stats">
+    <div class="statsSectionInner reveal">
+      <div class="statsGrid">
+        <div class="statCard" style="--accent:var(--crimson);">
+          <div class="statNumber" id="statDonors">0</div>
+          <div class="statLabelBn">মোট রক্তদাতা</div>
+          <div class="statLabelEn">Total Donors</div>
+        </div>
+        <div class="statCard" style="--accent:var(--sage);">
+          <div class="statNumber" id="statDonations">0</div>
+          <div class="statLabelBn">মোট রক্তদান</div>
+          <div class="statLabelEn">Total Donations</div>
+        </div>
+        <div class="statCard" style="--accent:var(--amber);">
+          <div class="statNumber" id="statLives">0</div>
+          <div class="statLabelBn">সম্ভাব্য জীবন রক্ষা</div>
+          <div class="statLabelEn">Lives Impacted</div>
+        </div>
+        <div class="statCard" style="--accent:#cfe0d6;">
+          <div class="statNumber" id="statVisitors">0</div>
+          <div class="statLabelBn">মোট ভিজিটর</div>
+          <div class="statLabelEn">Total Visitors</div>
+        </div>
+      </div>
+
+      <div class="bloodGroupSection">
+        <div class="bloodGroupGrid" id="bloodGroupGrid">
+          <div class="bloodGroupCard" data-bg="A+">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">A+</span>
+            </div>
+            <div class="bloodGroupCount" id="bgAPos">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="A-">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">A-</span>
+            </div>
+            <div class="bloodGroupCount" id="bgANeg">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="B+">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">B+</span>
+            </div>
+            <div class="bloodGroupCount" id="bgBPos">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="B-">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">B-</span>
+            </div>
+            <div class="bloodGroupCount" id="bgBNeg">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="AB+">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">AB+</span>
+            </div>
+            <div class="bloodGroupCount" id="bgABPos">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="AB-">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">AB-</span>
+            </div>
+            <div class="bloodGroupCount" id="bgABNeg">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="O+">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">O+</span>
+            </div>
+            <div class="bloodGroupCount" id="bgOPos">0</div>
+          </div>
+          <div class="bloodGroupCard" data-bg="O-">
+            <div class="bloodGroupIconWrap">
+              <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+              <span class="bloodGroupLetter">O-</span>
+            </div>
+            <div class="bloodGroupCount" id="bgONeg">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="donationGallery reveal">
+    <span class="sectionEyebrow">আমাদের যাত্রা</span>
+    <div class="donationGalleryHead">
+      <h2 class="donationGalleryHeading">সাম্প্রতিক রক্তদান</h2>
+      <button type="button" class="sectionAddBtn" id="donationAddBtn">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> ছবি যোগ করুন
+      </button>
+    </div>
+    <div class="donationGrid scrollRowX" id="donationGrid"></div>
+  </section>
+
+  <section class="about reveal">
+    <div class="aboutCard">
+      <div class="aboutImageFrame">
+        <div class="aboutImageWrap placeholderMode" id="aboutImageWrap">
+          <img class="aboutImage" id="aboutImageEl" src="" alt="Blood Donor Network">
+          <span class="aboutPlaceholderMark">
+            <i class="fa-solid fa-droplet" aria-hidden="true"></i>
+          </span>
+          <button type="button" class="imgEditBtn" data-img-key="aboutImage">
+            <i class="fa-solid fa-camera" aria-hidden="true"></i>
+            ছবি পরিবর্তন
+          </button>
+          <button type="button" class="imgRemoveBtn" data-img-key="aboutImage" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+        </div>
+        <span class="aboutStamp"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
+      </div>
+      <div class="aboutTextCol">
+        <span class="sectionEyebrow">আমাদের সম্পর্কে</span>
+        <h2 class="aboutTitle editable-field" data-key="aboutTitle" contenteditable="false">আমরা কারা</h2>
+        <p class="aboutText editable-field" data-key="aboutText" contenteditable="false">Blood Donor Network একটি স্বেচ্ছাসেবী রক্তদাতা প্ল্যাটফর্ম, যেখানে যাচাইকৃত রক্তদাতাদের তথ্য একত্রে রাখা হয় যাতে জরুরি প্রয়োজনে দ্রুত সঠিক রক্তদাতার সাথে যোগাযোগ করা যায়। আমাদের লক্ষ্য — প্রতিটি এলাকায় যেন রক্তের অভাবে কোনো জীবন ঝুঁকিতে না পড়ে।</p>
+        <div class="aboutTags">
+          <span class="aboutTag"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> যাচাইকৃত</span>
+          <span class="aboutTag"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ২৪/৭ সাড়া</span>
+          <span class="aboutTag"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> সম্পূর্ণ বিনামূল্যে</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features reveal">
+    <span class="sectionEyebrow">কেন আমরা</span>
+    <h2 class="featuresHeading">আমরা যা নিশ্চিত করি</h2>
+    <div class="featuresGrid">
+      <div class="featureCard">
+        <div class="featureIcon">
+          <i class="fa-solid fa-shield-heart" aria-hidden="true"></i>
+        </div>
+        <div class="featureTitle editable-field" data-key="feature1Title" contenteditable="false">যাচাইকৃত রক্তদাতা</div>
+        <div class="featureText editable-field" data-key="feature1Text" contenteditable="false">প্রতিটি রক্তদাতার তথ্য যাচাই করে তালিকাভুক্ত করা হয়, যাতে জরুরি সময়ে নির্ভরযোগ্য যোগাযোগ নিশ্চিত হয়।</div>
+      </div>
+      <div class="featureCard">
+        <div class="featureIcon">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        </div>
+        <div class="featureTitle editable-field" data-key="feature2Title" contenteditable="false">জরুরি সাড়া</div>
+        <div class="featureText editable-field" data-key="feature2Text" contenteditable="false">ব্লাড গ্রুপ ও এলাকা অনুযায়ী মুহূর্তেই কাছাকাছি রক্তদাতা খুঁজে বের করা যায়, একদম ফ্রি-তে।</div>
+      </div>
+      <div class="featureCard">
+        <div class="featureIcon">
+          <i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>
+        </div>
+        <div class="featureTitle editable-field" data-key="feature3Title" contenteditable="false">সহজ ও বিনামূল্যে</div>
+        <div class="featureText editable-field" data-key="feature3Text" contenteditable="false">কোনো সাইনআপ ফি বা লুকানো খরচ নেই — যে কেউ রক্তদাতা হতে বা খুঁজতে পারেন সম্পূর্ণ বিনামূল্যে।</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="team reveal">
+    <span class="sectionEyebrow">টিম</span>
+    <div class="teamHead">
+      <h2 class="teamHeading">আমাদের নির্মাতা</h2>
+      <button type="button" class="sectionAddBtn" id="teamAddBtn">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> সদস্য যোগ করুন
+      </button>
+    </div>
+    <div class="teamRow" id="teamRow"></div>
+  </section>
+
+  <div class="container">
+    <div class="ctaBand reveal" id="ctaBand">
+      <div class="ctaBandOverlay" id="ctaBandOverlay"></div>
+      <button type="button" class="imgEditBtn" data-img-key="impactImage" style="right: 20px; bottom: 20px;">
+        <i class="fa-solid fa-camera" aria-hidden="true"></i>
+        ব্যাকগ্রাউন্ড ছবি
+      </button>
+      <button type="button" class="imgRemoveBtn" data-img-key="impactImage" style="left: 20px; bottom: 20px;" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+      <div class="ctaBandInner">
+        <h2 class="ctaHeading editable-field" data-key="ctaHeading" contenteditable="false">আজই একজন রক্তদাতা হয়ে অন্য কারো জীবনে আশার আলো হয়ে উঠুন</h2>
+        <button type="button" class="btnPrimary light" id="ctaJoinBtn">রক্তদাতা হিসেবে যোগ দিন</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="siteFooter">
+  <div class="footerGrid">
+    <div>
+      <div class="footerBrand">
+        <img class="footerBrandLogo" id="footerBrandLogo" src="fav.jpeg" alt="Blood Donor Network">
+        <span class="editable-field" data-key="siteName" contenteditable="false">Blood Donor Network</span>
+      </div>
+      <p class="footerTagline">স্বেচ্ছাসেবী রক্তদাতাদের একটি বিশ্বস্ত নেটওয়ার্ক — জরুরি প্রয়োজনে জীবন বাঁচাতে পাশে আছি।</p>
+    </div>
+    <div>
+      <div class="footerColTitle">যোগাযোগ</div>
+      <div class="footerPhoneRow">
+        <span class="footerPhoneIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="footerPhoneText">
+          <span class="footerPhoneName editable-field" data-key="contactName1" contenteditable="false">নাম ১</span>
+          <span class="footerPhoneNum editable-field" data-key="contactPhone1" contenteditable="false">01XXXXXXXXX</span>
+        </span>
+      </div>
+      <div class="footerPhoneRow">
+        <span class="footerPhoneIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="footerPhoneText">
+          <span class="footerPhoneName editable-field" data-key="contactName2" contenteditable="false">নাম ২</span>
+          <span class="footerPhoneNum editable-field" data-key="contactPhone2" contenteditable="false">01XXXXXXXXX</span>
+        </span>
+      </div>
+      <div class="footerPhoneRow">
+        <span class="footerPhoneIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="footerPhoneText">
+          <span class="footerPhoneName editable-field" data-key="contactName3" contenteditable="false">নাম ৩</span>
+          <span class="footerPhoneNum editable-field" data-key="contactPhone3" contenteditable="false">01XXXXXXXXX</span>
+        </span>
+      </div>
+      <div class="footerRow" style="margin-top:14px;"><i class="fa-solid fa-envelope" aria-hidden="true"></i> <span class="editable-field" data-key="contactEmail" contenteditable="false">contact@blooddonornetwork.org</span></div>
+      <div class="footerRow"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <span class="editable-field" data-key="contactAddress" contenteditable="false">ঢাকা, বাংলাদেশ</span></div>
+    </div>
+    <div>
+      <div class="footerColTitle">লিংক</div>
+      <div class="footerRow"><a href="index-9.html">রক্তদাতা তালিকা</a></div>
+      <div class="footerRow"><a href="#top">উপরে ফিরে যান</a></div>
+      <div class="footerRow"><i class="fa-brands fa-facebook" aria-hidden="true"></i> <span class="editable-field" data-key="footerFacebook" contenteditable="false">facebook.com/blooddonornetwork</span></div>
+    </div>
+  </div>
+  <div class="footerBottom">
+    <div class="footerVersionRow">
+      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Donor Network</span><span class="footerDivider">•</span>© <span id="footerYear">2026</span> সর্বস্বত্ব সংরক্ষিত (All Rights Reserved)<span class="footerDivider">•</span>Version <span class="editable-field" data-key="siteVersion" contenteditable="false">1.0.0</span>
+    </div>
+    <div class="footerBottomRow">
+      <span>Development by <u class="editable-field" data-key="footerDevName1" contenteditable="false">IBRAHIM KHALIL</u> | <u class="editable-field" data-key="footerDevName2" contenteditable="false">SAMIN KHAN</u></span>
+      <button type="button" class="footerAdminLink" id="footerAdminLoginTrigger">
+        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+        Admin
+      </button>
+    </div>
+  </div>
+</footer>
+
+<div class="modalOverlay" id="joinCallModalOverlay" style="display:none;">
+  <div class="pinModal">
+    <h3><i class="fa-solid fa-phone-volume" aria-hidden="true" style="color:var(--crimson); margin-right:6px;"></i>কল করে যোগ দিন</h3>
+    <p>রক্তদাতা হিসেবে নিবন্ধন করতে নিচের যেকোনো নম্বরে সরাসরি কল করুন।</p>
+    <div class="joinCallList">
+      <a class="joinCallRow" id="joinCallItem1" href="tel:">
+        <span class="joinCallIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="joinCallText">
+          <span class="joinCallName" id="joinCallName1">নাম ১</span>
+          <span class="joinCallNum" id="joinCallNum1">01XXXXXXXXX</span>
+        </span>
+      </a>
+      <a class="joinCallRow" id="joinCallItem2" href="tel:">
+        <span class="joinCallIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="joinCallText">
+          <span class="joinCallName" id="joinCallName2">নাম ২</span>
+          <span class="joinCallNum" id="joinCallNum2">01XXXXXXXXX</span>
+        </span>
+      </a>
+      <a class="joinCallRow" id="joinCallItem3" href="tel:">
+        <span class="joinCallIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="joinCallText">
+          <span class="joinCallName" id="joinCallName3">নাম ৩</span>
+          <span class="joinCallNum" id="joinCallNum3">01XXXXXXXXX</span>
+        </span>
+      </a>
+    </div>
+    <div class="modalBtns">
+      <button type="button" id="joinCallCloseBtn">বন্ধ করুন</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="pinModalOverlay" style="display:none;">
+  <div class="pinModal">
+    <h3>অ্যাডমিন লগইন</h3>
+    <p>এই পেজের কনটেন্ট এডিট করতে আপনার Admin ইমেইল ও পাসওয়ার্ড দিন।</p>
+    <input type="email" id="adminEmailInput" class="pinInput" placeholder="ইমেইল" autocomplete="username">
+    <input type="password" id="adminPinInput" class="pinInput" placeholder="পাসওয়ার্ড" autocomplete="current-password">
+    <div class="pinError" id="pinError">ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।</div>
+    <div class="modalBtns">
+      <button type="button" id="pinCancelBtn">বাতিল</button>
+      <button type="button" id="pinSubmitBtn">Login</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="cropModalOverlay" style="display:none;">
+  <div class="cropModal">
+    <h3>ছবি ক্রপ করুন</h3>
+    <p id="cropModalHint">যেখানে ছবিটি দেখানো হবে, সেই জায়গার মাপ অনুযায়ী অনুপাত স্বয়ংক্রিয়ভাবে সেট করা হয়েছে।</p>
+    <span class="cropSlotBadge" id="cropSlotBadge"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i> <span id="cropSlotBadgeText">—</span></span>
+    <div class="cropperStage">
+      <img id="cropperImage" src="" alt="Crop preview">
+    </div>
+    <div class="cropRatioRow">
+      <button type="button" class="cropRatioBtn active" data-ratio="locked"><i class="fa-solid fa-lock" aria-hidden="true"></i> নির্ধারিত অনুপাত</button>
+      <button type="button" class="cropRatioBtn" data-ratio="free"><i class="fa-solid fa-lock-open" aria-hidden="true"></i> ফ্রি ক্রপ</button>
+    </div>
+    <div class="cropModalBtns">
+      <button type="button" id="cropCancelBtn">বাতিল</button>
+      <button type="button" id="cropConfirmBtn">ক্রপ করে সংরক্ষণ করুন</button>
+    </div>
+  </div>
+</div>
+
+<div class="callFab" id="callFab">
+  <div class="callFabMenu" id="callFabMenu">
+    <a class="callFabItem" id="callFabItem1" href="tel:">
+      <i class="fa-solid fa-phone" aria-hidden="true"></i>
+      <span><span id="callFabName1">নাম ১</span><span class="callFabNum" id="callFabNum1">01XXXXXXXXX</span></span>
+    </a>
+    <a class="callFabItem" id="callFabItem2" href="tel:">
+      <i class="fa-solid fa-phone" aria-hidden="true"></i>
+      <span><span id="callFabName2">নাম ২</span><span class="callFabNum" id="callFabNum2">01XXXXXXXXX</span></span>
+    </a>
+    <a class="callFabItem" id="callFabItem3" href="tel:">
+      <i class="fa-solid fa-phone" aria-hidden="true"></i>
+      <span><span id="callFabName3">নাম ৩</span><span class="callFabNum" id="callFabNum3">01XXXXXXXXX</span></span>
+    </a>
+  </div>
+  <button type="button" class="callFabBtn" id="callFabBtn" aria-label="কল করুন">
+    <i class="fa-solid fa-phone" aria-hidden="true"></i>
+  </button>
+</div>
+
+<input type="file" id="imgFileInput" accept="image/*" style="display:none;">
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   FIREBASE INIT (same project/database as the main Donor List app)
+   ============================================================ */
+const _cfgB64 = "eyJhcGlLZXkiOiJBSXphU3lDSDVvSEZ6dUM2cWJBalY3Y2dIV1FvcEh0R0ExODBqaVUiLCJhdXRoRG9tYWluIjoiYmxvb2QtbmV0d29yay1hODUxYi5maXJlYmFzZWFwcC5jb20iLCJkYXRhYmFzZVVSTCI6Imh0dHBzOi8vYmxvb2QtbmV0d29yay1hODUxYi1kZWZhdWx0LXJ0ZGIuYXNpYS1zb3V0aGVhc3QxLmZpcmViYXNlZGF0YWJhc2UuYXBwIiwicHJvamVjdElkIjoiYmxvb2QtbmV0d29yay1hODUxYiIsInN0b3JhZ2VCdWNrZXQiOiJibG9vZC1uZXR3b3JrLWE4NTFiLmZpcmViYXNlc3RvcmFnZS5hcHAiLCJtZXNzYWdpbmdTZW5kZXJJZCI6IjcxMzA1ODg2ODQyNCIsImFwcElkIjoiMTo3MTMwNTg4Njg0MjQ6d2ViOjU5OTQ0MWM5NTQ0OTBjYTVjYjE5ZmQiLCJtZWFzdXJlbWVudElkIjoiRy1TTDE2VEJKMkZRIn0=";
+const firebaseConfig = JSON.parse(atob(_cfgB64));
+
+let firebaseAvailable = false;
+let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef;
+
+/* ============================================================
+   LOCAL CACHE (shares keys with the main app where relevant,
+   so the same browser stays in sync instantly offline)
+   ============================================================ */
+const CACHE_APPCONFIG_KEY = "blood_donor_appconfig_cache";
+const CACHE_LANDING_KEY = "blood_donor_landing_cache";
+const CACHE_DONORS_KEY = "blood_donor_cache";
+const CACHE_VISITOR_KEY = "blood_donor_visitor_cache";
+
+function readCache(key, fallback) {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
+  } catch (err) { return fallback; }
+}
+function writeCache(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (err) { /* ignore */ }
+}
+
+/* ============================================================
+   DEFAULT LANDING PAGE CONTENT
+   ============================================================ */
+const DEFAULT_LANDING = {
+  siteName: "Blood Donor Network",
+  siteVersion: "1.0.0",
+  heroTitle: "প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প",
+  heroSubtitle: "জরুরি মুহূর্তে নির্ভরযোগ্য রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়। বিনামূল্যে ও স্বেচ্ছাসেবী রক্তদাতাদের নেটওয়ার্কে আজই যুক্ত হোন, জীবন বাঁচাতে হাত বাড়ান।",
+  aboutTitle: "আমরা কারা",
+  aboutText: "Blood Donor Network একটি স্বেচ্ছাসেবী রক্তদাতা প্ল্যাটফর্ম, যেখানে যাচাইকৃত রক্তদাতাদের তথ্য একত্রে রাখা হয় যাতে জরুরি প্রয়োজনে দ্রুত সঠিক রক্তদাতার সাথে যোগাযোগ করা যায়। আমাদের লক্ষ্য — প্রতিটি এলাকায় যেন রক্তের অভাবে কোনো জীবন ঝুঁকিতে না পড়ে।",
+  aboutImage: "",
+  impactImage: "",
+  donationPhotos: [],
+  heroBackgroundImage: "",
+  ctaHeading: "আজই একজন রক্তদাতা হয়ে অন্য কারো জীবনে আশার আলো হয়ে উঠুন",
+  feature1Title: "যাচাইকৃত রক্তদাতা",
+  feature1Text: "প্রতিটি রক্তদাতার তথ্য যাচাই করে তালিকাভুক্ত করা হয়, যাতে জরুরি সময়ে নির্ভরযোগ্য যোগাযোগ নিশ্চিত হয়।",
+  feature2Title: "জরুরি সাড়া",
+  feature2Text: "ব্লাড গ্রুপ ও এলাকা অনুযায়ী মুহূর্তেই কাছাকাছি রক্তদাতা খুঁজে বের করা যায়, একদম ফ্রি-তে।",
+  feature3Title: "সহজ ও বিনামূল্যে",
+  feature3Text: "কোনো সাইনআপ ফি বা লুকানো খরচ নেই — যে কেউ রক্তদাতা হতে বা খুঁজতে পারেন সম্পূর্ণ বিনামূল্যে।",
+  team: [
+    {
+      id: "t1",
+      name: "IBRAHIM KHALIL",
+      role: "ডেভেলপার",
+      bio: "এই প্ল্যাটফর্মের কারিগরি নির্মাণ ও রক্ষণাবেক্ষণের দায়িত্বে আছেন — কোড থেকে শুরু করে সার্ভার পর্যন্ত সবকিছু।",
+      photo: ""
+    },
+    {
+      id: "t2",
+      name: "SAMIN KHAN",
+      role: "ডিজাইনার",
+      bio: "প্ল্যাটফর্মের চেহারা ও ব্যবহার-অভিজ্ঞতা ডিজাইন করেছেন, যাতে সবার জন্য ব্যবহার সহজ ও সুন্দর হয়।",
+      photo: ""
+    }
+  ],
+  contactName1: "নাম ১",
+  contactPhone1: "01XXXXXXXXX",
+  contactName2: "নাম ২",
+  contactPhone2: "01XXXXXXXXX",
+  contactName3: "নাম ৩",
+  contactPhone3: "01XXXXXXXXX",
+  contactEmail: "contact@blooddonornetwork.org",
+  contactAddress: "ঢাকা, বাংলাদেশ",
+  footerFacebook: "facebook.com/blooddonornetwork",
+  footerDevName1: "IBRAHIM KHALIL",
+  footerDevName2: "SAMIN KHAN"
+};
+
+let landingData = Object.assign({}, DEFAULT_LANDING, readCache(CACHE_LANDING_KEY, {}));
+let appConfigData = readCache(CACHE_APPCONFIG_KEY, { logoImage: "" });
+let isAdmin = false;
+
+/* Firebase (and old localStorage caches) may hand back plain objects
+   instead of arrays for donationPhotos/team — this keeps both fields
+   as real arrays no matter where the data came from. */
+function normalizeLandingData() {
+  const dp = landingData.donationPhotos;
+  landingData.donationPhotos = Array.isArray(dp) ? dp.filter(Boolean)
+    : (dp && typeof dp === "object" ? Object.values(dp).filter(Boolean) : []);
+
+  const tm = landingData.team;
+  let teamArr = Array.isArray(tm) ? tm.filter(Boolean)
+    : (tm && typeof tm === "object" ? Object.values(tm).filter(Boolean) : []);
+  landingData.team = teamArr.length ? teamArr : DEFAULT_LANDING.team.map(m => Object.assign({}, m));
+}
+normalizeLandingData();
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderDonationGallery() {
+  const grid = document.getElementById("donationGrid");
+  if (!grid) return;
+  if (!landingData.donationPhotos.length) {
+    grid.innerHTML = '<div class="donationEmptyState"><i class="fa-solid fa-images" aria-hidden="true"></i><span>এখনও কোনো ছবি যোগ করা হয়নি</span></div>';
+    return;
+  }
+  grid.innerHTML = landingData.donationPhotos.map(p => (
+    '<div class="donationItem" data-donation-id="' + p.id + '">' +
+      '<img class="donationImg" src="' + p.src + '" alt="সাম্প্রতিক রক্তদান">' +
+      '<button type="button" class="imgEditBtn" data-img-key="donation:' + p.id + '"><i class="fa-solid fa-camera" aria-hidden="true"></i></button>' +
+      '<button type="button" class="imgRemoveBtn" data-img-key="donation:' + p.id + '" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+    '</div>'
+  )).join("");
+}
+
+function teamCardTemplate(m) {
+  return (
+    '<div class="teamCard" data-team-id="' + m.id + '">' +
+      '<button type="button" class="teamRemoveBtn" data-team-id="' + m.id + '" title="সদস্য মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
+      '<div class="teamPhotoWrap placeholderMode">' +
+        '<img class="teamPhoto" src="" alt="' + m.name + '">' +
+        '<span class="teamPlaceholderMark"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
+        '<button type="button" class="imgEditBtn" data-img-key="team:' + m.id + ':photo"><i class="fa-solid fa-camera" aria-hidden="true"></i> ছবি পরিবর্তন</button>' +
+        '<button type="button" class="imgRemoveBtn" data-img-key="team:' + m.id + ':photo" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+      '</div>' +
+      '<div class="teamName editable-field" data-team-id="' + m.id + '" data-field="name" contenteditable="false"></div>' +
+      '<div class="teamRole editable-field" data-team-id="' + m.id + '" data-field="role" contenteditable="false"></div>' +
+      '<p class="teamBio editable-field" data-team-id="' + m.id + '" data-field="bio" contenteditable="false"></p>' +
+    '</div>'
+  );
+}
+
+function renderTeamSection() {
+  const container = document.getElementById("teamRow");
+  if (!container) return;
+  const existingIds = Array.from(container.children).map(c => c.getAttribute("data-team-id"));
+  const newIds = landingData.team.map(m => m.id);
+  const structureChanged = existingIds.length !== newIds.length || existingIds.some((id, i) => id !== newIds[i]);
+  if (structureChanged) {
+    container.innerHTML = landingData.team.map(teamCardTemplate).join("");
+    if (isAdmin) container.querySelectorAll(".editable-field").forEach(el => el.setAttribute("contenteditable", "true"));
+  }
+  landingData.team.forEach(m => {
+    const card = container.querySelector('.teamCard[data-team-id="' + m.id + '"]');
+    if (!card) return;
+    const nameEl = card.querySelector(".teamName");
+    const roleEl = card.querySelector(".teamRole");
+    const bioEl = card.querySelector(".teamBio");
+    if (nameEl && document.activeElement !== nameEl) nameEl.textContent = m.name;
+    if (roleEl && document.activeElement !== roleEl) roleEl.textContent = m.role;
+    if (bioEl && document.activeElement !== bioEl) bioEl.textContent = m.bio;
+    const wrap = card.querySelector(".teamPhotoWrap");
+    const img = card.querySelector(".teamPhoto");
+    if (m.photo) { img.src = m.photo; wrap.classList.remove("placeholderMode"); }
+    else { wrap.classList.add("placeholderMode"); }
+  });
+}
+
+function renderLanding() {
+  normalizeLandingData();
+
+  document.querySelectorAll(".editable-field[data-key]").forEach(el => {
+    if (document.activeElement === el) return; // don't clobber what the admin is typing
+    const key = el.getAttribute("data-key");
+    if (landingData[key] !== undefined) el.textContent = landingData[key];
+  });
+
+  const aboutWrap = document.getElementById("aboutImageWrap");
+  const aboutImg = document.getElementById("aboutImageEl");
+  if (landingData.aboutImage) {
+    aboutImg.src = landingData.aboutImage;
+    aboutWrap.classList.remove("placeholderMode");
+  } else {
+    aboutWrap.classList.add("placeholderMode");
+  }
+
+  const heroEl = document.getElementById("top");
+  if (landingData.heroBackgroundImage) {
+    heroEl.style.backgroundImage = "url('" + landingData.heroBackgroundImage + "')";
+    heroEl.classList.add("hasImage");
+  } else {
+    heroEl.style.backgroundImage = "";
+    heroEl.classList.remove("hasImage");
+  }
+
+  const ctaBand = document.getElementById("ctaBand");
+  if (landingData.impactImage) {
+    ctaBand.style.backgroundImage = "url('" + landingData.impactImage + "')";
+    ctaBand.classList.add("hasImage");
+  } else {
+    ctaBand.style.backgroundImage = "";
+    ctaBand.classList.remove("hasImage");
+  }
+
+  renderDonationGallery();
+  renderTeamSection();
+
+  [1, 2, 3].forEach(n => {
+    const name = landingData["contactName" + n] || "";
+    const phone = landingData["contactPhone" + n] || "";
+    const nameEl = document.getElementById("callFabName" + n);
+    const numEl = document.getElementById("callFabNum" + n);
+    const itemEl = document.getElementById("callFabItem" + n);
+    if (nameEl) nameEl.textContent = name;
+    if (numEl) numEl.textContent = phone;
+    if (itemEl) itemEl.setAttribute("href", "tel:" + phone.replace(/[^0-9+]/g, ""));
+
+    const heroChipEl = document.getElementById("heroPhoneChip" + n);
+    const heroChipNameEl = document.getElementById("heroPhoneChipName" + n);
+    const heroChipTextEl = document.getElementById("heroPhoneChipText" + n);
+    if (heroChipNameEl) heroChipNameEl.textContent = name;
+    if (heroChipTextEl) heroChipTextEl.textContent = phone;
+    if (heroChipEl) heroChipEl.setAttribute("href", "tel:" + phone.replace(/[^0-9+]/g, ""));
+  });
+
+  const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+  document.getElementById("heroBrandLogo").src = logoSrc;
+  document.getElementById("footerBrandLogo").src = logoSrc;
+
+  const joinNames = [1, 2, 3].map(n => landingData["contactName" + n] || "");
+  const joinPhones = [1, 2, 3].map(n => landingData["contactPhone" + n] || "");
+  [1, 2, 3].forEach(n => {
+    const nameEl = document.getElementById("joinCallName" + n);
+    const numEl = document.getElementById("joinCallNum" + n);
+    const linkEl = document.getElementById("joinCallItem" + n);
+    if (nameEl) nameEl.textContent = joinNames[n - 1];
+    if (numEl) numEl.textContent = joinPhones[n - 1];
+    if (linkEl) linkEl.setAttribute("href", "tel:" + joinPhones[n - 1].replace(/[^0-9+]/g, ""));
+  });
+}
+renderLanding();
+
+/* ============================================================
+   AUTO-SCROLL — ONLY the "সাম্প্রতিক রক্তদান" photo gallery
+   auto-glides every 10s with a smooth animation, looping back to
+   the start at the end. Every other horizontally scrollable row
+   (features, team) stays fully manual — no auto-scroll — so it
+   never keeps drifting on its own. Pauses while the visitor is
+   hovering/touching so manual scrolling never fights it.
+   ============================================================ */
+(function initAutoScrollRows() {
+  const AUTO_SCROLL_INTERVAL = 10000;
+  document.querySelectorAll("#donationGrid.scrollRowX").forEach(row => {
+    let timer = null;
+    let paused = false;
+
+    function tick() {
+      if (paused) return;
+      const maxScroll = row.scrollWidth - row.clientWidth;
+      if (maxScroll <= 4) return; // nothing to scroll
+      if (row.scrollLeft >= maxScroll - 4) {
+        row.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        row.scrollBy({ left: row.clientWidth * 0.9, behavior: "smooth" });
+      }
+    }
+
+    function start() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(tick, AUTO_SCROLL_INTERVAL);
+    }
+
+    row.addEventListener("mouseenter", () => { paused = true; });
+    row.addEventListener("mouseleave", () => { paused = false; });
+    row.addEventListener("touchstart", () => { paused = true; }, { passive: true });
+    row.addEventListener("touchend", () => { setTimeout(() => { paused = false; }, 3000); }, { passive: true });
+    row.addEventListener("focusin", () => { paused = true; });
+    row.addEventListener("focusout", () => { paused = false; });
+
+    start();
+  });
+})();
+
+/* ============================================================
+   HERO HEARTBEAT LINE — a real cardiac-monitor sweep: the strip
+   loops continuously (never blanks out and restarts). A cursor
+   point sweeps left → right, erasing a small gap just ahead of
+   itself and drawing a brand-new, fully randomized heartbeat
+   pattern behind it; the old sweep's trace stays visible ahead
+   of the cursor until the cursor reaches and overwrites it — on
+   wrap it just keeps going from the left edge with a new pattern,
+   exactly like a hospital ECG monitor.
+   ============================================================ */
+(function initHeroHeartbeat() {
+  const canvas = document.getElementById("heroPulseCanvas");
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext("2d");
+
+  const crimson = getComputedStyle(document.documentElement).getPropertyValue("--crimson").trim() || "#9E1B32";
+  const SPEED = 130;      // logical px / second the cursor sweeps at
+  const GAP_WIDTH = 14;   // erased blank gap just ahead of the cursor
+
+  let W = 0, H = 70;
+  let displayBuf = [];
+  let nextBuf = [];
+  let head = 0;
+  let lastTs = null;
+  let reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function lerpFill(buf, xa, xb, ya, yb) {
+    xa = Math.max(0, Math.round(xa));
+    xb = Math.min(buf.length, Math.round(xb));
+    const span = xb - xa;
+    if (span <= 0) return;
+    for (let x = xa; x < xb; x++) {
+      const t = (x - xa) / span;
+      buf[x] = ya + (yb - ya) * t;
+    }
+  }
+
+  function generatePattern(width, height) {
+    const baseY = height / 2;
+    const buf = new Array(width).fill(baseY);
+    let x = 0;
+    let y = baseY;
+    while (x < width - 40) {
+      const amp = 0.5 + Math.random() * 0.9;   // random pulse strength each beat
+      const gap = 45 + Math.random() * 75;      // random spacing between beats
+      const x0 = x;
+      x = x0 + gap;
+      lerpFill(buf, x0, x, y, baseY); y = baseY;   // resting baseline
+      // P wave
+      const pPeak = baseY - 0.08 * height * amp;
+      lerpFill(buf, x, x + 5, y, pPeak); x += 5; y = pPeak;
+      lerpFill(buf, x, x + 5, y, baseY); x += 5; y = baseY;
+      lerpFill(buf, x, x + 4, y, baseY); x += 4;   // PR segment
+      // Q dip
+      const qDip = baseY + 0.07 * height * amp;
+      lerpFill(buf, x, x + 3, y, qDip); x += 3; y = qDip;
+      // R spike
+      const rPeak = baseY - 0.44 * height * amp;
+      lerpFill(buf, x, x + 4, y, rPeak); x += 4; y = rPeak;
+      // S dip
+      const sDip = baseY + 0.24 * height * amp;
+      lerpFill(buf, x, x + 5, y, sDip); x += 5; y = sDip;
+      lerpFill(buf, x, x + 6, y, baseY); x += 6; y = baseY;  // back to baseline
+      lerpFill(buf, x, x + 10, y, baseY); x += 10;  // ST segment
+      // T wave
+      const tPeak = baseY - 0.13 * height * amp;
+      lerpFill(buf, x, x + 10, y, tPeak); x += 10; y = tPeak;
+      lerpFill(buf, x, x + 16, y, baseY); x += 16; y = baseY;
+    }
+    lerpFill(buf, x, width, y, baseY);
+    return buf;
+  }
+
+  function sizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    W = Math.max(1, Math.round(rect.width));
+    H = Math.max(1, Math.round(rect.height)) || 70;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    displayBuf = generatePattern(W, H);
+    nextBuf = generatePattern(W, H);
+    head = 0;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    const headIdx = Math.min(W - 1, Math.floor(head));
+
+    ctx.beginPath();
+    ctx.strokeStyle = crimson;
+    ctx.lineWidth = 2.6;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    for (let x = 0; x < W; x++) {
+      const y = displayBuf[x];
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // erase a small gap just ahead of the cursor — the classic monitor "sweep" look
+    ctx.clearRect(headIdx + 1, 0, GAP_WIDTH, H);
+
+    // the sweeping cursor dot itself
+    const dotY = nextBuf[headIdx] !== undefined ? nextBuf[headIdx] : H / 2;
+    ctx.beginPath();
+    ctx.fillStyle = crimson;
+    ctx.shadowColor = "rgba(158,27,50,0.85)";
+    ctx.shadowBlur = 8;
+    ctx.arc(headIdx, dotY, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function frame(ts) {
+    if (lastTs === null) lastTs = ts;
+    const dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+
+    if (!reduced) {
+      head += SPEED * dt;
+      if (head >= W) {
+        head -= W;
+        displayBuf = nextBuf;
+        nextBuf = generatePattern(W, H);
+      }
+      const headIdx = Math.min(W - 1, Math.floor(head));
+      for (let x = 0; x <= headIdx; x++) displayBuf[x] = nextBuf[x];
+    }
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   FLOATING CALL BUTTON
+   ============================================================ */
+(function initCallFab() {
+  const fab = document.getElementById("callFab");
+  const btn = document.getElementById("callFabBtn");
+  if (!fab || !btn) return;
+  btn.addEventListener("click", () => fab.classList.toggle("open"));
+  document.addEventListener("click", e => {
+    if (!fab.contains(e.target)) fab.classList.remove("open");
+  });
+})();
+
+/* ============================================================
+   FOOTER YEAR
+   ============================================================ */
+document.getElementById("footerYear").textContent = new Date().getFullYear();
+
+/* ============================================================
+   "রক্তদাতা হিসেবে যোগ দিন" — CALL MODAL
+   ============================================================ */
+(function initJoinCallModal() {
+  const btn = document.getElementById("ctaJoinBtn");
+  const overlay = document.getElementById("joinCallModalOverlay");
+  const closeBtn = document.getElementById("joinCallCloseBtn");
+  if (!btn || !overlay) return;
+  btn.addEventListener("click", () => { overlay.style.display = "flex"; });
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.style.display = "none"; });
+  if (closeBtn) closeBtn.addEventListener("click", () => { overlay.style.display = "none"; });
+})();
+
+
+/* ============================================================
+   LIVE STATS
+   ============================================================ */
+let statsAnimated = false;
+function animateNumber(el, to) {
+  const from = parseInt(el.textContent.replace(/[^0-9]/g, ""), 10) || 0;
+  if (from === to) return;
+  const duration = 1200;
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const progress = Math.min((ts - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(from + (to - from) * eased).toLocaleString("en-US");
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = to.toLocaleString("en-US");
+  }
+  requestAnimationFrame(step);
+  const card = el.closest(".statCard, .bloodGroupCard");
+  if (card) {
+    card.classList.add("flash");
+    setTimeout(() => card.classList.remove("flash"), 900);
+  }
+}
+
+let latestVisitorCount = readCache(CACHE_VISITOR_KEY, 0);
+const BLOOD_GROUP_ID_MAP = {
+  "A+": "bgAPos", "A-": "bgANeg",
+  "B+": "bgBPos", "B-": "bgBNeg",
+  "AB+": "bgABPos", "AB-": "bgABNeg",
+  "O+": "bgOPos", "O-": "bgONeg"
+};
+function computeAndRenderStats(donorsVal) {
+  const donors = donorsVal ? Object.values(donorsVal) : [];
+  const totalDonors = donors.length;
+  const totalDonations = donors.reduce((sum, d) => sum + (parseInt(d.donationCount, 10) || 0), 0);
+  const livesImpacted = totalDonations * 3;
+
+  animateNumber(document.getElementById("statDonors"), totalDonors);
+  animateNumber(document.getElementById("statDonations"), totalDonations);
+  animateNumber(document.getElementById("statLives"), livesImpacted);
+
+  const bgCounts = {};
+  Object.keys(BLOOD_GROUP_ID_MAP).forEach(g => { bgCounts[g] = 0; });
+  donors.forEach(d => {
+    const g = (d.bloodGroup || "").toString().trim().toUpperCase();
+    if (bgCounts.hasOwnProperty(g)) bgCounts[g]++;
+  });
+  Object.keys(BLOOD_GROUP_ID_MAP).forEach(g => {
+    const el = document.getElementById(BLOOD_GROUP_ID_MAP[g]);
+    if (el) animateNumber(el, bgCounts[g]);
+  });
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+/* ============================================================
+   REVEAL ON SCROLL
+   ============================================================ */
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("inView");
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+const statsObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !statsAnimated) {
+      statsAnimated = true;
+      computeAndRenderStats(readCache(CACHE_DONORS_KEY, []).reduce((acc, d) => { acc[d.id] = d; return acc; }, {}));
+      animateNumber(document.getElementById("statVisitors"), latestVisitorCount);
+      statsObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.2 });
+const statsSectionEl = document.getElementById("stats");
+if (statsSectionEl) statsObserver.observe(statsSectionEl);
+
+/* ============================================================
+   IMAGE UPLOAD + CROP (opens a crop modal with selectable ratios
+   before saving the image as base64)
+   ============================================================ */
+function fitImageToCanvas(canvas, maxDim, quality) {
+  let w = canvas.width, h = canvas.height;
+  if (w > maxDim || h > maxDim) {
+    if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+    else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+    const scaled = document.createElement("canvas");
+    scaled.width = w; scaled.height = h;
+    scaled.getContext("2d").drawImage(canvas, 0, 0, w, h);
+    return scaled.toDataURL("image/jpeg", quality);
+  }
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+let pendingImgKey = null;
+let pendingSlotRatio = NaN;   // width/height of the on-page spot the image will fill
+let pendingSlotDims = null;   // { w, h } of that spot, in CSS pixels
+let pendingIsNewDonation = false;
+let cropper = null;
+const imgFileInput = document.getElementById("imgFileInput");
+const cropModalOverlay = document.getElementById("cropModalOverlay");
+const cropperImage = document.getElementById("cropperImage");
+const cropSlotBadgeText = document.getElementById("cropSlotBadgeText");
+
+/* Figures out the width/height of the exact spot this image will be shown in
+   (the button's own container), so the crop tool can match that shape. */
+function readSlotDimensions(btn) {
+  const target = btn.parentElement;
+  if (!target) return null;
+  const rect = target.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
+  return { w: w, h: h, ratio: w / h };
+}
+
+/* The donation gallery is a bento grid: every 4th photo is a big square,
+   the 2nd/3rd are small squares, the 4th is a tall card (see CSS pattern
+   nth-of-type(4n+1)/nth-of-type(4n)). A brand-new photo doesn't exist in
+   the DOM yet when the file picker opens, so this predicts which slot
+   shape it will land in (by its future index) and returns that shape's
+   aspect ratio, so the crop tool still matches the exact grid size it
+   will be shown in. */
+function donationSlotDims(index) {
+  const grid = document.getElementById("donationGrid");
+  const rowH = grid ? parseFloat(getComputedStyle(grid).getPropertyValue("--rowH")) || 171 : 171;
+  const gap = 14;
+  const pos = (index % 4) + 1; // 1-based position within the 4-photo cycle
+  let w, h;
+  if (pos === 1) { w = rowH * 2 + gap; h = rowH * 2 + gap; }      // big square (2 cols x 2 rows)
+  else if (pos === 4) { w = rowH; h = rowH * 2 + gap; }           // tall card (1 col x 2 rows)
+  else { w = rowH; h = rowH; }                                    // small square (1 col x 1 row)
+  return { w: Math.round(w), h: Math.round(h), ratio: w / h };
+}
+
+function gcd(a, b) { return b < 1 ? a : gcd(b, a % b); }
+function formatRatioLabel(dims) {
+  if (!dims) return "";
+  const divisor = gcd(dims.w, dims.h) || 1;
+  const rw = Math.round(dims.w / divisor);
+  const rh = Math.round(dims.h / divisor);
+  const clean = (rw <= 40 && rh <= 40) ? (rw + ":" + rh) : dims.ratio.toFixed(2) + ":1";
+  return dims.w + " × " + dims.h + " পিক্সেল  •  অনুপাত " + clean;
+}
+
+/* Applies a saved image value to landingData for any key shape:
+   flat keys (aboutImage, impactImage), donation gallery items
+   ("donation:<id>"), or team member photos ("team:<id>:photo"). */
+function applyImageValue(key, value) {
+  if (key.indexOf("donation:") === 0) {
+    const id = key.slice(9);
+    const item = landingData.donationPhotos.find(p => p.id === id);
+    if (item) item.src = value;
+  } else if (key.indexOf("team:") === 0 && key.slice(-6) === ":photo") {
+    const id = key.slice(5, -6);
+    const member = landingData.team.find(m => m.id === id);
+    if (member) member.photo = value;
+  } else {
+    landingData[key] = value;
+  }
+}
+
+/* Pushes the affected slice of landingData to Firebase after an image change. */
+function syncImageKeyToFirebase(key) {
+  if (!firebaseAvailable || !landingPageRef) return;
+  if (key.indexOf("donation:") === 0) {
+    landingPageRef.child("donationPhotos").set(landingData.donationPhotos).catch(err => console.log("Image sync failed:", err));
+  } else if (key.indexOf("team:") === 0) {
+    landingPageRef.child("team").set(landingData.team).catch(err => console.log("Image sync failed:", err));
+  } else {
+    landingPageRef.child(key).set(landingData[key]).catch(err => console.log("Image sync failed:", err));
+  }
+}
+
+/* Click delegation so dynamically-added donation/team photo buttons work too */
+document.addEventListener("click", e => {
+  const editBtn = e.target.closest(".imgEditBtn");
+  if (editBtn) {
+    pendingImgKey = editBtn.getAttribute("data-img-key");
+    pendingIsNewDonation = false;
+    if (editBtn.hasAttribute("data-free-crop")) {
+      pendingSlotDims = null;
+      pendingSlotRatio = NaN;
+    } else {
+      const dims = readSlotDimensions(editBtn);
+      pendingSlotDims = dims;
+      pendingSlotRatio = dims ? dims.ratio : NaN;
+    }
+    imgFileInput.click();
+    return;
+  }
+
+  const removeBtn = e.target.closest(".imgRemoveBtn");
+  if (removeBtn) {
+    const key = removeBtn.getAttribute("data-img-key");
+    if (!key) return;
+    if (!window.confirm("আপনি কি নিশ্চিত এই ছবিটি মুছে ফেলতে চান?")) return;
+    if (key.indexOf("donation:") === 0) {
+      const id = key.slice(9);
+      landingData.donationPhotos = landingData.donationPhotos.filter(p => p.id !== id);
+    } else {
+      applyImageValue(key, "");
+    }
+    writeCache(CACHE_LANDING_KEY, landingData);
+    renderLanding();
+    syncImageKeyToFirebase(key);
+    showToast("ছবি মুছে ফেলা হয়েছে");
+    return;
+  }
+
+  const teamRemoveBtn = e.target.closest(".teamRemoveBtn");
+  if (teamRemoveBtn) {
+    const id = teamRemoveBtn.getAttribute("data-team-id");
+    if (!id) return;
+    if (!window.confirm("আপনি কি নিশ্চিত এই সদস্যকে মুছে ফেলতে চান?")) return;
+    landingData.team = landingData.team.filter(m => m.id !== id);
+    writeCache(CACHE_LANDING_KEY, landingData);
+    renderLanding();
+    if (firebaseAvailable && landingPageRef) {
+      landingPageRef.child("team").set(landingData.team).catch(err => console.log("Team sync failed:", err));
+    }
+    showToast("সদস্য মুছে ফেলা হয়েছে");
+  }
+});
+
+/* "ছবি যোগ করুন" — adds a brand-new donation photo at the very front of the
+   gallery (most recent first), sized to the bento grid's first slot shape */
+document.getElementById("donationAddBtn").addEventListener("click", () => {
+  pendingImgKey = "donation:" + genId();
+  pendingIsNewDonation = true;
+  const dims = donationSlotDims(0);
+  pendingSlotDims = dims;
+  pendingSlotRatio = dims.ratio;
+  imgFileInput.click();
+});
+
+/* "সদস্য যোগ করুন" — adds a blank editable team card the admin can fill in */
+document.getElementById("teamAddBtn").addEventListener("click", () => {
+  landingData.team.push({ id: genId(), name: "নতুন সদস্য", role: "পদবি", bio: "সংক্ষিপ্ত বিবরণ যোগ করুন।", photo: "" });
+  writeCache(CACHE_LANDING_KEY, landingData);
+  renderLanding();
+  if (firebaseAvailable && landingPageRef) {
+    landingPageRef.child("team").set(landingData.team).catch(err => console.log("Team sync failed:", err));
+  }
+  showToast("নতুন সদস্য যোগ হয়েছে");
+});
+
+imgFileInput.addEventListener("change", () => {
+  const file = imgFileInput.files[0];
+  imgFileInput.value = "";
+  if (!file || !pendingImgKey) return;
+  const reader = new FileReader();
+  reader.onerror = () => showToast("ছবি আপলোড ব্যর্থ হয়েছে");
+  reader.onload = () => {
+    cropperImage.src = reader.result;
+    openCropModal();
+  };
+  reader.readAsDataURL(file);
+});
+
+function openCropModal() {
+  if (typeof Cropper === "undefined") {
+    showToast("ক্রপ টুল লোড হচ্ছে, একটু পর আবার চেষ্টা করুন");
+    pendingImgKey = null;
+    pendingIsNewDonation = false;
+    return;
+  }
+  cropModalOverlay.style.display = "flex";
+  const hasSlotRatio = pendingSlotDims && isFinite(pendingSlotRatio) && pendingSlotRatio > 0;
+  cropSlotBadgeText.textContent = hasSlotRatio ? formatRatioLabel(pendingSlotDims) : "ফ্রি-ফর্ম";
+  document.querySelectorAll(".cropRatioBtn").forEach(b => b.classList.remove("active"));
+  const defaultBtn = document.querySelector('.cropRatioBtn[data-ratio="' + (hasSlotRatio ? "locked" : "free") + '"]');
+  if (defaultBtn) defaultBtn.classList.add("active");
+  const lockedBtnEl = document.querySelector('.cropRatioBtn[data-ratio="locked"]');
+  if (lockedBtnEl) lockedBtnEl.style.display = hasSlotRatio ? "" : "none";
+  const start = () => {
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(cropperImage, {
+      viewMode: 1,
+      autoCropArea: 0.9,
+      background: false,
+      responsive: true,
+      aspectRatio: hasSlotRatio ? pendingSlotRatio : NaN
+    });
+  };
+  if (cropperImage.complete) start();
+  else cropperImage.onload = start;
+}
+
+function closeCropModal() {
+  cropModalOverlay.style.display = "none";
+  if (cropper) { cropper.destroy(); cropper = null; }
+  cropperImage.src = "";
+  pendingImgKey = null;
+  pendingSlotRatio = NaN;
+  pendingSlotDims = null;
+  pendingIsNewDonation = false;
+}
+document.getElementById("cropCancelBtn").addEventListener("click", closeCropModal);
+cropModalOverlay.addEventListener("click", e => { if (e.target === cropModalOverlay) closeCropModal(); });
+
+document.querySelectorAll(".cropRatioBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (!cropper) return;
+    const raw = btn.getAttribute("data-ratio");
+    const ratio = (raw === "locked" && isFinite(pendingSlotRatio) && pendingSlotRatio > 0) ? pendingSlotRatio : NaN;
+    cropper.setAspectRatio(ratio);
+    document.querySelectorAll(".cropRatioBtn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+document.getElementById("cropConfirmBtn").addEventListener("click", () => {
+  if (!cropper || !pendingImgKey) return;
+  const canvas = cropper.getCroppedCanvas({ imageSmoothingQuality: "high" });
+  if (!canvas) { showToast("ছবি আপলোড ব্যর্থ হয়েছে"); return; }
+  try {
+    const base64 = fitImageToCanvas(canvas, 1200, 0.85);
+    let oldestRemoved = false;
+    const MAX_DONATION_PHOTOS = 5;
+    if (pendingIsNewDonation && pendingImgKey.indexOf("donation:") === 0) {
+      landingData.donationPhotos.unshift({ id: pendingImgKey.slice(9), src: base64 });
+      /* Keep only the most recent MAX_DONATION_PHOTOS — since new photos are
+         unshifted to the front, the oldest ones sit at the end of the array,
+         so trimming the length drops them automatically. */
+      if (landingData.donationPhotos.length > MAX_DONATION_PHOTOS) {
+        landingData.donationPhotos.length = MAX_DONATION_PHOTOS;
+        oldestRemoved = true;
+      }
+    } else {
+      applyImageValue(pendingImgKey, base64);
+    }
+    writeCache(CACHE_LANDING_KEY, landingData);
+    renderLanding();
+    syncImageKeyToFirebase(pendingImgKey);
+    showToast(oldestRemoved ? "সর্বোচ্চ " + MAX_DONATION_PHOTOS + "টি ছবি রাখা হয় — সবচেয়ে পুরনো ছবিটি মুছে ফেলা হয়েছে" : "ছবি আপডেট হয়েছে");
+  } catch (err) {
+    console.log("Image crop/save failed:", err);
+    showToast("ছবি আপলোড ব্যর্থ হয়েছে");
+  }
+  closeCropModal();
+});
+
+/* ============================================================
+   ADMIN LOGIN + EDIT MODE
+   ============================================================ */
+const pinModalOverlay = document.getElementById("pinModalOverlay");
+const adminEmailInput = document.getElementById("adminEmailInput");
+const adminPinInput = document.getElementById("adminPinInput");
+const pinError = document.getElementById("pinError");
+
+function openPinModal() {
+  pinError.classList.remove("show");
+  adminEmailInput.value = "";
+  adminPinInput.value = "";
+  pinModalOverlay.style.display = "flex";
+  setTimeout(() => adminEmailInput.focus(), 50);
+  ensureAuthLoaded().catch(err => console.log("Auth SDK failed to load:", err));
+}
+function closePinModal() { pinModalOverlay.style.display = "none"; }
+
+document.getElementById("footerAdminLoginTrigger").addEventListener("click", openPinModal);
+document.getElementById("pinCancelBtn").addEventListener("click", closePinModal);
+pinModalOverlay.addEventListener("click", e => { if (e.target === pinModalOverlay) closePinModal(); });
+
+function showLoginError(message) {
+  if (message) pinError.textContent = message;
+  pinError.classList.remove("show");
+  void pinError.offsetWidth;
+  pinError.classList.add("show");
+}
+
+async function attemptLoginSubmit() {
+  const email = adminEmailInput.value.trim();
+  const password = adminPinInput.value;
+  if (!email || !password) return;
+  if (!firebaseAvailable) {
+    showLoginError("লগইন সার্ভিস প্রস্তুত নয়, একটু পরে চেষ্টা করুন।");
+    return;
+  }
+  const submitBtn = document.getElementById("pinSubmitBtn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "...";
+  try {
+    await ensureAuthLoaded();
+    await auth.signInWithEmailAndPassword(email, password);
+    closePinModal();
+    enterEditMode();
+  } catch (err) {
+    console.log("Admin login failed:", err);
+    showLoginError("ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Login";
+  }
+}
+document.getElementById("pinSubmitBtn").addEventListener("click", attemptLoginSubmit);
+adminEmailInput.addEventListener("keydown", e => { if (e.key === "Enter") attemptLoginSubmit(); });
+adminPinInput.addEventListener("keydown", e => { if (e.key === "Enter") attemptLoginSubmit(); });
+
+function enterEditMode() {
+  isAdmin = true;
+  document.body.classList.add("adminMode");
+  document.getElementById("adminBar").style.display = "flex";
+  document.querySelectorAll(".editable-field").forEach(el => el.setAttribute("contenteditable", "true"));
+  showToast("এডিট মোড চালু হয়েছে");
+}
+function exitEditMode() {
+  isAdmin = false;
+  document.body.classList.remove("adminMode");
+  document.getElementById("adminBar").style.display = "none";
+  document.querySelectorAll(".editable-field").forEach(el => el.setAttribute("contenteditable", "false"));
+  if (firebaseAvailable && auth) auth.signOut().catch(() => {});
+}
+document.getElementById("exitEditBtn").addEventListener("click", exitEditMode);
+
+/* Keep duplicate data-key fields (e.g. site name in header + footer) in sync while typing */
+document.addEventListener("input", e => {
+  const target = e.target;
+  if (!target.classList || !target.classList.contains("editable-field")) return;
+
+  const teamId = target.getAttribute("data-team-id");
+  const field = target.getAttribute("data-field");
+  if (teamId && field) {
+    const member = landingData.team.find(m => m.id === teamId);
+    if (member) member[field] = target.textContent;
+    return;
+  }
+
+  const key = target.getAttribute("data-key");
+  if (!key) return;
+  document.querySelectorAll('.editable-field[data-key="' + key + '"]').forEach(el => {
+    if (el !== target) el.textContent = target.textContent;
+  });
+});
+
+document.getElementById("saveEditsBtn").addEventListener("click", () => {
+  document.querySelectorAll(".editable-field[data-key]").forEach(el => {
+    const key = el.getAttribute("data-key");
+    landingData[key] = el.textContent.trim();
+  });
+  writeCache(CACHE_LANDING_KEY, landingData);
+  if (firebaseAvailable && landingPageRef) {
+    landingPageRef.update(landingData).then(() => {
+      showToast("সংরক্ষণ হয়েছে");
+    }).catch(err => {
+      console.log("Save failed, will retry when online:", err);
+      showToast("অফলাইনে সংরক্ষিত হয়েছে");
+    });
+  } else {
+    showToast("অফলাইনে সংরক্ষিত হয়েছে");
+  }
+});
+
+/* ============================================================
+   VISITOR COUNTER
+   (localStorage, not sessionStorage, so each device/browser is
+   counted exactly once — a new tab or a repeat visit later that
+   day won't bump the count again)
+   ============================================================ */
+function bumpVisitorIfNewDevice() {
+  try {
+    if (localStorage.getItem("blood_donor_visited")) return;
+    localStorage.setItem("blood_donor_visited", "1");
+    if (firebaseAvailable && visitorRef) {
+      visitorRef.transaction(curr => (curr || 0) + 1);
+    }
+  } catch (err) { /* ignore */ }
+}
+
+/* ============================================================
+   FIREBASE CONNECT
+   ============================================================ */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js")
+  .catch(err => console.log("Could not load Cropper.js:", err));
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    donorsRef = db.ref("donors");
+    appConfigRef = db.ref("appConfig");
+    landingPageRef = db.ref("landingPage");
+    visitorRef = db.ref("siteStats/visitorCount");
+    firebaseAvailable = true;
+
+    donorsRef.on("value", snapshot => {
+      const val = snapshot.val() || {};
+      writeCache(CACHE_DONORS_KEY, Object.values(val));
+      computeAndRenderStats(val);
+    });
+
+    appConfigRef.on("value", snapshot => {
+      const val = snapshot.val() || {};
+      appConfigData = {
+        logoImage: val.logoImage || ""
+      };
+      writeCache(CACHE_APPCONFIG_KEY, appConfigData);
+      renderLanding();
+    });
+
+    landingPageRef.on("value", snapshot => {
+      const val = snapshot.val() || {};
+      landingData = Object.assign({}, DEFAULT_LANDING, val);
+      writeCache(CACHE_LANDING_KEY, landingData);
+      renderLanding();
+    });
+
+    visitorRef.on("value", snapshot => {
+      latestVisitorCount = snapshot.val() || 0;
+      writeCache(CACHE_VISITOR_KEY, latestVisitorCount);
+      if (statsAnimated) animateNumber(document.getElementById("statVisitors"), latestVisitorCount);
+    });
+
+    bumpVisitorIfNewDevice();
+  } catch (err) {
+    console.log("Firebase init failed, running from local cache only:", err);
+  }
+}
+
+/* Core data path: app + database only. This is what donors, donations,
+   lives-impacted and visitor-count all depend on, so it loads with
+   nothing else blocking it (auth is not needed to read this data). */
+loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js")
+  .then(() => loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"))
+  .then(initFirebase)
+  .catch(err => console.log("Could not load Firebase SDK:", err));
+
+/* Auth is only needed for admin login, so its script is fetched lazily —
+   started the moment the login modal opens (well before the admin
+   actually types a password), instead of blocking the stats above. */
+let authLoadPromise = null;
+function ensureAuthLoaded() {
+  if (auth) return Promise.resolve(auth);
+  if (!authLoadPromise) {
+    authLoadPromise = loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js")
+      .then(() => { auth = firebase.auth(); return auth; });
+  }
+  return authLoadPromise;
+}
+</script>
+</body>
+</html>
