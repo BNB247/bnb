@@ -986,17 +986,6 @@
     </div>
   </section>
 
-  <section class="team reveal">
-    <span class="sectionEyebrow">টিম</span>
-    <div class="teamHead">
-      <h2 class="teamHeading">আমাদের নির্মাতা</h2>
-      <button type="button" class="sectionAddBtn" id="teamAddBtn">
-        <i class="fa-solid fa-plus" aria-hidden="true"></i> সদস্য যোগ করুন
-      </button>
-    </div>
-    <div class="teamRow" id="teamRow"></div>
-  </section>
-
   <div class="container">
     <div class="ctaBand reveal" id="ctaBand">
       <div class="ctaBandOverlay" id="ctaBandOverlay"></div>
@@ -1855,17 +1844,6 @@ document.getElementById("donationAddBtn").addEventListener("click", () => {
   pendingSlotDims = dims;
   pendingSlotRatio = dims.ratio;
   imgFileInput.click();
-});
-
-/* "সদস্য যোগ করুন" — adds a blank editable team card the admin can fill in */
-document.getElementById("teamAddBtn").addEventListener("click", () => {
-  landingData.team.push({ id: genId(), name: "নতুন সদস্য", role: "পদবি", bio: "সংক্ষিপ্ত বিবরণ যোগ করুন।", photo: "" });
-  writeCache(CACHE_LANDING_KEY, landingData);
-  renderLanding();
-  if (firebaseAvailable && landingPageRef) {
-    landingPageRef.child("team").set(landingData.team).catch(err => console.log("Team sync failed:", err));
-  }
-  showToast("নতুন সদস্য যোগ হয়েছে");
 });
 
 imgFileInput.addEventListener("change", () => {
