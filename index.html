@@ -117,8 +117,8 @@
   }
   #saveEditsBtn { background: var(--crimson); color: #fff; }
   #saveEditsBtn:hover { background: var(--crimson-dark); }
-  #exitEditBtn { background: transparent; color: var(--cream); border-color: rgba(251,247,242,0.35); }
-  #exitEditBtn:hover { border-color: var(--cream); }
+  #manageDonationRecordsBtn, #exitEditBtn { background: transparent; color: var(--cream); border-color: rgba(251,247,242,0.35); }
+  #manageDonationRecordsBtn:hover, #exitEditBtn:hover { border-color: var(--cream); }
 
   body.adminMode .editable-field {
     outline: 1.5px dashed rgba(158,27,50,0.55);
@@ -402,6 +402,357 @@
   @media (max-width: 360px) {
     .heroPhoneChipText span:last-child { font-size: 10.5px; }
   }
+
+  /* ============================================================
+     HERO DONATION SEARCH — search a donation record by its ID
+     ============================================================ */
+  .heroSearchBox { display: flex; gap: 8px; max-width: 420px; margin: 22px auto 0; }
+  .heroSearchInput {
+    flex: 1; min-width: 0; font-family: var(--font-bn); font-size: 14px;
+    padding: 12px 18px; border-radius: 999px; border: 1.5px solid var(--line);
+    background: var(--paper); color: var(--ink);
+  }
+  .heroSearchInput:focus { outline: none; border-color: var(--crimson); }
+  .heroSearchBtn {
+    flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%;
+    background: var(--crimson); color: #fff; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    box-shadow: 0 8px 18px rgba(158,27,50,0.25);
+  }
+  .heroSearchBtn:hover { background: var(--crimson-dark); }
+
+  /* ---- donation search result popup — "রক্তদান নিশ্চিতকরণ" premium certificate card ---- */
+  .donationResultModal {
+    position: relative; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
+    background: var(--paper);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(33,22,19,0.28);
+    color: var(--ink); text-align: left; isolation: isolate;
+  }
+  /* ---- faint website-logo + "BNB" watermark behind the card content.
+     This lives INSIDE #donationResultContent (not the modal shell), so
+     when the print stage clones #donationResultContent it comes along
+     automatically — no separate print-only copy needed, and no seam
+     between a background-image layer and the card underneath (which is
+     what caused the white line during print). isolation:isolate keeps
+     its negative z-index from escaping behind the card's own background. */
+  #donationResultContent { position: relative; isolation: isolate; }
+  .donationResultWatermark {
+    position: absolute; inset: 0; z-index: -1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; opacity: 0.07; pointer-events: none;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .donationResultWatermark img {
+    width: 52%; max-width: 210px; height: auto; display: block; filter: grayscale(1);
+  }
+  .donationResultWatermarkText {
+    font-family: var(--font-heading, var(--font-body)); font-weight: 800;
+    font-size: 44px; letter-spacing: 0.09em; color: var(--ink); line-height: 1;
+  }
+  .donationResultClose {
+    position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff; display: flex;
+    align-items: center; justify-content: center; cursor: pointer; font-size: 12px; z-index: 5;
+    transition: background .2s ease, transform .3s ease;
+  }
+  .donationResultClose:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+
+  /* Admin-only "print card" button — hidden by default, shown only
+     in adminMode, so regular visitors never see it. */
+  .donationResultPrintBtn {
+    display: none; position: absolute; top: 14px; left: 14px; z-index: 5;
+    align-items: center; justify-content: center; gap: 6px;
+    height: 32px; padding: 0 13px; border-radius: 999px;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    font-family: var(--font-body); font-size: 11.5px; font-weight: 700; cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+  }
+  .donationResultPrintBtn:hover { background: rgba(255,255,255,0.3); }
+  .donationResultPrintBtn:disabled { opacity: 0.6; cursor: wait; }
+  body.adminMode .donationResultPrintBtn { display: inline-flex; }
+
+  /* ---- print stage: hidden on screen, used only to print the card
+     as a single page with a 9:16 aspect ratio ---- */
+  #cardPrintRoot { display: none; position: relative; }
+  @media print {
+    @page { size: 100mm 177.78mm; margin: 0; }
+    html, body { background: #fff !important; }
+    body.printingCard > *:not(#cardPrintRoot) { display: none !important; }
+    body.printingCard #cardPrintRoot {
+      display: block !important;
+      position: fixed; top: 0; left: 0;
+      background: #fff; overflow: hidden;
+    }
+  }
+
+  /* crimson certificate header band, with a subtle dotted seal pattern.
+     When a donor photo is set (JS adds .hasImage + background-image), the
+     crimson gradient blends over it so the photo becomes the band's own background. */
+  .donationResultHeadBand {
+    position: relative; padding: 30px 26px 46px; text-align: center; overflow: hidden;
+    min-height: 190px;
+    background-color: var(--crimson);
+    background-size: cover; background-position: center;
+    background-image:
+      radial-gradient(circle at 14% 20%, rgba(255,255,255,0.14), transparent 40%),
+      radial-gradient(circle at 88% 82%, rgba(255,255,255,0.09), transparent 45%),
+      linear-gradient(160deg, var(--crimson) 0%, var(--crimson-dark) 85%);
+  }
+  .donationResultHeadBand.hasImage {
+    background-image:
+      radial-gradient(circle at 14% 20%, rgba(255,255,255,0.14), transparent 40%),
+      radial-gradient(circle at 88% 82%, rgba(255,255,255,0.09), transparent 45%),
+      linear-gradient(160deg, rgba(158,27,50,0.82) 0%, rgba(110,18,32,0.88) 85%);
+  }
+  .donationResultHeadBand::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1.4px);
+    background-size: 15px 15px; opacity: 0.35; pointer-events: none;
+  }
+  /* scalloped bottom edge of the header band, like an official seal card */
+  .donationResultHeadBand::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 14px;
+    background-image: radial-gradient(circle at 7px 0, transparent 7px, var(--paper) 7.5px);
+    background-size: 14px 14px; background-repeat: repeat-x;
+  }
+  .donationResultRibbon {
+    position: absolute; top: 16px; right: -34px; width: 150px; padding: 5px 0; text-align: center;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #F3D8A8 0%, var(--amber) 55%, #8F5A20 100%);
+    color: #3A2205;
+    font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; box-shadow: 0 3px 8px rgba(0,0,0,0.25); z-index: 2;
+  }
+  .donationResultRibbon i { margin-right: 4px; }
+  .donationResultIconCircle {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 12px;
+    background: rgba(255,255,255,0.16); border: 1.5px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+  }
+  .donationResultIconCircle i { font-size: 22px; color: #fff; }
+
+  /* organization brand lockup — logo + site name, top of the head band */
+  .donationResultBrandRow {
+    position: relative; display: flex; align-items: center; justify-content: flex-start; gap: 11px;
+    text-align: left; margin-bottom: 14px; padding-right: 60px;
+  }
+  .donationResultLogo {
+    width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+    background: #fff;
+  }
+  /* Fallback mark shown inside the band only when there's no photo (hidden/missing) */
+  .donationResultAvatarFallback {
+    width: 64px; height: 64px; margin: 14px auto 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.14); color: #fff;
+  }
+  .donationResultAvatarFallback i { font-size: 26px; }
+  .donationResultAvatarFallback.donationResultAvatarHidden { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+  .donationResultAvatarFallback.donationResultAvatarHidden i { font-size: 22px; }
+  .donationResultVerifiedBadge {
+    position: absolute; bottom: 10px; right: 14px; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--sage); color: #fff; border: 2.5px solid var(--paper); z-index: 2;
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+  }
+
+  /* ID badge — now placed below the header band, at the top of the body */
+  .donationResultNo {
+    position: relative;
+    display: inline-flex;
+    align-items: flex-end;
+    /* gap: 7px; */
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* body of the card, sits on cream/paper below the scalloped band */
+  .donationResultBody { padding: 4px 26px 30px; text-align: left; }
+
+  /* hospital name + summary sentence — plain text, no card/box styling */
+  .donationResultHospitalLine {
+    font-family: var(--font-bn); font-size: 14.5px; line-height: 1.8; color: var(--ink);
+    text-align: left; margin: 0 0 0px;
+  }
+  .donationResultHospitalLine strong { font-weight: 700; color: var(--crimson-dark); }
+
+  .donationResultName {
+    font-family: var(--font-display); font-size: 23px; font-weight: 700; text-align: left;
+    margin: 0; line-height: 1.25; letter-spacing: 0.01em; color: var(--ink);
+  }
+
+  /* name + blood group, sitting on the same line */
+  .donationResultNameRow {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 0px;
+  }
+  .donationResultBgBadge {
+    display: inline-flex; align-items: center; justify-content: center; padding: 5px 13px;
+    border-radius: 999px; font-family: var(--font-display); font-size: 14.5px; font-weight: 700;
+    color: #fff; letter-spacing: 0.02em; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
+    box-shadow: 0 6px 14px rgba(158,27,50,0.28);
+  }
+
+  /* total donation count — modern pill under the name/blood-group row */
+  .donationResultCountBadge {
+        display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    /* padding: 7px 14px; */
+    /* margin-bottom: 20px; */
+    border-radius: 999px;
+    /* background: var(--amber-tint); */
+    /* border: 1px solid rgba(185,114,46,0.3); */
+    color: #7A4A18;
+    font-family: var(--font-bn);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+  }
+  .donationResultCountBadge i { color: var(--amber); font-size: 12px; }
+  .donationResultCountBadge b { font-family: var(--font-display); font-size: 14px; }
+
+  .donationResultInfoGrid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: left; }
+  .donationResultInfoRow {
+    display: flex; align-items: center; gap: 13px; background: var(--cream);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  }
+  .donationResultInfoIcon {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--crimson-tint);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .donationResultInfoIcon i { font-size: 14.5px; color: var(--crimson); }
+  .donationResultInfoText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .donationResultInfoLabel {
+    font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .donationResultInfoValue { font-family: var(--font-bn); font-size: 14.5px; font-weight: 700; color: var(--ink); }
+
+  .donationResultDivider {
+    position: relative; display: flex; align-items: center; gap: 8px; margin: 4px 0 4px;
+    color: var(--line);
+  }
+  .donationResultDivider::before, .donationResultDivider::after {
+    content: ""; flex: 1; height: 0; border-top: 1.5px dashed var(--line);
+  }
+  .donationResultDivider i { font-size: 11px; color: var(--amber); opacity: 0.8; }
+
+  .donationResultThanks {
+    text-align: left; font-family: var(--font-display); font-style: italic; font-size: 14.5px;
+    line-height: 1.85; color: var(--ink); opacity: 0.92;
+  }
+  .donationResultThanks strong { font-weight: 700; font-style: normal; color: var(--crimson-dark); }
+  .donationResultEmojiRow { margin-top: 0px; font-size: 15px; text-align: left; }
+
+  /* gold-foil authenticity seal */
+  .donationResultStamp {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; padding: 7px 16px;
+    border: 1px solid var(--amber); border-radius: 999px;
+    background: linear-gradient(135deg, var(--amber-tint) 0%, #F0DCB6 100%);
+    box-shadow: 0 4px 12px rgba(185,114,46,0.18);
+    font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #7A4A18; transform: rotate(-2deg);
+  }
+  .donationResultStamp i { font-size: 10px; }
+
+  .donationResultQrWrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .donationResultQrImg {
+    width: 140px; height: 140px; border-radius: 10px; background: #fff; padding: 6px;
+    box-shadow: 0 6px 16px rgba(33,22,19,0.08);
+  }
+  .donationResultQrCaption {
+    margin-top: 10px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+      display:none;
+  }
+
+  .donationResultImgWrap {
+    position: relative; margin-top: 22px; border-radius: 16px; overflow: hidden;
+    background: var(--cream); min-height: 60px; padding: 6px;
+    border: 1px solid var(--line);
+  }
+  .donationResultImg { width: 100%; display: block; object-fit: cover; max-height: 320px; border-radius: 11px; }
+
+  .donationNotFound { text-align: center; padding: 40px 22px 30px; }
+  .donationNotFound .donationResultIconCircle {
+    background: linear-gradient(160deg, var(--crimson) 0%, var(--crimson-dark) 85%); margin-bottom: 16px;
+  }
+  .donationNotFound p { font-family: var(--font-bn); font-size: 14px; line-height: 1.8; color: var(--muted); margin-top: 6px; }
+
+  /* ---- admin: donation record manager ---- */
+  .donationManageModal {
+    background: var(--paper); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    width: 100%; max-width: 560px; max-height: 88vh; display: flex; flex-direction: column;
+    padding: 22px 22px 18px; text-align: left;
+  }
+  .donationManageHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+  .donationManageHead h3 { font-size: 17.5px; font-weight: 600; }
+  .donationManageCloseX {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--paper); color: var(--muted); cursor: pointer;
+  }
+  .donationManageCloseX:hover { border-color: var(--crimson); color: var(--crimson); }
+  .donationManageAddBtn {
+    background: var(--crimson); color: #fff; border: none; border-radius: 999px; padding: 10px 18px 10px 14px;
+    font-weight: 700; font-size: 13px; cursor: pointer; margin-bottom: 14px; display: inline-flex;
+    align-items: center; gap: 7px; box-shadow: 0 8px 18px rgba(158,27,50,0.25); align-self: flex-start;
+  }
+  .donationManageAddBtn:hover { background: var(--crimson-dark); }
+  .donationManageList { overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; }
+  .donationManageItem { position: relative; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px; background: var(--cream); }
+  .donationManageFieldLabel {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 4px; display: block;
+  }
+  .donationManageNoBadge {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-weight: 700;
+    color: var(--crimson); font-size: 12.5px; background: var(--crimson-tint); border-radius: 999px;
+    padding: 5px 12px; margin-bottom: 12px;
+  }
+  .donationManageNoInput {
+    font-family: var(--font-bn); font-weight: 600; color: var(--ink); font-size: 14px; margin-bottom: 10px;
+    padding: 7px 10px; border: 1px dashed var(--line); border-radius: 8px; background: var(--paper); cursor: text;
+  }
+  .donationManageRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+  .donationManageNumberInput, .donationManageSelect {
+    width: 100%; font-family: var(--font-bn); font-size: 13.5px; padding: 8px 10px;
+    border: 1px dashed var(--line); border-radius: 8px; background: var(--paper); color: var(--ink);
+  }
+  .donationManageNumberInput:focus, .donationManageSelect:focus { outline: none; border-color: var(--crimson); }
+  .donationManagePhotoOptOut {
+    display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; padding: 10px 12px;
+    background: var(--paper); border: 1px dashed var(--line); border-radius: 10px; cursor: pointer;
+  }
+  .donationManagePhotoOptOut input[type="checkbox"] {
+    width: 17px; height: 17px; margin: 1px 0 0; accent-color: var(--crimson); flex-shrink: 0; cursor: pointer;
+  }
+  .donationManagePhotoOptOutText { font-family: var(--font-bn); font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+  .donationManagePhotoOptOutText strong { display: block; font-size: 12.5px; font-weight: 700; }
+  .donationManagePhotoOptOutText span { color: var(--muted); font-size: 11.5px; }
+  .donationManageImgRow { margin-top: 12px; display: flex; align-items: center; gap: 10px; padding-right: 30px; }
+  .donationManageImgRow.isDisabled { opacity: 0.45; pointer-events: none; }
+  .donationManageImgThumb {
+    position: relative; width: 70px; height: 70px; border-radius: 10px; overflow: hidden;
+    background: var(--crimson-tint); flex-shrink: 0;
+  }
+  .donationManageImgThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .donationManageImgThumb.placeholderMode img { display: none; }
+  .donationManageImgHint { font-size: 12px; color: var(--muted); }
+  .donationManageRemoveBtn {
+    position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--paper); color: var(--muted);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; z-index: 6;
+  }
+  .donationManageRemoveBtn:hover { background: #B23A3A; color: #fff; border-color: #B23A3A; }
+
   .btnPrimary, .btnGhost {
     font-family: var(--font-body); font-weight: 700; font-size: 14.5px;
     border-radius: 999px; padding: 13px 26px; display: inline-flex; align-items: center; gap: 8px;
@@ -1267,6 +1618,7 @@
     এডিট মোড চালু
   </span>
   <span class="adminBarBtns">
+    <button type="button" id="manageDonationRecordsBtn"><i class="fa-solid fa-list-check" aria-hidden="true"></i> রেকর্ড</button>
     <button type="button" id="saveEditsBtn">Save</button>
     <button type="button" id="exitEditBtn">Close</button>
   </span>
@@ -1322,6 +1674,12 @@
         <i class="fa-solid fa-phone" aria-hidden="true"></i>
         <span class="heroPhoneChipText"><span id="heroPhoneChipName3">নাম ৩</span><span id="heroPhoneChipText3">01XXXXXXXXX</span></span>
       </a>
+    </div>
+    <div class="heroSearchBox">
+      <input type="text" id="donationSearchInput" class="heroSearchInput" placeholder="ID দিয়ে খুঁজুন...">
+      <button type="button" id="donationSearchBtn" class="heroSearchBtn" aria-label="খুঁজুন">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 
@@ -1931,6 +2289,29 @@
   </div>
 </div>
 
+<div class="modalOverlay" id="donationResultModalOverlay" style="display:none;">
+  <div class="donationResultModal" id="donationResultModal">
+    <button type="button" class="donationResultPrintBtn" id="donationResultPrintBtn" title="কার্ড প্রিন্ট করুন">
+      <i class="fa-solid fa-print" aria-hidden="true"></i><span>প্রিন্ট</span>
+    </button>
+    <button type="button" class="donationResultClose" id="donationResultCloseBtn" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    <div id="donationResultContent"></div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="donationManageModalOverlay" style="display:none;">
+  <div class="donationManageModal">
+    <div class="donationManageHead">
+      <h3><i class="fa-solid fa-droplet" aria-hidden="true" style="color:var(--crimson); margin-right:6px;"></i>ডোনেশন রেকর্ড ব্যবস্থাপনা</h3>
+      <button type="button" class="donationManageCloseX" id="donationManageCloseBtn" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <button type="button" class="donationManageAddBtn" id="donationManageAddBtn">
+      <i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন রেকর্ড যোগ করুন
+    </button>
+    <div class="donationManageList" id="donationManageList"></div>
+  </div>
+</div>
+
 <div class="callFab" id="callFab">
   <div class="callFabMenu" id="callFabMenu">
     <a class="callFabItem" id="callFabItem1" href="tel:">
@@ -2014,6 +2395,28 @@ function writeCache(key, value) {
 }
 
 /* ============================================================
+   BANDWIDTH-SAVING FETCH CACHE
+   A persistent .on("value") listener re-downloads the *entire*
+   node from Firebase on first load AND again on every future
+   write to that node, for as long as the tab stays open. Since
+   donors / appConfig / landingPage rarely change minute to
+   minute, we fetch them once (.once, not .on) and skip the
+   network call altogether on repeat visits within FETCH_TTL_MS —
+   the page already renders instantly from the cached copy in
+   localStorage, so nothing is lost visually, only the re-download.
+   ============================================================ */
+const FETCH_TTL_MS = 10 * 60 * 1000; // 10 minutes
+function lastFetchedAt(key) {
+  try { return parseInt(localStorage.getItem(key + "_fetchedAt"), 10) || 0; } catch (err) { return 0; }
+}
+function markFetchedNow(key) {
+  try { localStorage.setItem(key + "_fetchedAt", String(Date.now())); } catch (err) { /* ignore */ }
+}
+function isCacheFresh(key) {
+  return (Date.now() - lastFetchedAt(key)) < FETCH_TTL_MS;
+}
+
+/* ============================================================
    PAGE LOADER (scale-in loading screen)
    Stays visible until the page has finished loading (including
    images), with a minimum show time so it never just flashes, and
@@ -2049,6 +2452,7 @@ const DEFAULT_LANDING = {
   aboutImage: "",
   impactImage: "",
   donationPhotos: [],
+  donationRecords: [],
   heroBackgroundImage: "",
   ctaHeading: "আজই একজন রক্তদাতা হয়ে অন্য কারো জীবনে আশার আলো হয়ে উঠুন",
   feature1Title: "যাচাইকৃত রক্তদাতা",
@@ -2129,6 +2533,7 @@ function syncListToFirebase(fieldName, arr) {
    including the { _empty: true } marker above. */
 function normalizeLandingData() {
   landingData.donationPhotos = toArrayField(landingData.donationPhotos);
+  landingData.donationRecords = toArrayField(landingData.donationRecords);
   landingData.team = toArrayField(landingData.team);
   landingData.faqs = toArrayField(landingData.faqs);
   landingData.partners = toArrayField(landingData.partners);
@@ -2147,6 +2552,67 @@ function setSectionVisible(sectionEl, hasData) {
 }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* Escapes text so it's safe to interpolate inside an HTML attribute
+   (e.g. alt="..."). Without this, a name/text field containing a
+   double-quote could break out of the attribute and inject arbitrary
+   HTML/JS (stored XSS) when the template string is set via innerHTML. */
+function escAttr(str) {
+  return String(str == null ? "" : str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/* Sequential donation-search ID — generated by the system, never typed by the admin.
+   Starts at 0001 and always continues from the highest existing number
+   (so it keeps counting up even if an earlier record was deleted). */
+function genDonationNo() {
+  let maxNo = 0;
+  landingData.donationRecords.forEach(r => {
+    const n = parseInt(r.donationNo, 10);
+    if (!isNaN(n) && n > maxNo) maxNo = n;
+  });
+  return String(maxNo + 1).padStart(4, "0");
+}
+
+/* Bengali word-ordinals for "কতবারের মতো" (1st, 2nd, 3rd... time) */
+const BN_ORDINALS = [
+  "", "প্রথম", "দ্বিতীয়", "তৃতীয়", "চতুর্থ", "পঞ্চম", "ষষ্ঠ", "সপ্তম", "অষ্টম", "নবম", "দশম",
+  "একাদশ", "দ্বাদশ", "ত্রয়োদশ", "চতুর্দশ", "পঞ্চদশ", "ষোড়শ", "সপ্তদশ", "অষ্টাদশ", "ঊনবিংশ", "বিংশ"
+];
+function ordinalBn(n) {
+  n = parseInt(n, 10) || 1;
+  if (n >= 1 && n < BN_ORDINALS.length) return BN_ORDINALS[n];
+  return toBengaliDigits(n) + "তম";
+}
+
+/* Short numeral-style Bengali ordinals for badges/pills — ১ম, ২য়, ৩য়, ৪র্থ... */
+const BN_ORDINAL_SUFFIX = ["", "ম", "য়", "য়", "র্থ", "ম", "ষ্ঠ", "ম", "ম", "ম", "ম"];
+function ordinalShortBn(n) {
+  n = parseInt(n, 10) || 1;
+  if (n >= 1 && n <= 10) return toBengaliDigits(n) + BN_ORDINAL_SUFFIX[n];
+  return toBengaliDigits(n) + "তম";
+}
+
+/* Composes the fixed announcement text — only name, visit count, blood group and
+   hospital come from the admin; everything else is the same every time. */
+function buildDonationMessage(r) {
+  const network = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+  return [
+    (r.name || "").trim(),
+    ordinalBn(r.visitCount) + "বারের মতো",
+    "(" + (r.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন",
+    (r.hospitalName || "").trim() + " এ।",
+    "",
+    network + " এর পক্ষ থেকে অবিরাম ভালোবাসা রইলো। 🤝🖤",
+    "",
+    "ভাই/বোনের জন্য সবাই দোয়া করবেন।",
+    "❤️ রক্ত দিন • জীবন বাঁচান",
+    "🌍 মানবতার সেবায় আমরা একসাথে"
+  ].join("\n");
+}
 
 /* ============================================================
    GOOGLE DRIVE IMAGE LOADING — RELIABILITY FIX
@@ -2267,13 +2733,95 @@ function renderDonationGallery() {
   });
 }
 
+const DONATION_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+function donationManageItemTemplate(r) {
+  const bgOptions = DONATION_BLOOD_GROUPS.map(g => '<option value="' + g + '">' + g + '</option>').join("");
+  return (
+    '<div class="donationManageItem" data-record-id="' + r.id + '">' +
+      '<button type="button" class="donationManageRemoveBtn" data-record-id="' + r.id + '" title="রেকর্ড মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
+      '<span class="donationManageNoBadge"><i class="fa-solid fa-hashtag" aria-hidden="true"></i> ID: <span class="donationManageNoText"></span></span>' +
+      '<span class="donationManageFieldLabel">নাম</span>' +
+      '<div class="donationManageNoInput editable-field" data-record-id="' + r.id + '" data-field="name" contenteditable="true"></div>' +
+      '<div class="donationManageRow2">' +
+        '<div>' +
+          '<span class="donationManageFieldLabel">কতবারের মতো</span>' +
+          '<input type="number" min="1" class="donationManageNumberInput" data-record-id="' + r.id + '" data-field="visitCount">' +
+        '</div>' +
+        '<div>' +
+          '<span class="donationManageFieldLabel">রক্তের গ্রুপ</span>' +
+          '<select class="donationManageSelect" data-record-id="' + r.id + '" data-field="bloodGroup">' + bgOptions + '</select>' +
+        '</div>' +
+      '</div>' +
+      '<span class="donationManageFieldLabel">হাসপাতালের নাম</span>' +
+      '<div class="donationManageNoInput editable-field" data-record-id="' + r.id + '" data-field="hospitalName" contenteditable="true"></div>' +
+      '<div class="donationManageImgRow" id="donationManageImgRow_' + r.id + '">' +
+        '<div class="donationManageImgThumb placeholderMode" id="donationManageThumb_' + r.id + '">' +
+          '<div class="imgSkeleton" aria-hidden="true"></div>' +
+          '<img class="donationManageImg" alt="">' +
+          '<button type="button" class="imgEditBtn" data-img-key="donationRecord:' + r.id + ':image" style="position:absolute; inset:0; bottom:auto; right:auto; width:100%; height:100%; border-radius:10px; justify-content:center; font-size:0; gap:0; background:rgba(33,22,19,0.45);"><i class="fa-solid fa-camera" aria-hidden="true"></i></button>' +
+        '</div>' +
+        '<span class="donationManageImgHint">রেকর্ডের সাথে দেখানোর জন্য একটি ছবি যোগ করুন (ঐচ্ছিক)</span>' +
+        '<button type="button" class="imgRemoveBtn" data-img-key="donationRecord:' + r.id + ':image" style="position:static; display:inline-flex; flex-shrink:0;" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+      '</div>' +
+      '<label class="donationManagePhotoOptOut">' +
+        '<input type="checkbox" class="donationManagePhotoOptOutCheckbox" data-record-id="' + r.id + '" data-field="hidePhoto">' +
+        '<span class="donationManagePhotoOptOutText"><strong>ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়</strong><span>টিক দিলে ছবি যোগ করা যাবে না, নিশ্চিতকরণ কার্ডে ছবির জায়গায় এই বার্তাটি দেখানো হবে</span></span>' +
+      '</label>' +
+    '</div>'
+  );
+}
+
+function renderDonationManageList() {
+  const container = document.getElementById("donationManageList");
+  if (!container) return;
+  if (!landingData.donationRecords.length) {
+    container.innerHTML = '<div class="sectionEmptyState" style="display:flex;"><i class="fa-solid fa-droplet" aria-hidden="true"></i><span>এখনও কোনো রেকর্ড যোগ করা হয়নি — উপরের বাটনে ক্লিক করে যোগ করুন</span></div>';
+    return;
+  }
+  const existingIds = Array.from(container.children).map(c => c.getAttribute("data-record-id"));
+  const newIds = landingData.donationRecords.map(r => r.id);
+  const structureChanged = existingIds.length !== newIds.length || existingIds.some((id, i) => id !== newIds[i]);
+  if (structureChanged) {
+    container.innerHTML = landingData.donationRecords.map(donationManageItemTemplate).join("");
+  }
+  landingData.donationRecords.forEach(r => {
+    const item = container.querySelector('.donationManageItem[data-record-id="' + r.id + '"]');
+    if (!item) return;
+    const noTextEl = item.querySelector(".donationManageNoText");
+    if (noTextEl) noTextEl.textContent = r.donationNo;
+    const nameEl = item.querySelector('[data-field="name"]');
+    const hospitalEl = item.querySelector('[data-field="hospitalName"]');
+    const visitEl = item.querySelector('[data-field="visitCount"]');
+    const bgEl = item.querySelector('[data-field="bloodGroup"]');
+    if (nameEl && document.activeElement !== nameEl) nameEl.textContent = r.name;
+    if (hospitalEl && document.activeElement !== hospitalEl) hospitalEl.textContent = r.hospitalName;
+    if (visitEl && document.activeElement !== visitEl) visitEl.value = r.visitCount || 1;
+    if (bgEl && document.activeElement !== bgEl) bgEl.value = r.bloodGroup || "A+";
+    const thumb = item.querySelector(".donationManageImgThumb");
+    const img = item.querySelector(".donationManageImg");
+    if (r.image) {
+      thumb.classList.remove("placeholderMode");
+      loadImageWithFallback(img, r.image, thumb);
+    } else {
+      thumb.classList.add("placeholderMode");
+      thumb.classList.remove("loadingImg", "imgLoadFailed");
+      img.removeAttribute("src");
+    }
+    const optOutEl = item.querySelector('[data-field="hidePhoto"]');
+    if (optOutEl) optOutEl.checked = !!r.hidePhoto;
+    const imgRow = item.querySelector(".donationManageImgRow");
+    if (imgRow) imgRow.classList.toggle("isDisabled", !!r.hidePhoto);
+  });
+}
+
 function teamCardTemplate(m) {
   return (
     '<div class="teamCard" data-team-id="' + m.id + '">' +
       '<button type="button" class="teamRemoveBtn" data-team-id="' + m.id + '" title="সদস্য মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<div class="teamPhotoWrap placeholderMode">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        '<img class="teamPhoto" alt="' + m.name + '">' +
+        '<img class="teamPhoto" alt="' + escAttr(m.name) + '">' +
         '<span class="teamPlaceholderMark"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
         '<button type="button" class="imgEditBtn" data-img-key="team:' + m.id + ':photo"><i class="fa-solid fa-camera" aria-hidden="true"></i> ছবি পরিবর্তন</button>' +
         '<button type="button" class="imgRemoveBtn" data-img-key="team:' + m.id + ':photo" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
@@ -2356,7 +2904,7 @@ function partnerCardTemplate(p) {
       '<button type="button" class="partnerRemoveBtn" data-partner-id="' + p.id + '" title="সহযোগী মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<div class="partnerLogoWrap placeholderMode">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        '<img class="partnerLogo" alt="' + p.name + '">' +
+        '<img class="partnerLogo" alt="' + escAttr(p.name) + '">' +
         '<span class="partnerPlaceholderMark"><i class="fa-solid fa-building" aria-hidden="true"></i></span>' +
         '<button type="button" class="imgEditBtn" data-img-key="partner:' + p.id + ':logo"><i class="fa-solid fa-camera" aria-hidden="true"></i></button>' +
       '</div>' +
@@ -2518,6 +3066,7 @@ function renderLanding() {
   loadBackgroundWithFallback(ctaBand, landingData.impactImage, "hasImage");
 
   renderDonationGallery();
+  renderDonationManageList();
   renderTeamSection();
   renderFaqSection();
   renderPartnersSection();
@@ -3022,6 +3571,10 @@ function applyImageValue(key, value) {
     const id = key.slice(8, -5);
     const partner = landingData.partners.find(p => p.id === id);
     if (partner) partner.logo = value;
+  } else if (key.indexOf("donationRecord:") === 0 && key.slice(-6) === ":image") {
+    const id = key.slice(15, -6);
+    const rec = landingData.donationRecords.find(r => r.id === id);
+    if (rec) rec.image = value;
   } else {
     landingData[key] = value;
   }
@@ -3036,6 +3589,8 @@ function syncImageKeyToFirebase(key) {
     syncListToFirebase("team", landingData.team);
   } else if (key.indexOf("partner:") === 0) {
     syncListToFirebase("partners", landingData.partners);
+  } else if (key.indexOf("donationRecord:") === 0) {
+    syncListToFirebase("donationRecords", landingData.donationRecords);
   } else {
     landingPageRef.child(key).set(landingData[key]).catch(err => console.log("Image sync failed:", err));
   }
@@ -3113,6 +3668,19 @@ document.addEventListener("click", e => {
     renderLanding();
     syncListToFirebase("partners", landingData.partners);
     showToast("সহযোগী মুছে ফেলা হয়েছে");
+    return;
+  }
+
+  const donationRecordRemoveBtn = e.target.closest(".donationManageRemoveBtn");
+  if (donationRecordRemoveBtn) {
+    const id = donationRecordRemoveBtn.getAttribute("data-record-id");
+    if (!id) return;
+    if (!window.confirm("আপনি কি নিশ্চিত এই রেকর্ডটি মুছে ফেলতে চান?")) return;
+    landingData.donationRecords = landingData.donationRecords.filter(r => r.id !== id);
+    writeCache(CACHE_LANDING_KEY, landingData);
+    renderLanding();
+    syncListToFirebase("donationRecords", landingData.donationRecords);
+    showToast("রেকর্ড মুছে ফেলা হয়েছে");
     return;
   }
 
@@ -3201,6 +3769,375 @@ document.getElementById("partnersAddBtn").addEventListener("click", () => {
   renderLanding();
   syncListToFirebase("partners", landingData.partners);
 });
+
+/* "নতুন রেকর্ড যোগ করুন" — adds a new blank donation record, ready to edit */
+document.getElementById("donationManageAddBtn").addEventListener("click", () => {
+  const rec = {
+    id: genId(),
+    donationNo: genDonationNo(),
+    name: "নাম লিখুন",
+    visitCount: 1,
+    bloodGroup: "A+",
+    hospitalName: "রক্ত দান করলেন",
+    image: "",
+    hidePhoto: false
+  };
+  landingData.donationRecords.unshift(rec);
+  writeCache(CACHE_LANDING_KEY, landingData);
+  renderLanding();
+  syncListToFirebase("donationRecords", landingData.donationRecords);
+});
+
+document.addEventListener("change", e => {
+  const target = e.target;
+  if (target.classList && target.classList.contains("donationManageSelect")) {
+    target.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  if (target.classList && target.classList.contains("donationManagePhotoOptOutCheckbox")) {
+    const recordId = target.getAttribute("data-record-id");
+    const rec = landingData.donationRecords.find(r => r.id === recordId);
+    if (rec) {
+      rec.hidePhoto = target.checked;
+      if (rec.hidePhoto) rec.image = ""; // opting out clears any photo already set
+      writeCache(CACHE_LANDING_KEY, landingData);
+      renderDonationManageList();
+      syncListToFirebase("donationRecords", landingData.donationRecords);
+      showToast(rec.hidePhoto ? "ছবি প্রকাশ করা হবে না" : "ছবি যোগ করা যাবে");
+    }
+    return;
+  }
+  /* Any other donation-record field (visit count number input, blood group
+     select) that already has its value in memory from the "input" listener
+     below — persist it to the local cache and Firebase as soon as it settles. */
+  if (target.getAttribute("data-record-id")) {
+    writeCache(CACHE_LANDING_KEY, landingData);
+    syncListToFirebase("donationRecords", landingData.donationRecords);
+  }
+});
+
+/* Contenteditable fields (name, hospital name) don't fire "change" — only
+   "input" while typing — so persist them to Firebase once the admin leaves
+   the field (blur doesn't bubble, so this listener is registered with
+   capture:true). */
+document.addEventListener("blur", e => {
+  const target = e.target;
+  if (target.classList && target.classList.contains("editable-field") && target.getAttribute("data-record-id")) {
+    writeCache(CACHE_LANDING_KEY, landingData);
+    syncListToFirebase("donationRecords", landingData.donationRecords);
+  }
+}, true);
+
+/* ============================================================
+   DONATION RECORD SEARCH (public) + ADMIN MANAGER MODAL
+   ============================================================ */
+(function initDonationSearchAndManager() {
+  const searchInput = document.getElementById("donationSearchInput");
+  const searchBtn = document.getElementById("donationSearchBtn");
+  const resultOverlay = document.getElementById("donationResultModalOverlay");
+  const resultContent = document.getElementById("donationResultContent");
+  const resultCloseBtn = document.getElementById("donationResultCloseBtn");
+  const resultModal = document.getElementById("donationResultModal");
+  const resultPrintBtn = document.getElementById("donationResultPrintBtn");
+  const manageBtn = document.getElementById("manageDonationRecordsBtn");
+  const manageOverlay = document.getElementById("donationManageModalOverlay");
+  const manageCloseBtn = document.getElementById("donationManageCloseBtn");
+  if (!searchInput || !searchBtn || !resultOverlay) return;
+
+  let currentDonationRecord = null; // last successfully found record, for the JPEG filename
+
+  function iconRow(iconClass, label, value) {
+    const row = document.createElement("div");
+    row.className = "donationResultInfoRow";
+    const iconWrap = document.createElement("span");
+    iconWrap.className = "donationResultInfoIcon";
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+    iconWrap.appendChild(icon);
+    const textWrap = document.createElement("span");
+    textWrap.className = "donationResultInfoText";
+    const labelEl = document.createElement("span");
+    labelEl.className = "donationResultInfoLabel";
+    labelEl.textContent = label;
+    const valueEl = document.createElement("span");
+    valueEl.className = "donationResultInfoValue";
+    valueEl.textContent = value;
+    textWrap.appendChild(labelEl);
+    textWrap.appendChild(valueEl);
+    row.appendChild(iconWrap);
+    row.appendChild(textWrap);
+    return row;
+  }
+
+  function performDonationSearch() {
+    const q = (searchInput.value || "").trim();
+    if (!q) { showToast("অনুগ্রহ করে ID লিখুন"); return; }
+    const found = landingData.donationRecords.find(r => (r.donationNo || "").trim().toLowerCase() === q.toLowerCase());
+    renderDonationResult(found);
+  }
+
+  /* Shared renderer — used by manual search AND by auto-opening a card
+     when the page is loaded with a ?id=... link (e.g. from a QR scan). */
+  function renderDonationResult(found) {
+    currentDonationRecord = found || null;
+    resultContent.innerHTML = "";
+
+    /* ---- watermark (logo + "BNB") behind everything in the card ---- */
+    const watermarkLogoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+    const watermark = document.createElement("div");
+    watermark.className = "donationResultWatermark";
+    watermark.setAttribute("aria-hidden", "true");
+    const watermarkImg = document.createElement("img");
+    watermarkImg.alt = "";
+    loadImageWithFallback(watermarkImg, watermarkLogoSrc);
+    const watermarkText = document.createElement("div");
+    watermarkText.className = "donationResultWatermarkText";
+    watermarkText.textContent = "BNB";
+    watermark.appendChild(watermarkImg);
+    watermark.appendChild(watermarkText);
+    resultContent.appendChild(watermark);
+
+    if (!found) {
+      const wrap = document.createElement("div");
+      wrap.className = "donationNotFound";
+      const iconCircle = document.createElement("div");
+      iconCircle.className = "donationResultIconCircle";
+      const icon = document.createElement("i");
+      icon.className = "fa-solid fa-magnifying-glass";
+      icon.setAttribute("aria-hidden", "true");
+      iconCircle.appendChild(icon);
+      const msg = document.createElement("p");
+      msg.textContent = "এই ID-তে কোনো রেকর্ড পাওয়া যায়নি। ID আবার যাচাই করুন।";
+      wrap.appendChild(iconCircle);
+      wrap.appendChild(msg);
+      resultContent.appendChild(wrap);
+    } else {
+      /* ---- crimson certificate head band ---- */
+      const headBand = document.createElement("div");
+      headBand.className = "donationResultHeadBand";
+
+      const ribbon = document.createElement("div");
+      ribbon.className = "donationResultRibbon";
+      ribbon.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>Verified';
+      headBand.appendChild(ribbon);
+
+      /* ---- website/organization logo only — brand text + eyebrow removed ---- */
+      const brandRow = document.createElement("div");
+      brandRow.className = "donationResultBrandRow";
+      const logoImg = document.createElement("img");
+      logoImg.className = "donationResultLogo";
+      logoImg.alt = (landingData.siteName || "Blood Network").trim();
+      brandRow.appendChild(logoImg);
+      headBand.appendChild(brandRow);
+      const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+      loadImageWithFallback(logoImg, logoSrc);
+
+      /* ---- donor photo is set as the head band's OWN background (not a separate element) ---- */
+      if (found.hidePhoto) {
+        const fallback = document.createElement("div");
+        fallback.className = "donationResultAvatarFallback donationResultAvatarHidden";
+        const fbIcon = document.createElement("i");
+        fbIcon.className = "fa-solid fa-eye-slash";
+        fbIcon.setAttribute("aria-hidden", "true");
+        fallback.appendChild(fbIcon);
+        headBand.appendChild(fallback);
+      } else if (found.image) {
+        loadBackgroundWithFallback(headBand, found.image, "hasImage");
+      } else {
+        const fallback = document.createElement("div");
+        fallback.className = "donationResultAvatarFallback";
+        const fbIcon = document.createElement("i");
+        fbIcon.className = "fa-solid fa-user";
+        fbIcon.setAttribute("aria-hidden", "true");
+        fallback.appendChild(fbIcon);
+        headBand.appendChild(fallback);
+      }
+      const verifiedBadge = document.createElement("span");
+      verifiedBadge.className = "donationResultVerifiedBadge";
+      verifiedBadge.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
+      headBand.appendChild(verifiedBadge);
+      resultContent.appendChild(headBand);
+
+      /* ---- body ---- */
+      const body = document.createElement("div");
+      body.className = "donationResultBody";
+
+      /* ID — moved below the header band */
+      const noPill = document.createElement("span");
+      noPill.className = "donationResultNo";
+      const noIcon = document.createElement("i");
+      noIcon.className = "fa-solid fa-hashtag";
+      noIcon.setAttribute("aria-hidden", "true");
+      noPill.appendChild(noIcon);
+      noPill.appendChild(document.createTextNode("ID: " + found.donationNo));
+      body.appendChild(noPill);
+
+      /* ---- name + blood group, same row ---- */
+      const nameRow = document.createElement("div");
+      nameRow.className = "donationResultNameRow";
+      const nameEl = document.createElement("div");
+      nameEl.className = "donationResultName";
+      nameEl.textContent = (found.name || "").trim();
+      nameRow.appendChild(nameEl);
+      const bgBadge = document.createElement("span");
+      bgBadge.className = "donationResultBgBadge";
+      bgBadge.textContent = found.bloodGroup || "—";
+      nameRow.appendChild(bgBadge);
+      body.appendChild(nameRow);
+
+      /* ---- total donation count, modern pill ---- */
+      const countBadge = document.createElement("div");
+      countBadge.className = "donationResultCountBadge";
+      countBadge.innerHTML =
+        '<i class="fa-solid fa-droplet" aria-hidden="true"></i>' +
+        '<b>' + ordinalShortBn(found.visitCount || 1) + '</b> বারের মতো';
+      body.appendChild(countBadge);
+
+      /* হাসপাতাল — plain text line, no icon/box design; hospital name itself is bold */
+      const hospitalLine = document.createElement("p");
+      hospitalLine.className = "donationResultHospitalLine";
+      hospitalLine.appendChild(document.createTextNode(
+        "(" + (found.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন "
+      ));
+      const hospitalNameStrong = document.createElement("strong");
+      hospitalNameStrong.textContent = (found.hospitalName || "").trim();
+      hospitalLine.appendChild(hospitalNameStrong);
+      hospitalLine.appendChild(document.createTextNode(" এ।"));
+      body.appendChild(hospitalLine);
+
+      const divider = document.createElement("div");
+      divider.className = "donationResultDivider";
+      divider.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
+      body.appendChild(divider);
+
+      const thanks = document.createElement("div");
+      thanks.className = "donationResultThanks";
+      const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+      thanks.innerHTML =
+        '<strong>' + networkName.replace(/[<>&]/g, "") + '</strong> এর পক্ষ থেকে অবিরাম ভালোবাসা রইলো।<br>';
+      body.appendChild(thanks);
+
+      const emojiRow = document.createElement("div");
+      emojiRow.className = "donationResultEmojiRow";
+      emojiRow.textContent = "ভাই এর জন্য সবাই দোয়া করবেন।";
+      body.appendChild(emojiRow);
+
+      const stamp = document.createElement("div");
+      stamp.className = "donationResultStamp";
+      stamp.innerHTML = '<i class="fa-solid fa-shield-heart" aria-hidden="true"></i>রক্ত দিন • জীবন বাঁচান';
+      body.appendChild(stamp);
+
+      /* ---- dynamic card URL + QR code ---- */
+      const cardUrl = window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(found.donationNo);
+      const qrWrap = document.createElement("div");
+      qrWrap.className = "donationResultQrWrap";
+      const qrImg = document.createElement("img");
+      qrImg.className = "donationResultQrImg";
+      qrImg.alt = "QR কোড — কার্ড লিংক";
+      qrImg.loading = "lazy";
+      qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(cardUrl);
+      qrWrap.appendChild(qrImg);
+      const qrCaption = document.createElement("div");
+      qrCaption.className = "donationResultQrCaption";
+      qrCaption.textContent = "স্ক্যান করে কার্ড দেখুন";
+      qrWrap.appendChild(qrCaption);
+      body.appendChild(qrWrap);
+
+      resultContent.appendChild(body);
+    }
+    resultOverlay.style.display = "flex";
+  }
+
+  searchBtn.addEventListener("click", performDonationSearch);
+  searchInput.addEventListener("keydown", e => { if (e.key === "Enter") performDonationSearch(); });
+  if (resultCloseBtn) resultCloseBtn.addEventListener("click", () => { resultOverlay.style.display = "none"; });
+  resultOverlay.addEventListener("click", e => { if (e.target === resultOverlay) resultOverlay.style.display = "none"; });
+
+  /* ---- admin-only: print the currently open card, forced onto a
+     single 9:16 page. The card is cloned into a dedicated print stage
+     (#cardPrintRoot), scaled to fit the custom @page size defined in
+     the stylesheet, and everything else is hidden via .printingCard
+     on <body> for the duration of the print. ---- */
+  function buildDonationCardPrintStage() {
+    const source = document.getElementById("donationResultContent");
+    if (!source) return null;
+
+    let printRoot = document.getElementById("cardPrintRoot");
+    if (printRoot) printRoot.remove();
+    printRoot = document.createElement("div");
+    printRoot.id = "cardPrintRoot";
+
+    const clone = source.cloneNode(true);
+    clone.style.transformOrigin = "top left";
+    printRoot.appendChild(clone);
+    document.body.appendChild(printRoot);
+
+    // @page is 100mm x 177.78mm (a 9:16 ratio) — convert to px @ 96dpi
+    // so the clone can be scaled to fit exactly one page.
+    const mmToPx = 96 / 25.4;
+    const pageW = 100 * mmToPx;
+    const pageH = (100 * 16 / 9) * mmToPx;
+    printRoot.style.width = pageW + "px";
+    printRoot.style.height = pageH + "px";
+
+    const rect = clone.getBoundingClientRect();
+    const scale = Math.min(pageW / rect.width, pageH / rect.height);
+    const scaledW = rect.width * scale;
+    const scaledH = rect.height * scale;
+    clone.style.transform = "scale(" + scale + ")";
+    clone.style.marginLeft = Math.max(0, (pageW - scaledW) / 2) + "px";
+    clone.style.marginTop = Math.max(0, (pageH - scaledH) / 2) + "px";
+
+    return printRoot;
+  }
+
+  function printDonationCard() {
+    if (!currentDonationRecord) return;
+    if (!buildDonationCardPrintStage()) return;
+    document.body.classList.add("printingCard");
+    window.print();
+  }
+
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("printingCard");
+    const printRoot = document.getElementById("cardPrintRoot");
+    if (printRoot) printRoot.remove();
+  });
+
+  if (resultPrintBtn) {
+    resultPrintBtn.addEventListener("click", printDonationCard);
+  }
+
+  if (manageBtn && manageOverlay) {
+    manageBtn.addEventListener("click", () => {
+      renderDonationManageList();
+      manageOverlay.style.display = "flex";
+    });
+    if (manageCloseBtn) manageCloseBtn.addEventListener("click", () => { manageOverlay.style.display = "none"; });
+    manageOverlay.addEventListener("click", e => { if (e.target === manageOverlay) manageOverlay.style.display = "none"; });
+  }
+
+  /* ---- auto-open donation card (.donationResultModal) when the page is
+     opened via a QR / shared link like  yourdomain.com/?id=0001
+     (0001 = the donor's sequential donationNo, same one used for manual
+     search) ---- */
+  let autoOpenedFromUrl = false;
+  function tryAutoOpenDonationCardFromUrl() {
+    if (autoOpenedFromUrl) return;
+    const wantedId = (new URLSearchParams(window.location.search).get("id") || "").trim().toLowerCase();
+    if (!wantedId) return;
+    const records = (landingData && landingData.donationRecords) || [];
+    const found = records.find(r => (r.donationNo || "").trim().toLowerCase() === wantedId);
+    if (found) {
+      autoOpenedFromUrl = true;
+      renderDonationResult(found);
+    }
+  }
+  window.tryAutoOpenDonationCardFromUrl = tryAutoOpenDonationCardFromUrl;
+  // Try right away (covers data restored from local cache) — it will be
+  // retried once fresh data arrives from Firebase too.
+  tryAutoOpenDonationCardFromUrl();
+})();
 
 /* "ছবি যোগ করুন" — adds a brand-new donation photo at the very front of the
    gallery (most recent first), sized to the bento grid's first slot shape */
@@ -3370,6 +4307,14 @@ async function attemptLoginSubmit() {
     await auth.signInWithEmailAndPassword(email, password);
     closePinModal();
     enterEditMode();
+    /* Admin is about to edit — always pull the true latest copy,
+       bypassing the TTL cache, so they never save over a change
+       someone else made in the last few minutes. */
+    if (firebaseAvailable) {
+      fetchLandingOnce();
+      fetchDonorsOnce();
+      fetchAppConfigOnce();
+    }
   } catch (err) {
     console.log("Admin login failed:", err);
     showLoginError("ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।");
@@ -3401,7 +4346,8 @@ document.getElementById("exitEditBtn").addEventListener("click", exitEditMode);
 /* Keep duplicate data-key fields (e.g. site name in header + footer) in sync while typing */
 document.addEventListener("input", e => {
   const target = e.target;
-  if (!target.classList || !target.classList.contains("editable-field")) return;
+  const isDonationRecordControl = target.classList && (target.classList.contains("donationManageNumberInput") || target.classList.contains("donationManageSelect"));
+  if (!isDonationRecordControl && (!target.classList || !target.classList.contains("editable-field"))) return;
 
   const teamId = target.getAttribute("data-team-id");
   const field = target.getAttribute("data-field");
@@ -3430,6 +4376,22 @@ document.addEventListener("input", e => {
   if (stepId && stepCol && field && landingData[stepCol]) {
     const step = landingData[stepCol].find(s => s.id === stepId);
     if (step) step[field] = target.textContent;
+    return;
+  }
+
+  const recordId = target.getAttribute("data-record-id");
+  if (recordId && field) {
+    const rec = landingData.donationRecords.find(r => r.id === recordId);
+    if (rec) {
+      if (field === "visitCount") {
+        const n = parseInt(target.value, 10);
+        rec.visitCount = (n && n > 0) ? n : 1;
+      } else if (target.tagName === "INPUT" || target.tagName === "SELECT") {
+        rec[field] = target.value;
+      } else {
+        rec[field] = target.textContent;
+      }
+    }
     return;
   }
 
@@ -3494,7 +4456,19 @@ function bumpVisitorIfNewDevice() {
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = src; s.onload = resolve; s.onerror = reject;
+    let settled = false;
+    /* If a CDN script is blocked (ad-blocker, network hiccup, CSP) it can
+       sometimes fail silently — neither onload nor onerror fires — which
+       used to leave callers (like the export button) waiting forever. A
+       10s timeout guarantees this promise always settles. */
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("script load timed out: " + src));
+    }, 10000);
+    s.onload = () => { if (settled) return; settled = true; clearTimeout(timeoutId); resolve(); };
+    s.onerror = (err) => { if (settled) return; settled = true; clearTimeout(timeoutId); reject(err); };
+    s.src = src;
     document.head.appendChild(s);
   });
 }
@@ -3512,28 +4486,27 @@ function initFirebase() {
     visitorRef = db.ref("siteStats/visitorCount");
     firebaseAvailable = true;
 
-    donorsRef.on("value", snapshot => {
-      const val = snapshot.val() || {};
-      writeCache(CACHE_DONORS_KEY, Object.values(val));
-      computeAndRenderStats(val);
-    });
+    if (isCacheFresh(CACHE_DONORS_KEY)) {
+      console.log("Donors: using cached copy, skipping download");
+    } else {
+      fetchDonorsOnce();
+    }
 
-    appConfigRef.on("value", snapshot => {
-      const val = snapshot.val() || {};
-      appConfigData = {
-        logoImage: val.logoImage || ""
-      };
-      writeCache(CACHE_APPCONFIG_KEY, appConfigData);
-      renderLanding();
-    });
+    if (isCacheFresh(CACHE_APPCONFIG_KEY)) {
+      console.log("AppConfig: using cached copy, skipping download");
+    } else {
+      fetchAppConfigOnce();
+    }
 
-    landingPageRef.on("value", snapshot => {
-      const val = snapshot.val() || {};
-      landingData = Object.assign({}, DEFAULT_LANDING, val);
-      writeCache(CACHE_LANDING_KEY, landingData);
-      renderLanding();
-    });
+    if (isCacheFresh(CACHE_LANDING_KEY)) {
+      console.log("LandingPage: using cached copy, skipping download");
+    } else {
+      fetchLandingOnce();
+    }
 
+    /* Visitor count stays a live listener — it's a single small
+       number, not a full collection, so keeping it real-time costs
+       almost nothing next to the nodes above. */
     visitorRef.on("value", snapshot => {
       latestVisitorCount = snapshot.val() || 0;
       writeCache(CACHE_VISITOR_KEY, latestVisitorCount);
@@ -3544,6 +4517,39 @@ function initFirebase() {
   } catch (err) {
     console.log("Firebase init failed, running from local cache only:", err);
   }
+}
+
+/* One-time fetches (used both by the TTL-gated calls above and to
+   force a fresh copy — e.g. right before an admin starts editing,
+   so they never overwrite someone else's newer change). */
+function fetchDonorsOnce() {
+  return donorsRef.once("value").then(snapshot => {
+    const val = snapshot.val() || {};
+    writeCache(CACHE_DONORS_KEY, Object.values(val));
+    markFetchedNow(CACHE_DONORS_KEY);
+    computeAndRenderStats(val);
+  }).catch(err => console.log("Donors fetch failed:", err));
+}
+
+function fetchAppConfigOnce() {
+  return appConfigRef.once("value").then(snapshot => {
+    const val = snapshot.val() || {};
+    appConfigData = { logoImage: val.logoImage || "" };
+    writeCache(CACHE_APPCONFIG_KEY, appConfigData);
+    markFetchedNow(CACHE_APPCONFIG_KEY);
+    renderLanding();
+  }).catch(err => console.log("AppConfig fetch failed:", err));
+}
+
+function fetchLandingOnce() {
+  return landingPageRef.once("value").then(snapshot => {
+    const val = snapshot.val() || {};
+    landingData = Object.assign({}, DEFAULT_LANDING, val);
+    writeCache(CACHE_LANDING_KEY, landingData);
+    markFetchedNow(CACHE_LANDING_KEY);
+    renderLanding();
+    if (window.tryAutoOpenDonationCardFromUrl) window.tryAutoOpenDonationCardFromUrl();
+  }).catch(err => console.log("Landing fetch failed:", err));
 }
 
 /* Core data path: app + database only. This is what donors, donations,
