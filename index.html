@@ -434,11 +434,17 @@
      when the print stage clones #donationResultContent it comes along
      automatically — no separate print-only copy needed, and no seam
      between a background-image layer and the card underneath (which is
-     what caused the white line during print). isolation:isolate keeps
-     its negative z-index from escaping behind the card's own background. */
-  #donationResultContent { position: relative; isolation: isolate; }
+     what caused the white line during print). It is appended to
+     #donationResultContent FIRST (see JS below), before the head band and
+     body, so normal DOM paint order alone puts it behind everything else —
+     no z-index needed. (A negative z-index used to be here to force this,
+     but html2canvas 1.4.1 handles negative z-index / isolation unreliably
+     and was rendering the watermark ABOVE the card at full opacity in the
+     exported PNG even though it looked fine on screen. Relying on plain
+     DOM order instead fixes the PNG without changing on-screen output.) */
+  #donationResultContent { position: relative; }
   .donationResultWatermark {
-    position: absolute; inset: 0; z-index: -1;
+    position: absolute; inset: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 8px; opacity: 0.07; pointer-events: none;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
@@ -457,20 +463,11 @@
     transition: background .2s ease, transform .3s ease;
   }
   .donationResultClose:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
-
-  /* Admin-only "print card" button — hidden by default, shown only
-     in adminMode, so regular visitors never see it. */
-  .donationResultPrintBtn {
-    display: none; position: absolute; top: 14px; left: 14px; z-index: 5;
-    align-items: center; justify-content: center; gap: 6px;
-    height: 32px; padding: 0 13px; border-radius: 999px;
-    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: #fff;
-    font-family: var(--font-body); font-size: 11.5px; font-weight: 700; cursor: pointer;
-    transition: background .2s ease, transform .2s ease;
-  }
-  .donationResultPrintBtn:hover { background: rgba(255,255,255,0.3); }
-  .donationResultPrintBtn:disabled { opacity: 0.6; cursor: wait; }
-  body.adminMode .donationResultPrintBtn { display: inline-flex; }
+  /* Admin doesn't get the floating X close button, and the card itself
+     shows with square corners (no border-radius) instead of the rounded
+     "certificate" look regular visitors see. */
+  body.adminMode .donationResultClose { display: none; }
+  body.adminMode .donationResultModal { border-radius: 0; }
 
   /* ---- print stage: hidden on screen, used only to print the card
      as a single page with a 9:16 aspect ratio ---- */
@@ -550,8 +547,17 @@
     background: rgba(255,255,255,0.14); color: #fff;
   }
   .donationResultAvatarFallback i { font-size: 26px; }
-  .donationResultAvatarFallback.donationResultAvatarHidden { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+  .donationResultAvatarFallback.donationResultAvatarHidden {
+    width: auto; max-width: 260px; height: auto; min-height: 64px;
+    margin: 14px auto 0; padding: 12px 18px; border-radius: 14px;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85);
+    flex-direction: column; gap: 8px;
+  }
   .donationResultAvatarFallback.donationResultAvatarHidden i { font-size: 22px; }
+  .donationResultAvatarHiddenText {
+    font-family: var(--font-bn); font-size: 15.5px; font-weight: 700;
+    line-height: 1.35; color: #fff; text-align: center;
+  }
   .donationResultVerifiedBadge {
     position: absolute; bottom: 10px; right: 14px; width: 26px; height: 26px; border-radius: 50%;
     background: var(--sage); color: #fff; border: 2.5px solid var(--paper); z-index: 2;
@@ -2291,9 +2297,6 @@
 
 <div class="modalOverlay" id="donationResultModalOverlay" style="display:none;">
   <div class="donationResultModal" id="donationResultModal">
-    <button type="button" class="donationResultPrintBtn" id="donationResultPrintBtn" title="কার্ড প্রিন্ট করুন">
-      <i class="fa-solid fa-print" aria-hidden="true"></i><span>প্রিন্ট</span>
-    </button>
     <button type="button" class="donationResultClose" id="donationResultCloseBtn" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     <div id="donationResultContent"></div>
   </div>
@@ -3838,6 +3841,7 @@ document.addEventListener("blur", e => {
   const resultCloseBtn = document.getElementById("donationResultCloseBtn");
   const resultModal = document.getElementById("donationResultModal");
   const resultPrintBtn = document.getElementById("donationResultPrintBtn");
+  const resultDownloadBtn = document.getElementById("donationResultDownloadBtn");
   const manageBtn = document.getElementById("manageDonationRecordsBtn");
   const manageOverlay = document.getElementById("donationManageModalOverlay");
   const manageCloseBtn = document.getElementById("donationManageCloseBtn");
@@ -3940,6 +3944,10 @@ document.addEventListener("blur", e => {
         fbIcon.className = "fa-solid fa-eye-slash";
         fbIcon.setAttribute("aria-hidden", "true");
         fallback.appendChild(fbIcon);
+        const fbText = document.createElement("span");
+        fbText.className = "donationResultAvatarHiddenText";
+        fbText.textContent = "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়";
+        fallback.appendChild(fbText);
         headBand.appendChild(fallback);
       } else if (found.image) {
         loadBackgroundWithFallback(headBand, found.image, "hasImage");
@@ -4106,6 +4114,466 @@ document.addEventListener("blur", e => {
 
   if (resultPrintBtn) {
     resultPrintBtn.addEventListener("click", printDonationCard);
+  }
+
+  /* Google Drive image hosts (drive.google.com, lh3.googleusercontent.com)
+     happily let a plain <img> display them, but most do NOT send an
+     Access-Control-Allow-Origin header, so a same-page fetch(url,{mode:
+     "cors"}) is rejected — which is exactly what "taints" a canvas that
+     later draws that image. Routing the URL through images.weserv.nl (a
+     free image proxy built for this: it fetches the image server-side and
+     re-serves it with a permissive CORS header) lets us actually read the
+     pixels. Used only as a fallback after a direct fetch fails, so hosts
+     that already allow CORS (or are same-origin) skip the extra hop. */
+  function corsProxyUrl(url) {
+    try {
+      const withoutScheme = url.replace(/^https?:\/\//i, "");
+      return "https://images.weserv.nl/?url=" + encodeURIComponent(withoutScheme);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error("FileReader failed"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /* Fetches a (possibly cross-origin) image URL and converts it to a
+     data: URL, trying the URL directly first and falling back to the CORS
+     proxy. Returns null (never throws) so the caller can skip that one
+     image instead of failing the whole card. */
+  async function toDataUrlSafe(url) {
+    if (!url || url.indexOf("data:") === 0) return url || null;
+    const candidates = [url, corsProxyUrl(url)].filter(Boolean);
+    for (const candidateUrl of candidates) {
+      try {
+        const res = await fetch(candidateUrl, { mode: "cors", cache: "no-store" });
+        if (!res.ok) throw new Error("fetch failed: " + res.status);
+        const blob = await res.blob();
+        return await blobToDataUrl(blob);
+      } catch (err) {
+        console.log("toDataUrlSafe: attempt failed for", candidateUrl, err);
+      }
+    }
+    return null;
+  }
+
+  function loadImageEl(src) {
+    return new Promise((resolve) => {
+      if (!src) { resolve(null); return; }
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  /* Resolves a (possibly cross-origin) image URL to an <img> element the
+     canvas can safely draw AND read back from (data URL first). Google
+     Drive links only reliably resolve through ONE of a few URL shapes
+     (lh3.googleusercontent.com/d/ID, drive.google.com/thumbnail?id=ID, or
+     the raw share URL) depending on the file — driveUrlCandidates() (same
+     helper the on-screen <img> fallback already uses) gives all of them,
+     and each one is tried directly and then via the CORS proxy until one
+     actually produces image bytes. */
+  async function loadDrawableImage(url) {
+    if (!url) return null;
+    const candidates = typeof driveUrlCandidates === "function" ? driveUrlCandidates(url) : [url];
+    for (const candidateUrl of candidates) {
+      const dataUrl = await toDataUrlSafe(candidateUrl);
+      /* IMPORTANT: only ever draw a successfully-fetched data: URL.
+         Falling back to drawing the original cross-origin URL directly
+         would taint the canvas (the browser can't be sure we have
+         permission to read those pixels back), which makes
+         canvas.toDataURL() throw a SecurityError later — that thrown
+         error was exactly what "প্রিভিউ তৈরি করা যায়নি" was catching. */
+      if (dataUrl) {
+        const img = await loadImageEl(dataUrl);
+        if (img) return img;
+      }
+    }
+    console.log("loadDrawableImage: all URL candidates failed for", url);
+    return null;
+  }
+
+  function wrapCanvasText(ctx, text, maxWidth) {
+    const words = String(text || "").split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.length ? lines : [""];
+  }
+
+  function roundRectPath(ctx, x, y, w, h, r) {
+    if (typeof r === "number") r = { tl: r, tr: r, br: r, bl: r };
+    ctx.beginPath();
+    ctx.moveTo(x + r.tl, y);
+    ctx.lineTo(x + w - r.tr, y);
+    ctx.arcTo(x + w, y, x + w, y + r.tr, r.tr);
+    ctx.lineTo(x + w, y + h - r.br);
+    ctx.arcTo(x + w, y + h, x + w - r.br, y + h, r.br);
+    ctx.lineTo(x + r.bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r.bl, r.bl);
+    ctx.lineTo(x, y + r.tl);
+    ctx.arcTo(x, y, x + r.tl, y, r.tl);
+    ctx.closePath();
+  }
+
+  function drawTeardrop(ctx, cx, cy, size, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - size);
+    ctx.bezierCurveTo(cx + size * 0.85, cy - size * 0.1, cx + size * 0.6, cy + size, cx, cy + size);
+    ctx.bezierCurveTo(cx - size * 0.6, cy + size, cx - size * 0.85, cy - size * 0.1, cx, cy - size);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ---- draws the whole donation card by hand onto a <canvas>, using the
+     Canvas 2D API instead of asking html2canvas to screenshot the live
+     DOM. This is the "new system": no more DOM snapshotting, so none of
+     html2canvas's cross-origin-image / negative-z-index / webfont-timing
+     quirks can apply — every pixel is placed explicitly here, matching
+     the on-screen card's colors, fonts and layout. ---- */
+  async function buildDonationCardCanvas(record) {
+    const CARD_W = 400;
+    const HEAD_H = 232;
+    const PAD = 26;
+    const contentW = CARD_W - PAD * 2;
+    const scale = 3; // render at 3x for a crisp download regardless of screen DPI
+
+    const measure = document.createElement("canvas").getContext("2d");
+    const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+    const hospitalText = "(" + (record.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন " + (record.hospitalName || "").trim() + " এ।";
+    const thanksText = networkName + " এর পক্ষে থেকে অবিরাম ভালোবাসা রইলো।".replace("পক্ষে থেকে", "পক্ষ থেকে");
+    const emojiText = "ভাই এর জন্য সবাই দোয়া করবেন।";
+    const stampText = "রক্ত দিন • জীবন বাঁচান";
+
+    measure.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
+    const hospitalLines = wrapCanvasText(measure, hospitalText, contentW);
+    measure.font = "italic 600 14.5px 'Fraunces',Georgia,serif";
+    const thanksLines = wrapCanvasText(measure, thanksText, contentW);
+
+    let bodyH = 18;   // top padding
+    bodyH += 30;      // #ID row
+    bodyH += 32;      // name + blood-group row
+    bodyH += 26;      // visit-count row
+    bodyH += hospitalLines.length * 24 + 12;
+    bodyH += 24;      // divider
+    bodyH += thanksLines.length * 25 + 4;
+    bodyH += 30;      // emoji row
+    bodyH += 44;      // stamp pill
+    bodyH += 24;      // gap before QR
+    bodyH += 152;     // QR box
+    bodyH += 30;      // bottom padding
+    let totalH = HEAD_H + bodyH;
+    if (!isFinite(totalH) || totalH <= HEAD_H) totalH = HEAD_H + 400; // safety fallback, should never trigger
+    console.log("buildDonationCardCanvas: card size", CARD_W + "x" + totalH, "at " + scale + "x");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(CARD_W * scale);
+    canvas.height = Math.round(totalH * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+
+    // ---- card base + rounded outer corners ----
+    roundRectPath(ctx, 0, 0, CARD_W, totalH, 22);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fill();
+    ctx.save();
+    roundRectPath(ctx, 0, 0, CARD_W, totalH, 22);
+    ctx.clip();
+
+    // ---- watermark: drawn FIRST so it naturally sits behind everything
+    //      else painted after it — no z-index trick needed at all. ----
+    const logoSrc = (appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : "fav.jpeg";
+    const watermarkImg = await loadDrawableImage(logoSrc);
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    if (watermarkImg) {
+      const wmW = CARD_W * 0.52;
+      const wmH = wmW * (watermarkImg.height / watermarkImg.width || 1);
+      ctx.filter = "grayscale(1)";
+      ctx.drawImage(watermarkImg, (CARD_W - wmW) / 2, totalH / 2 - wmH - 24, wmW, wmH);
+      ctx.filter = "none";
+    }
+    ctx.font = "800 44px 'Fraunces','Inter',sans-serif";
+    ctx.fillStyle = "#211613";
+    ctx.textAlign = "center";
+    ctx.fillText("BNB", CARD_W / 2, totalH / 2 + 26);
+    ctx.textAlign = "left";
+    ctx.restore();
+
+    // ---- head band ----
+    ctx.save();
+    roundRectPath(ctx, 0, 0, CARD_W, HEAD_H, { tl: 22, tr: 22, br: 0, bl: 0 });
+    ctx.clip();
+    const hasPhoto = !record.hidePhoto && !!record.image;
+    if (hasPhoto) {
+      const photoImg = await loadDrawableImage(record.image);
+      if (photoImg) {
+        const ir = photoImg.width / photoImg.height;
+        const br = CARD_W / HEAD_H;
+        let dw, dh, dx, dy;
+        if (ir > br) { dh = HEAD_H; dw = dh * ir; dx = (CARD_W - dw) / 2; dy = 0; }
+        else { dw = CARD_W; dh = dw / ir; dx = 0; dy = (HEAD_H - dh) / 2; }
+        ctx.drawImage(photoImg, dx, dy, dw, dh);
+      }
+    }
+    const headGrad = ctx.createLinearGradient(0, 0, CARD_W * 0.6, HEAD_H);
+    if (hasPhoto) {
+      headGrad.addColorStop(0, "rgba(158,27,50,0.82)");
+      headGrad.addColorStop(1, "rgba(110,18,32,0.88)");
+    } else {
+      headGrad.addColorStop(0, "#9E1B32");
+      headGrad.addColorStop(1, "#6E1220");
+    }
+    ctx.fillStyle = headGrad;
+    ctx.fillRect(0, 0, CARD_W, HEAD_H);
+
+    if (!hasPhoto) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "600 15.5px 'Noto Sans Bengali','Inter',sans-serif";
+      ctx.textAlign = "center";
+      const msg = record.hidePhoto ? "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়" : "";
+      if (msg) ctx.fillText(msg, CARD_W / 2, HEAD_H / 2 + 30);
+      ctx.textAlign = "left";
+    }
+
+    // ribbon ("VERIFIED"), rotated 45° across the top-right corner
+    ctx.save();
+    ctx.translate(CARD_W - 34 + 75, 16 + 12);
+    ctx.rotate(Math.PI / 4);
+    const ribbonGrad = ctx.createLinearGradient(-75, -12, 75, 12);
+    ribbonGrad.addColorStop(0, "#F3D8A8");
+    ribbonGrad.addColorStop(0.55, "#B9722E");
+    ribbonGrad.addColorStop(1, "#8F5A20");
+    ctx.fillStyle = ribbonGrad;
+    ctx.fillRect(-75, -12, 150, 24);
+    ctx.fillStyle = "#3A2205";
+    ctx.font = "700 9.5px 'IBM Plex Mono',monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("✓ VERIFIED", 0, 1);
+    ctx.restore();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+
+    // brand logo circle, top-left of head band
+    const logoCx = PAD + 21, logoCy = 30 + 21, logoR = 21;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.clip();
+    if (watermarkImg) {
+      const ir2 = watermarkImg.width / watermarkImg.height || 1;
+      let ldw, ldh;
+      if (ir2 > 1) { ldh = logoR * 2; ldw = ldh * ir2; } else { ldw = logoR * 2; ldh = ldw / ir2; }
+      ctx.drawImage(watermarkImg, logoCx - ldw / 2, logoCy - ldh / 2, ldw, ldh);
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.stroke();
+
+    // verified droplet badge, bottom-right of head band
+    const vbx = CARD_W - 14 - 13, vby = HEAD_H - 10 - 13;
+    ctx.beginPath();
+    ctx.arc(vbx, vby, 13, 0, Math.PI * 2);
+    ctx.fillStyle = "#3F7A5D";
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.stroke();
+    drawTeardrop(ctx, vbx, vby + 1, 5, "#ffffff");
+
+    ctx.restore(); // end head-band clip
+
+    // ---- body ----
+    let y = HEAD_H + 26;
+    ctx.fillStyle = "#211613";
+    ctx.font = "700 12px 'IBM Plex Mono',monospace";
+    ctx.fillText("#ID: " + (record.donationNo || ""), PAD, y);
+    y += 32;
+
+    ctx.font = "700 23px 'Fraunces',Georgia,serif";
+    ctx.fillStyle = "#211613";
+    const nameText = (record.name || "").trim();
+    ctx.fillText(nameText, PAD, y);
+    const nameW = ctx.measureText(nameText).width;
+    const bgText = record.bloodGroup || "—";
+    ctx.font = "700 14.5px 'Fraunces',Georgia,serif";
+    const bgTextW = ctx.measureText(bgText).width;
+    const bgBadgeW = bgTextW + 26, bgBadgeH = 28;
+    const bgBadgeX = PAD + nameW + 10, bgBadgeY = y - 20;
+    roundRectPath(ctx, bgBadgeX, bgBadgeY, bgBadgeW, bgBadgeH, 999);
+    const badgeGrad = ctx.createLinearGradient(bgBadgeX, bgBadgeY, bgBadgeX + bgBadgeW, bgBadgeY + bgBadgeH);
+    badgeGrad.addColorStop(0, "#9E1B32");
+    badgeGrad.addColorStop(1, "#6E1220");
+    ctx.fillStyle = badgeGrad;
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.textBaseline = "middle";
+    ctx.fillText(bgText, bgBadgeX + 13, bgBadgeY + bgBadgeH / 2 + 1);
+    ctx.textBaseline = "alphabetic";
+    y += 28;
+
+    ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
+    ctx.fillStyle = "#7A4A18";
+    drawTeardrop(ctx, PAD + 5, y - 5, 5, "#B9722E");
+    ctx.fillText(ordinalShortBn(record.visitCount || 1) + " বারের মতো", PAD + 16, y);
+    y += 26;
+
+    ctx.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
+    ctx.fillStyle = "#211613";
+    for (const line of hospitalLines) {
+      ctx.fillText(line, PAD, y);
+      y += 24;
+    }
+    y += 12;
+
+    // divider
+    ctx.strokeStyle = "#E7DCD4";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, y);
+    ctx.lineTo(CARD_W - PAD, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(CARD_W / 2 - 10, y - 6, 20, 12);
+    drawTeardrop(ctx, CARD_W / 2, y, 4, "#B9722E");
+    y += 24;
+
+    ctx.font = "italic 600 14.5px 'Fraunces',Georgia,serif";
+    ctx.fillStyle = "#211613";
+    for (const line of thanksLines) {
+      ctx.fillText(line, PAD, y);
+      y += 25;
+    }
+    y += 4;
+
+    ctx.font = "700 15px 'Noto Sans Bengali','Inter',sans-serif";
+    ctx.fillStyle = "#211613";
+    ctx.fillText(emojiText, PAD, y);
+    y += 30;
+
+    // stamp pill
+    ctx.font = "700 11px 'Noto Sans Bengali','Inter',sans-serif";
+    const stampTextW = ctx.measureText(stampText).width;
+    const stampW = stampTextW + 40;
+    roundRectPath(ctx, PAD, y - 20, stampW, 34, 999);
+    const stampGrad = ctx.createLinearGradient(PAD, y, PAD + stampW, y);
+    stampGrad.addColorStop(0, "#F7EAD8");
+    stampGrad.addColorStop(1, "#F0DCB6");
+    ctx.fillStyle = stampGrad;
+    ctx.fill();
+    ctx.strokeStyle = "#B9722E";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = "#7A4A18";
+    ctx.fillText(stampText, PAD + 18, y + 3);
+    y += 44;
+
+    // QR code
+    const cardUrl = window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(record.donationNo || "");
+    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(cardUrl);
+    const qrImgEl = await loadDrawableImage(qrUrl);
+    const qrSize = 140;
+    const qrX = (CARD_W - qrSize) / 2;
+    roundRectPath(ctx, qrX - 6, y - 6, qrSize + 12, qrSize + 12, 10);
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = "rgba(33,22,19,0.12)";
+    ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    if (qrImgEl) ctx.drawImage(qrImgEl, qrX, y, qrSize, qrSize);
+
+    ctx.restore(); // end outer card clip
+    return canvas;
+  }
+
+  /* ---- admin-only: builds the card canvas above, then opens a small
+     popup window that shows that canvas full-size with a download button —
+     this is the "new system": the person can SEE the exact PNG (rendered
+     entirely from data, not a DOM screenshot) before saving it. ---- */
+  async function downloadDonationCardPNG() {
+    if (!currentDonationRecord) return;
+    resultDownloadBtn.disabled = true;
+    const prevLabel = resultDownloadBtn.innerHTML;
+    resultDownloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>প্রস্তুত হচ্ছে...</span>';
+    try {
+      if (document.fonts && document.fonts.ready) {
+        await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 1500))]);
+      }
+      const canvas = await buildDonationCardCanvas(currentDonationRecord);
+      const dataUrl = canvas.toDataURL("image/png");
+      const fileName = "donation-card-" + (currentDonationRecord.donationNo || "card") + ".png";
+
+      const win = window.open("", "_blank", "width=460,height=780");
+      if (!win) { showToast("পপ-আপ ব্লক হয়েছে, ব্রাউজারে অনুমতি দিন"); return; }
+      win.document.title = fileName;
+      win.document.write(
+        '<!doctype html><html><head><meta charset="utf-8"><title>' + fileName + '</title>' +
+        '<style>' +
+        'html,body{margin:0;background:#2b2320;min-height:100%;}' +
+        'body{display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px;font-family:sans-serif;box-sizing:border-box;}' +
+        'canvas{max-width:100%;height:auto;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,0.4);}' +
+        'button{padding:12px 24px;border-radius:999px;border:none;background:#9E1B32;color:#fff;font-size:15px;font-weight:700;cursor:pointer;}' +
+        'button:hover{background:#6E1220;}' +
+        '</style></head><body>' +
+        '<canvas id="cardCanvas" width="' + canvas.width + '" height="' + canvas.height + '"></canvas>' +
+        '<button id="dlBtn">ডাউনলোড করুন</button>' +
+        '</body></html>'
+      );
+      win.document.close();
+      const targetCanvas = win.document.getElementById("cardCanvas");
+      const tctx = targetCanvas.getContext("2d");
+      const previewImg = new win.Image();
+      previewImg.onload = () => tctx.drawImage(previewImg, 0, 0);
+      previewImg.src = dataUrl;
+      const dlBtn = win.document.getElementById("dlBtn");
+      dlBtn.addEventListener("click", () => {
+        const link = win.document.createElement("a");
+        link.href = dataUrl;
+        link.download = fileName;
+        win.document.body.appendChild(link);
+        link.click();
+        link.remove();
+      });
+      showToast("নতুন উইন্ডোতে কার্ড প্রস্তুত");
+    } catch (err) {
+      console.log("Canvas card render failed:", err);
+      showToast("প্রিভিউ তৈরি করা যায়নি, আবার চেষ্টা করুন");
+    } finally {
+      resultDownloadBtn.disabled = false;
+      resultDownloadBtn.innerHTML = prevLabel;
+    }
+  }
+
+  if (resultDownloadBtn) {
+    resultDownloadBtn.addEventListener("click", downloadDonationCardPNG);
   }
 
   if (manageBtn && manageOverlay) {
@@ -4475,6 +4943,10 @@ function loadScript(src) {
 
 loadScript("https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js")
   .catch(err => console.log("Could not load Cropper.js:", err));
+
+/* html2canvas is no longer used — the admin "download card as PNG" button
+   now draws the card by hand onto a <canvas> (see buildDonationCardCanvas),
+   so there's nothing to lazy-load here anymore. */
 
 function initFirebase() {
   try {
