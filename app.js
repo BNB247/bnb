@@ -5,7 +5,7 @@ const _cfgB64 = "eyJhcGlLZXkiOiJBSXphU3lDSDVvSEZ6dUM2cWJBalY3Y2dIV1FvcEh0R0ExODB
 const firebaseConfig = JSON.parse(atob(_cfgB64));
 
 let firebaseAvailable = false;
-let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef;
+let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef, newsLikesRef;
 
 /* ============================================================
    LOCAL CACHE (shares keys with the main app where relevant,
@@ -374,6 +374,116 @@ function renderDonationGallery() {
 
 const DONATION_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+/* ============================================================
+   সকল রক্তদান রেকর্ড — কার্ড গ্রিড (রুট পেজ #donations)
+   একই landingData.donationRecords ব্যবহার করে, যা ID সার্চ বক্স ও
+   এডমিন প্যানেলের "ডোনেশন রেকর্ড" ম্যানেজারও ব্যবহার করে — তাই আলাদা
+   কোনো Firebase রিড লাগে না, সবসময় সিঙ্কে থাকে।
+   ============================================================ */
+const recordsFilterState = { q: "", bg: "" };
+
+function recordDateBn(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const months = ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্ট", "অক্টো", "নভে", "ডিসে"];
+  return toBengaliDigits(d.getDate()) + " " + months[d.getMonth()] + ", " + toBengaliDigits(d.getFullYear());
+}
+
+function recordCardTemplate(r) {
+  const showPhoto = !r.hidePhoto && r.image;
+  const placeholderIcon = r.hidePhoto ? "fa-eye-slash" : "fa-user";
+  const dateBn = recordDateBn(r.date);
+  return (
+    '<button type="button" class="recordCard" data-record-id="' + r.id + '">' +
+      '<div class="recordCardPhotoWrap' + (showPhoto ? "" : " placeholderMode") + '">' +
+        '<div class="imgSkeleton" aria-hidden="true"></div>' +
+        (showPhoto ? '<img class="recordCardImg" alt="' + escAttr(r.name) + '">' : "") +
+        '<span class="recordCardPlaceholder"><i class="fa-solid ' + placeholderIcon + '" aria-hidden="true"></i></span>' +
+      '</div>' +
+      '<div class="recordCardBody">' +
+        '<div class="recordCardTopRow">' +
+          '<span class="recordCardNo"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>' + escAttr(r.donationNo || "") + '</span>' +
+          '<span class="recordCardBg">' + escAttr(r.bloodGroup || "—") + '</span>' +
+        '</div>' +
+        '<div class="recordCardName">' + escAttr(r.name || "") + '</div>' +
+        '<div class="recordCardHospital"><i class="fa-solid fa-hospital" aria-hidden="true"></i>' + escAttr(r.hospitalName || "—") + '</div>' +
+        '<div class="recordCardMetaRow">' +
+          (dateBn ? '<span><i class="fa-regular fa-calendar" aria-hidden="true"></i>' + escAttr(dateBn) + '</span>' : "<span></span>") +
+          '<span><i class="fa-solid fa-droplet" aria-hidden="true"></i>' + ordinalShortBn(r.visitCount || 1) + ' বার</span>' +
+        '</div>' +
+      '</div>' +
+    '</button>'
+  );
+}
+
+function renderRecordsGrid() {
+  const grid = document.getElementById("recordsGrid");
+  if (!grid) return;
+  const emptyState = document.getElementById("recordsEmptyState");
+  const all = (landingData.donationRecords || []).slice().sort((a, b) => {
+    const na = parseInt(a.donationNo, 10) || 0, nb = parseInt(b.donationNo, 10) || 0;
+    return nb - na;
+  });
+  const q = recordsFilterState.q.trim().toLowerCase();
+  const bg = recordsFilterState.bg;
+  const filtered = all.filter(r => {
+    if (bg && (r.bloodGroup || "") !== bg) return false;
+    if (!q) return true;
+    return (
+      (r.name || "").toLowerCase().includes(q) ||
+      (r.donationNo || "").toLowerCase().includes(q) ||
+      (r.hospitalName || "").toLowerCase().includes(q)
+    );
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = "";
+    if (emptyState) {
+      emptyState.style.display = "flex";
+      const span = emptyState.querySelector("span");
+      if (span) span.textContent = all.length ? "এই খোঁজে কোনো রেকর্ড পাওয়া যায়নি" : "এখনও কোনো রেকর্ড যোগ করা হয়নি";
+    }
+    return;
+  }
+  if (emptyState) emptyState.style.display = "none";
+  grid.innerHTML = filtered.map(recordCardTemplate).join("");
+  filtered.forEach(r => {
+    const card = grid.querySelector('.recordCard[data-record-id="' + r.id + '"]');
+    if (!card) return;
+    const img = card.querySelector(".recordCardImg");
+    if (img) loadImageWithFallback(img, r.image, card.querySelector(".recordCardPhotoWrap"));
+  });
+}
+
+(function initRecordsGridPage() {
+  const grid = document.getElementById("recordsGrid");
+  if (!grid) return;
+  const searchInput = document.getElementById("recordsSearchInput");
+  const bgFilter = document.getElementById("recordsBgFilter");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      recordsFilterState.q = searchInput.value || "";
+      renderRecordsGrid();
+    });
+  }
+  if (bgFilter) {
+    bgFilter.addEventListener("change", () => {
+      recordsFilterState.bg = bgFilter.value || "";
+      renderRecordsGrid();
+    });
+  }
+  grid.addEventListener("click", e => {
+    const card = e.target.closest(".recordCard");
+    if (!card) return;
+    const id = card.getAttribute("data-record-id");
+    const record = (landingData.donationRecords || []).find(rec => rec.id === id);
+    if (record && typeof window.renderDonationResult === "function") {
+      window.renderDonationResult(record);
+    }
+  });
+})();
+
 function teamCardTemplate(m) {
   return (
     '<div class="teamCard" data-team-id="' + m.id + '">' +
@@ -510,9 +620,41 @@ function toBengaliDigits(n) {
 
 /* ============================================================
    NEWS SECTION — admin writes news from the admin panel (title,
-   content, optional photo, date); the public site just lists
-   everything, newest first.
+   content, optional photo, date); the public site lists everything,
+   newest first, each post with its own like + share (WhatsApp /
+   Facebook / Messenger / copy-link) buttons.
    ============================================================ */
+const CACHE_NEWS_LIKES_KEY = "blood_donor_news_likes_cache";
+const LIKED_NEWS_KEY = "blood_donor_liked_news";
+let newsLikesData = readCache(CACHE_NEWS_LIKES_KEY, {});
+
+function getLikedNewsIds() { return readCache(LIKED_NEWS_KEY, []); }
+function setLikedNewsIds(arr) { writeCache(LIKED_NEWS_KEY, arr); }
+function isNewsLiked(id) { return getLikedNewsIds().indexOf(id) !== -1; }
+
+function toggleNewsLike(id) {
+  const liked = isNewsLiked(id);
+  const likedIds = getLikedNewsIds();
+  if (liked) {
+    setLikedNewsIds(likedIds.filter(x => x !== id));
+    newsLikesData[id] = Math.max(0, (newsLikesData[id] || 1) - 1);
+  } else {
+    setLikedNewsIds(likedIds.concat([id]));
+    newsLikesData[id] = (newsLikesData[id] || 0) + 1;
+  }
+  writeCache(CACHE_NEWS_LIKES_KEY, newsLikesData);
+  renderNewsSection(); // instant local feedback
+  if (firebaseAvailable && newsLikesRef) {
+    newsLikesRef.child(id).transaction(curr => Math.max(0, (curr || 0) + (liked ? -1 : 1)));
+  }
+}
+
+/* A shareable deep link straight to one news post — opened later, it
+   lands on the news page and scrolls/highlights that exact card. */
+function buildNewsShareUrl(id) {
+  return location.origin + location.pathname + "#news/" + encodeURIComponent(id);
+}
+
 function formatNewsDateBn(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -524,16 +666,33 @@ function formatNewsDateBn(dateStr) {
 function newsCardTemplate(n) {
   return (
     '<article class="newsCard" data-news-id="' + n.id + '">' +
+      '<div class="newsCardTopActions">' +
+        '<button type="button" class="newsLikeBtn" data-news-id="' + n.id + '" aria-label="লাইক">' +
+          '<i class="fa-regular fa-heart" aria-hidden="true"></i>' +
+          '<span class="newsLikeCount"></span>' +
+        '</button>' +
+        '<div class="newsShareWrap">' +
+          '<button type="button" class="newsShareBtn" data-news-id="' + n.id + '" aria-label="শেয়ার">' +
+            '<i class="fa-solid fa-share-nodes" aria-hidden="true"></i>' +
+          '</button>' +
+          '<div class="newsShareMenu">' +
+            '<a class="newsShareOpt waShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>WhatsApp</a>' +
+            '<a class="newsShareOpt fbShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook" aria-hidden="true"></i>Facebook</a>' +
+            '<a class="newsShareOpt msgShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i>Messenger</a>' +
+            '<button type="button" class="newsShareOpt copyShare" data-news-id="' + n.id + '"><i class="fa-solid fa-link" aria-hidden="true"></i>লিংক কপি</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="newsCardImageWrap placeholderMode">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
         '<img class="newsCardImage" alt="' + escAttr(n.title) + '">' +
         '<span class="newsCardPlaceholderMark"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>' +
       '</div>' +
-      '<div class="newsCardBody">' +
+      '<div class="newsCardTitleBox">' +
         '<span class="newsCardDate"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span class="newsCardDateText"></span></span>' +
         '<h3 class="newsCardTitle"></h3>' +
-        '<p class="newsCardText"></p>' +
       '</div>' +
+      '<p class="newsCardText"></p>' +
     '</article>'
   );
 }
@@ -555,8 +714,9 @@ function renderNewsSection() {
     const textEl = card.querySelector(".newsCardText");
     const dateEl = card.querySelector(".newsCardDateText");
     if (titleEl) titleEl.textContent = n.title;
-    if (textEl) textEl.textContent = n.content;
     if (dateEl) dateEl.textContent = formatNewsDateBn(n.date);
+    if (textEl) textEl.textContent = n.content || "";
+
     const wrap = card.querySelector(".newsCardImageWrap");
     const img = card.querySelector(".newsCardImage");
     if (n.newsImage) {
@@ -567,9 +727,98 @@ function renderNewsSection() {
       wrap.classList.remove("loadingImg", "imgLoadFailed");
       img.removeAttribute("src");
     }
+
+    // like button state + count
+    const likeBtn = card.querySelector(".newsLikeBtn");
+    const likeIcon = likeBtn ? likeBtn.querySelector("i") : null;
+    const likeCountEl = card.querySelector(".newsLikeCount");
+    const likeCount = (newsLikesData && newsLikesData[n.id]) || 0;
+    if (likeCountEl) likeCountEl.textContent = likeCount > 0 ? likeCount : "";
+    if (likeBtn) likeBtn.classList.toggle("liked", isNewsLiked(n.id));
+    if (likeIcon) likeIcon.className = isNewsLiked(n.id) ? "fa-solid fa-heart" : "fa-regular fa-heart";
+
+    // share links — a fresh, correct URL per post, rebuilt every render
+    const shareUrl = buildNewsShareUrl(n.id);
+    const shareText = encodeURIComponent((n.title || "") + " — " + (landingData.siteName || ""));
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const waLink = card.querySelector(".waShare");
+    const fbLink = card.querySelector(".fbShare");
+    const msgLink = card.querySelector(".msgShare");
+    const copyBtn = card.querySelector(".copyShare");
+    if (waLink) waLink.setAttribute("href", "https://wa.me/?text=" + shareText + "%20" + encodedUrl);
+    if (fbLink) fbLink.setAttribute("href", "https://www.facebook.com/sharer/sharer.php?u=" + encodedUrl);
+    if (msgLink) msgLink.setAttribute("href", "fb-messenger://share/?link=" + encodedUrl);
+    if (copyBtn) copyBtn.setAttribute("data-share-url", shareUrl);
   });
   setSectionVisible(document.getElementById("newsSection"), landingData.news.length > 0);
 }
+
+/* ============================================================
+   NEWS LIKE / SHARE — one delegated listener on the list container
+   (cards get re-rendered without re-binding, so delegation avoids
+   ever double-attaching a handler).
+   ============================================================ */
+(function initNewsInteractions() {
+  const container = document.getElementById("newsList");
+  if (!container) return;
+
+  function closeAllShareMenus(except) {
+    document.querySelectorAll(".newsShareMenu.open").forEach(m => { if (m !== except) m.classList.remove("open"); });
+  }
+
+  container.addEventListener("click", e => {
+    const likeBtn = e.target.closest(".newsLikeBtn");
+    if (likeBtn) {
+      toggleNewsLike(likeBtn.getAttribute("data-news-id"));
+      return;
+    }
+    const shareBtn = e.target.closest(".newsShareBtn");
+    if (shareBtn) {
+      const menu = shareBtn.parentElement.querySelector(".newsShareMenu");
+      const willOpen = menu && !menu.classList.contains("open");
+      closeAllShareMenus();
+      if (menu && willOpen) menu.classList.add("open");
+      return;
+    }
+    const copyBtn = e.target.closest(".copyShare");
+    if (copyBtn) {
+      const url = copyBtn.getAttribute("data-share-url") || "";
+      const menu = copyBtn.closest(".newsShareMenu");
+      if (menu) menu.classList.remove("open");
+      if (!url) return;
+      const done = () => showToast("লিংক কপি করা হয়েছে");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+      } else {
+        fallbackCopy(url, done);
+      }
+      return;
+    }
+    const shareOpt = e.target.closest(".newsShareOpt");
+    if (shareOpt) {
+      const menu = shareOpt.closest(".newsShareMenu");
+      if (menu) setTimeout(() => menu.classList.remove("open"), 150);
+    }
+  });
+
+  function fallbackCopy(url, done) {
+    try {
+      const tmp = document.createElement("textarea");
+      tmp.value = url;
+      tmp.style.position = "fixed";
+      tmp.style.opacity = "0";
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand("copy");
+      document.body.removeChild(tmp);
+      done();
+    } catch (err) { /* clipboard unavailable — link stays shareable via the app buttons */ }
+  }
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".newsShareWrap")) closeAllShareMenus();
+  });
+})();
 
 function processStepTemplate(step, index, colKey) {
   return (
@@ -704,6 +953,7 @@ function renderLanding() {
   loadBackgroundWithFallback(ctaBand, landingData.impactImage, "hasImage");
 
   renderDonationGallery();
+  renderRecordsGrid();
   renderNewsSection();
   renderTeamSection();
   renderFaqSection();
@@ -976,7 +1226,7 @@ renderLanding();
    লুকিয়ে সংশ্লিষ্ট রুট পেজ দেখানো হয়।
    ============================================================ */
 (function initRoutePages() {
-  const ROUTES = ["process", "testimonials", "blood-group"];
+  const ROUTES = ["process", "testimonials", "blood-group", "news", "donations"];
   const heroEl = document.getElementById("top");
   const mainEl = document.getElementById("main");
   if (!heroEl || !mainEl) return;
@@ -989,20 +1239,51 @@ renderLanding();
     });
   }
 
+  /* "#news" opens the news list page; "#news/<id>" (used by the news
+     share buttons — see buildNewsShareUrl) opens the same list page
+     and then scrolls to + highlights that one shared post. A raw hash
+     of "blood-group" must NOT be mistaken for a "news" route, so only
+     an exact "news" or a "news/" prefix counts. */
+  function parseHash(rawHash) {
+    const hash = (rawHash || "").replace("#", "");
+    if (hash === "news" || hash.indexOf("news/") === 0) {
+      return { route: "news", newsId: hash.indexOf("news/") === 0 ? decodeURIComponent(hash.slice(5)) : null };
+    }
+    return { route: hash, newsId: null };
+  }
+
+  function highlightSharedNews(id, attemptsLeft) {
+    if (!id) return;
+    const card = document.querySelector('.newsCard[data-news-id="' + id + '"]');
+    if (!card) {
+      // News list may still be rendering (data just arrived from Firebase) — retry briefly.
+      if (attemptsLeft > 0) setTimeout(() => highlightSharedNews(id, attemptsLeft - 1), 250);
+      return;
+    }
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("newsCardHighlight");
+    setTimeout(() => card.classList.remove("newsCardHighlight"), 2600);
+  }
+
   function showRoute(hash) {
-    const isRoute = ROUTES.includes(hash);
+    const parsed = parseHash(hash);
+    const isRoute = ROUTES.includes(parsed.route);
     ROUTES.forEach(r => {
       const page = document.getElementById("route-" + r);
-      if (page) page.classList.toggle("active", isRoute && hash === r);
+      if (page) page.classList.toggle("active", isRoute && parsed.route === r);
     });
     heroEl.style.display = isRoute ? "none" : "";
     mainEl.style.display = isRoute ? "none" : "";
-    markActiveNav(isRoute ? hash : "home");
-    window.scrollTo(0, 0);
+    markActiveNav(isRoute ? parsed.route : "home");
+    if (parsed.route === "news" && parsed.newsId) {
+      highlightSharedNews(parsed.newsId, 12);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }
 
   function handleHash() {
-    showRoute((location.hash || "").replace("#", ""));
+    showRoute(location.hash || "");
   }
 
   window.addEventListener("hashchange", handleHash);
@@ -1511,7 +1792,7 @@ document.addEventListener("click", e => {
 
       const emojiRow = document.createElement("div");
       emojiRow.className = "donationResultEmojiRow";
-      emojiRow.textContent = "ভাই এর জন্য সবাই দোয়া করবেন।";
+      emojiRow.textContent = (found.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।";
       body.appendChild(emojiRow);
 
       const stamp = document.createElement("div");
@@ -1552,6 +1833,7 @@ document.addEventListener("click", e => {
     renderDonationResult(fresh || null);
   }
   window.refreshOpenDonationCard = refreshOpenDonationCard;
+  window.renderDonationResult = renderDonationResult;
 
   searchBtn.addEventListener("click", performDonationSearch);
   searchInput.addEventListener("keydown", e => { if (e.key === "Enter") performDonationSearch(); });
@@ -1759,7 +2041,7 @@ document.addEventListener("click", e => {
     const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
     const hospitalText = "(" + (record.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন " + (record.hospitalName || "").trim() + " এ।";
     const thanksText = networkName + " এর পক্ষে থেকে অবিরাম ভালোবাসা রইলো।".replace("পক্ষে থেকে", "পক্ষ থেকে");
-    const emojiText = "ভাই এর জন্য সবাই দোয়া করবেন।";
+    const emojiText = (record.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।";
     const stampText = "রক্ত দিন • জীবন বাঁচান";
 
     measure.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
@@ -2154,6 +2436,7 @@ function initFirebase() {
     appConfigRef = db.ref("appConfig");
     landingPageRef = db.ref("landingPage");
     visitorRef = db.ref("siteStats/visitorCount");
+    newsLikesRef = db.ref("newsLikes");
     firebaseAvailable = true;
 
     if (isCacheFresh(CACHE_DONORS_KEY)) {
@@ -2168,11 +2451,34 @@ function initFirebase() {
       fetchAppConfigOnce();
     }
 
-    if (isCacheFresh(CACHE_LANDING_KEY)) {
-      console.log("LandingPage: using cached copy, skipping download");
-    } else {
-      fetchLandingOnce();
-    }
+    /* LandingPage content (team, FAQs, partners, testimonials, news,
+       gallery photos, process steps, site texts, donation records,
+       notices...) used to be fetched ONCE and then reused from a
+       10-minute local cache to save bandwidth (see isCacheFresh
+       above). That meant an admin deleting/editing anything in
+       admin.html could take up to 10 minutes to actually disappear
+       or update on the public site — every visitor's browser kept
+       serving its old cached copy until that timer ran out.
+       Fix: landingPage is now a live listener instead, the same fix
+       already applied earlier to just "importantNotice" and
+       "donationRecords" individually — this generalizes it to
+       EVERY field under landingPage. It still paints instantly from
+       localStorage on load (see the DEFAULT_LANDING/readCache line
+       near the top of this file), then Firebase's very first "value"
+       event replaces that with the true current copy, and every
+       future admin change (including deletes) re-fires this same
+       listener and re-renders within a second or two — no more
+       waiting on a cache timer. */
+    landingPageRef.on("value", snapshot => {
+      const val = snapshot.val() || {};
+      landingData = Object.assign({}, DEFAULT_LANDING, val);
+      normalizeLandingData();
+      writeCache(CACHE_LANDING_KEY, landingData);
+      markFetchedNow(CACHE_LANDING_KEY);
+      renderLanding();
+      if (window.refreshOpenDonationCard) window.refreshOpenDonationCard();
+      if (window.tryAutoOpenDonationCardFromUrl) window.tryAutoOpenDonationCardFromUrl();
+    });
 
     /* Visitor count stays a live listener — it's a single small
        number, not a full collection, so keeping it real-time costs
@@ -2183,35 +2489,13 @@ function initFirebase() {
       if (statsAnimated) animateNumber(document.getElementById("statVisitors"), latestVisitorCount);
     });
 
-    /* Important notice also stays live (bypassing the 10-minute landing
-       cache above) — it's meant to be urgent/time-sensitive, so a visitor
-       already on the page (or an admin double-checking right after saving)
-       should see it appear immediately, not after the cache expires. */
-    landingPageRef.child("importantNotice").on("value", snapshot => {
-      landingData.importantNotice = snapshot.val() || "";
-      writeCache(CACHE_LANDING_KEY, landingData);
-      renderNoticeBar();
-    });
-    landingPageRef.child("importantNoticeActive").on("value", snapshot => {
-      landingData.importantNoticeActive = !!snapshot.val();
-      writeCache(CACHE_LANDING_KEY, landingData);
-      renderNoticeBar();
-    });
-
-    /* Donation records also stay live (bypassing the 10-minute landing
-       cache above). This was the cause of the "changed photo doesn't
-       show up" bug: donationRecords used to only refresh when the
-       10-minute cache expired, so admins editing a record's photo and
-       then immediately searching for it (on the same device) kept
-       seeing the OLD photo from localStorage. A record card, once
-       opened, is also live-refreshed via refreshOpenDonationCard so an
-       edit made while someone already has the card open updates it
-       in place. */
-    landingPageRef.child("donationRecords").on("value", snapshot => {
-      landingData.donationRecords = toArrayField(snapshot.val());
-      writeCache(CACHE_LANDING_KEY, landingData);
-      if (window.refreshOpenDonationCard) window.refreshOpenDonationCard();
-      if (window.tryAutoOpenDonationCardFromUrl) window.tryAutoOpenDonationCardFromUrl();
+    /* News likes — small dataset, so a live listener stays cheap and
+       keeps like counts in sync across everyone currently viewing the
+       page (e.g. two visitors on the news page at the same time). */
+    newsLikesRef.on("value", snapshot => {
+      newsLikesData = snapshot.val() || {};
+      writeCache(CACHE_NEWS_LIKES_KEY, newsLikesData);
+      renderNewsSection();
     });
 
     bumpVisitorIfNewDevice();
@@ -2242,16 +2526,10 @@ function fetchAppConfigOnce() {
   }).catch(err => console.log("AppConfig fetch failed:", err));
 }
 
-function fetchLandingOnce() {
-  return landingPageRef.once("value").then(snapshot => {
-    const val = snapshot.val() || {};
-    landingData = Object.assign({}, DEFAULT_LANDING, val);
-    writeCache(CACHE_LANDING_KEY, landingData);
-    markFetchedNow(CACHE_LANDING_KEY);
-    renderLanding();
-    if (window.tryAutoOpenDonationCardFromUrl) window.tryAutoOpenDonationCardFromUrl();
-  }).catch(err => console.log("Landing fetch failed:", err));
-}
+/* landingPage no longer uses a once()+cache fetch — see the live
+   landingPageRef.on("value", ...) listener in initFirebase() above,
+   which replaced this so admin deletes/edits show up immediately
+   instead of waiting for the old 10-minute cache to expire. */
 
 /* Core data path: app + database only. This is what donors, donations,
    lives-impacted and visitor-count all depend on, so it loads with

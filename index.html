@@ -38,6 +38,7 @@
       <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
       <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
       <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
+      <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
       <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
       <a href="#" class="siteNavCta joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>যোগ দিন</a>
     </div>
@@ -50,6 +51,7 @@
     <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
     <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
     <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
+    <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
     <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
     <a href="#" class="siteNavCtaMobile joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>রক্তদাতা হিসেবে যোগ দিন</a>
   </div>
@@ -194,15 +196,6 @@
     <div class="donationGrid scrollRowX" id="donationGrid"></div>
   </section>
 
-  <section class="newsSection reveal dataSection" id="newsSection">
-    <span class="sectionEyebrow">সর্বশেষ আপডেট</span>
-    <div class="newsHead">
-      <h2 class="newsHeading" id="news">সংবাদ ও ঘোষণা</h2>
-    </div>
-    <div class="newsGrid" id="newsList"></div>
-    <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
-  </section>
-
   <section class="about reveal">
     <div class="aboutCard">
       <div class="aboutImageFrame">
@@ -303,6 +296,16 @@
         <span class="exploreLinkIcon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
         <span class="exploreLinkTitle">রক্তের গ্রুপ চার্ট</span>
         <span class="exploreLinkDesc">কোন গ্রুপ কাকে রক্ত দিতে বা নিতে পারবেন, বিস্তারিত চার্ট।</span>
+      </a>
+      <a class="exploreLinkCard" href="#news">
+        <span class="exploreLinkIcon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
+        <span class="exploreLinkTitle">সংবাদ ও ঘোষণা</span>
+        <span class="exploreLinkDesc">নেটওয়ার্কের সর্বশেষ সংবাদ, ঘোষণা ও আপডেট পড়ুন।</span>
+      </a>
+      <a class="exploreLinkCard" href="#donations">
+        <span class="exploreLinkIcon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
+        <span class="exploreLinkTitle">রক্তদান রেকর্ড</span>
+        <span class="exploreLinkDesc">এ পর্যন্ত হওয়া সব রক্তদানের রেকর্ড কার্ড আকারে দেখুন।</span>
       </a>
     </div>
   </section>
@@ -548,6 +551,60 @@
   </div>
 </section>
 
+<!-- ============================================================
+     রুট পেজ ৪ — সংবাদ ও ঘোষণা
+     ============================================================ -->
+<section class="routePage" id="route-news">
+  <div class="routePageInner">
+    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
+    <div class="routeHero">
+      <span class="sectionEyebrow">সর্বশেষ আপডেট</span>
+      <h1>সংবাদ ও ঘোষণা</h1>
+      <p>নেটওয়ার্কের সাম্প্রতিক সংবাদ, ঘোষণা ও কার্যক্রম — নতুন পোস্টটি সবার আগে দেখা যাবে। ভালো লাগলে লাইক দিন, কাউকে জানাতে চাইলে শেয়ার করুন।</p>
+    </div>
+
+    <div class="newsBody dataSection" id="newsSection">
+      <div class="newsGrid" id="newsList"></div>
+      <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     রুট পেজ ৫ — সকল রক্তদান রেকর্ড (কার্ড আকারে)
+     ============================================================ -->
+<section class="routePage" id="route-donations">
+  <div class="routePageInner">
+    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
+    <div class="routeHero">
+      <span class="sectionEyebrow">আর্কাইভ</span>
+      <h1>সকল রক্তদান রেকর্ড</h1>
+      <p>আমাদের নেটওয়ার্কের মাধ্যমে সম্পন্ন হওয়া প্রতিটি রক্তদানের রেকর্ড এখানে কার্ড আকারে রাখা হয়েছে — নাম, ID বা হাসপাতালের নাম দিয়ে খুঁজুন, অথবা রক্তের গ্রুপ অনুযায়ী ফিল্টার করুন।</p>
+    </div>
+
+    <div class="recordsToolbar">
+      <div class="recordsSearchBox">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="text" id="recordsSearchInput" class="recordsSearchInput" placeholder="নাম, ID বা হাসপাতাল দিয়ে খুঁজুন...">
+      </div>
+      <select id="recordsBgFilter" class="recordsBgFilter" aria-label="রক্তের গ্রুপ ফিল্টার">
+        <option value="">সব গ্রুপ</option>
+        <option value="A+">A+</option>
+        <option value="A-">A-</option>
+        <option value="B+">B+</option>
+        <option value="B-">B-</option>
+        <option value="AB+">AB+</option>
+        <option value="AB-">AB-</option>
+        <option value="O+">O+</option>
+        <option value="O-">O-</option>
+      </select>
+    </div>
+
+    <div class="recordsGrid" id="recordsGrid"></div>
+    <div class="sectionEmptyState" id="recordsEmptyState"><i class="fa-solid fa-droplet" aria-hidden="true"></i><span>এখনও কোনো রেকর্ড যোগ করা হয়নি</span></div>
+  </div>
+</section>
+
 <footer class="siteFooter">
   <div class="footerGrid">
     <div>
@@ -589,6 +646,8 @@
       <div class="footerRow"><a href="#process">কীভাবে কাজ করে</a></div>
       <div class="footerRow"><a href="#testimonials">সফলতার গল্প</a></div>
       <div class="footerRow"><a href="#blood-group">রক্তের গ্রুপ চার্ট</a></div>
+      <div class="footerRow"><a href="#donations">রক্তদান রেকর্ড</a></div>
+      <div class="footerRow"><a href="#news">সংবাদ ও ঘোষণা</a></div>
       <div class="footerRow"><a href="#top">উপরে ফিরে যান</a></div>
       <div class="footerRow"><i class="fa-brands fa-facebook" aria-hidden="true"></i> <span class="editable-field" data-key="footerFacebook" contenteditable="false">facebook.com/bloodnetworkbaraikhali</span></div>
     </div>
