@@ -98,6 +98,7 @@ const DEFAULT_LANDING = {
   team: [],
   faqs: [],
   partners: [],
+  news: [],
   processStepsRecipient: [
     { id: "r1", title: "রক্তের গ্রুপ ও এলাকা লিখে সার্চ করুন", text: "ওয়েবসাইটে গিয়ে প্রয়োজনীয় রক্তের গ্রুপ এবং আপনার এলাকা নির্বাচন করুন — কোনো সাইনআপ ছাড়াই।" },
     { id: "r2", title: "তালিকা থেকে রক্তদাতা বাছাই করুন", text: "যাচাইকৃত ও সক্রিয় রক্তদাতাদের একটি তালিকা মুহূর্তেই দেখতে পাবেন।" },
@@ -174,6 +175,7 @@ function normalizeLandingData() {
   landingData.team = toArrayField(landingData.team);
   landingData.faqs = toArrayField(landingData.faqs);
   landingData.partners = toArrayField(landingData.partners);
+  landingData.news = toArrayField(landingData.news);
   landingData.processStepsRecipient = toArrayField(landingData.processStepsRecipient);
   landingData.processStepsDonor = toArrayField(landingData.processStepsDonor);
   landingData.testimonials = toArrayField(landingData.testimonials);
@@ -506,6 +508,69 @@ function toBengaliDigits(n) {
   return String(n).split("").map(ch => (map[ch] !== undefined ? map[ch] : ch)).join("");
 }
 
+/* ============================================================
+   NEWS SECTION — admin writes news from the admin panel (title,
+   content, optional photo, date); the public site just lists
+   everything, newest first.
+   ============================================================ */
+function formatNewsDateBn(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const months = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
+  return toBengaliDigits(d.getDate()) + " " + months[d.getMonth()] + ", " + toBengaliDigits(d.getFullYear());
+}
+
+function newsCardTemplate(n) {
+  return (
+    '<article class="newsCard" data-news-id="' + n.id + '">' +
+      '<div class="newsCardImageWrap placeholderMode">' +
+        '<div class="imgSkeleton" aria-hidden="true"></div>' +
+        '<img class="newsCardImage" alt="' + escAttr(n.title) + '">' +
+        '<span class="newsCardPlaceholderMark"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>' +
+      '</div>' +
+      '<div class="newsCardBody">' +
+        '<span class="newsCardDate"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span class="newsCardDateText"></span></span>' +
+        '<h3 class="newsCardTitle"></h3>' +
+        '<p class="newsCardText"></p>' +
+      '</div>' +
+    '</article>'
+  );
+}
+
+function renderNewsSection() {
+  const container = document.getElementById("newsList");
+  if (!container) return;
+  const sorted = landingData.news.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const existingIds = Array.from(container.children).map(c => c.getAttribute("data-news-id"));
+  const newIds = sorted.map(n => n.id);
+  const structureChanged = existingIds.length !== newIds.length || existingIds.some((id, i) => id !== newIds[i]);
+  if (structureChanged) {
+    container.innerHTML = sorted.map(newsCardTemplate).join("");
+  }
+  sorted.forEach(n => {
+    const card = container.querySelector('.newsCard[data-news-id="' + n.id + '"]');
+    if (!card) return;
+    const titleEl = card.querySelector(".newsCardTitle");
+    const textEl = card.querySelector(".newsCardText");
+    const dateEl = card.querySelector(".newsCardDateText");
+    if (titleEl) titleEl.textContent = n.title;
+    if (textEl) textEl.textContent = n.content;
+    if (dateEl) dateEl.textContent = formatNewsDateBn(n.date);
+    const wrap = card.querySelector(".newsCardImageWrap");
+    const img = card.querySelector(".newsCardImage");
+    if (n.newsImage) {
+      wrap.classList.remove("placeholderMode");
+      loadImageWithFallback(img, n.newsImage, wrap);
+    } else {
+      wrap.classList.add("placeholderMode");
+      wrap.classList.remove("loadingImg", "imgLoadFailed");
+      img.removeAttribute("src");
+    }
+  });
+  setSectionVisible(document.getElementById("newsSection"), landingData.news.length > 0);
+}
+
 function processStepTemplate(step, index, colKey) {
   return (
     '<div class="processStep" data-step-id="' + step.id + '" data-col="' + colKey + '">' +
@@ -639,6 +704,7 @@ function renderLanding() {
   loadBackgroundWithFallback(ctaBand, landingData.impactImage, "hasImage");
 
   renderDonationGallery();
+  renderNewsSection();
   renderTeamSection();
   renderFaqSection();
   renderPartnersSection();
@@ -654,7 +720,14 @@ function renderLanding() {
     const itemEl = document.getElementById("callFabItem" + n);
     if (nameEl) nameEl.textContent = name;
     if (numEl) numEl.textContent = phone;
-    if (itemEl) itemEl.setAttribute("href", "tel:" + phone.replace(/[^0-9+]/g, ""));
+    if (itemEl) {
+      itemEl.setAttribute("href", "tel:" + phone.replace(/[^0-9+]/g, ""));
+      itemEl.setAttribute("data-cc-name", name);
+      itemEl.setAttribute("data-cc-phone", phone);
+      itemEl.setAttribute("data-cc-photo", landingData["contactPhoto" + n] || "");
+      itemEl.setAttribute("data-cc-whatsapp", landingData["contactWhatsapp" + n] || phone);
+      itemEl.setAttribute("data-cc-messenger", landingData["contactMessenger" + n] || "");
+    }
 
     const heroChipEl = document.getElementById("heroPhoneChip" + n);
     const heroChipNameEl = document.getElementById("heroPhoneChipName" + n);
@@ -985,10 +1058,16 @@ renderLanding();
   }
   function closeCallingCard() { overlay.classList.remove("show"); }
 
-  document.querySelectorAll(".heroPhoneChip[id^='heroPhoneChip']").forEach(chip => {
-    chip.addEventListener("click", e => {
+  /* Every calling-card trigger — the 3 header phone chips AND the 3
+     items inside the floating call button's menu — share the same
+     ".ccTrigger" class + "data-cc-*" attributes, so both places open
+     this exact same donor-ID-card popup instead of dialing directly. */
+  document.querySelectorAll(".ccTrigger").forEach(trigger => {
+    trigger.addEventListener("click", e => {
       e.preventDefault();
-      openCallingCard(chip);
+      openCallingCard(trigger);
+      const fab = document.getElementById("callFab");
+      if (fab) fab.classList.remove("open");
     });
   });
   if (closeBtn) closeBtn.addEventListener("click", closeCallingCard);
@@ -1460,6 +1539,19 @@ document.addEventListener("click", e => {
     }
     resultOverlay.style.display = "flex";
   }
+
+  /* Re-renders the currently open card (if any) against whatever is
+     now in landingData.donationRecords — used by the live Firebase
+     listener below so an edited record (a new photo especially)
+     shows up immediately instead of waiting for it to be searched
+     again or for the 10-minute cache to expire. */
+  function refreshOpenDonationCard() {
+    if (resultOverlay.style.display !== "flex" || !currentDonationRecord) return;
+    const fresh = landingData.donationRecords.find(r => r.id === currentDonationRecord.id) ||
+      landingData.donationRecords.find(r => (r.donationNo || "").trim().toLowerCase() === (currentDonationRecord.donationNo || "").trim().toLowerCase());
+    renderDonationResult(fresh || null);
+  }
+  window.refreshOpenDonationCard = refreshOpenDonationCard;
 
   searchBtn.addEventListener("click", performDonationSearch);
   searchInput.addEventListener("keydown", e => { if (e.key === "Enter") performDonationSearch(); });
@@ -2104,6 +2196,22 @@ function initFirebase() {
       landingData.importantNoticeActive = !!snapshot.val();
       writeCache(CACHE_LANDING_KEY, landingData);
       renderNoticeBar();
+    });
+
+    /* Donation records also stay live (bypassing the 10-minute landing
+       cache above). This was the cause of the "changed photo doesn't
+       show up" bug: donationRecords used to only refresh when the
+       10-minute cache expired, so admins editing a record's photo and
+       then immediately searching for it (on the same device) kept
+       seeing the OLD photo from localStorage. A record card, once
+       opened, is also live-refreshed via refreshOpenDonationCard so an
+       edit made while someone already has the card open updates it
+       in place. */
+    landingPageRef.child("donationRecords").on("value", snapshot => {
+      landingData.donationRecords = toArrayField(snapshot.val());
+      writeCache(CACHE_LANDING_KEY, landingData);
+      if (window.refreshOpenDonationCard) window.refreshOpenDonationCard();
+      if (window.tryAutoOpenDonationCardFromUrl) window.tryAutoOpenDonationCardFromUrl();
     });
 
     bumpVisitorIfNewDevice();

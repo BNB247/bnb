@@ -38,6 +38,7 @@
       <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
       <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
       <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
+      <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
       <a href="#" class="siteNavCta joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>যোগ দিন</a>
     </div>
     <button type="button" class="siteNavToggle" id="siteNavToggle" aria-label="মেনু খুলুন" aria-expanded="false">
@@ -49,6 +50,7 @@
     <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
     <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
     <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
+    <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
     <a href="#" class="siteNavCtaMobile joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>রক্তদাতা হিসেবে যোগ দিন</a>
   </div>
 </nav>
@@ -68,15 +70,15 @@
     <h1 class="heroTitle editable-field" data-key="heroTitle" contenteditable="false">প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প</h1>
     <p class="heroSubtitle editable-field" data-key="heroSubtitle" contenteditable="false">জরুরি মুহূর্তে নির্ভরযোগ্য রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়। বিনামূল্যে ও স্বেচ্ছাসেবী রক্তদাতাদের নেটওয়ার্কে আজই যুক্ত হোন, জীবন বাঁচাতে হাত বাড়ান।</p>
     <div class="heroPhoneRow" id="heroPhoneRow">
-      <a class="heroPhoneChip" id="heroPhoneChip1" href="tel:">
+      <a class="heroPhoneChip ccTrigger" id="heroPhoneChip1" href="tel:">
         <i class="fa-solid fa-phone" aria-hidden="true"></i>
         <span class="heroPhoneChipText"><span id="heroPhoneChipName1">নাম ১</span><span id="heroPhoneChipText1">01XXXXXXXXX</span></span>
       </a>
-      <a class="heroPhoneChip" id="heroPhoneChip2" href="tel:">
+      <a class="heroPhoneChip ccTrigger" id="heroPhoneChip2" href="tel:">
         <i class="fa-solid fa-phone" aria-hidden="true"></i>
         <span class="heroPhoneChipText"><span id="heroPhoneChipName2">নাম ২</span><span id="heroPhoneChipText2">01XXXXXXXXX</span></span>
       </a>
-      <a class="heroPhoneChip" id="heroPhoneChip3" href="tel:">
+      <a class="heroPhoneChip ccTrigger" id="heroPhoneChip3" href="tel:">
         <i class="fa-solid fa-phone" aria-hidden="true"></i>
         <span class="heroPhoneChipText"><span id="heroPhoneChipName3">নাম ৩</span><span id="heroPhoneChipText3">01XXXXXXXXX</span></span>
       </a>
@@ -190,6 +192,15 @@
       <h2 class="donationGalleryHeading">সাম্প্রতিক রক্তদান</h2>
     </div>
     <div class="donationGrid scrollRowX" id="donationGrid"></div>
+  </section>
+
+  <section class="newsSection reveal dataSection" id="newsSection">
+    <span class="sectionEyebrow">সর্বশেষ আপডেট</span>
+    <div class="newsHead">
+      <h2 class="newsHeading" id="news">সংবাদ ও ঘোষণা</h2>
+    </div>
+    <div class="newsGrid" id="newsList"></div>
+    <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
   </section>
 
   <section class="about reveal">
@@ -690,15 +701,15 @@
 
 <div class="callFab" id="callFab">
   <div class="callFabMenu" id="callFabMenu">
-    <a class="callFabItem" id="callFabItem1" href="tel:">
+    <a class="callFabItem ccTrigger" id="callFabItem1" href="tel:">
       <i class="fa-solid fa-phone" aria-hidden="true"></i>
       <span><span id="callFabName1">নাম ১</span><span class="callFabNum" id="callFabNum1">01XXXXXXXXX</span></span>
     </a>
-    <a class="callFabItem" id="callFabItem2" href="tel:">
+    <a class="callFabItem ccTrigger" id="callFabItem2" href="tel:">
       <i class="fa-solid fa-phone" aria-hidden="true"></i>
       <span><span id="callFabName2">নাম ২</span><span class="callFabNum" id="callFabNum2">01XXXXXXXXX</span></span>
     </a>
-    <a class="callFabItem" id="callFabItem3" href="tel:">
+    <a class="callFabItem ccTrigger" id="callFabItem3" href="tel:">
       <i class="fa-solid fa-phone" aria-hidden="true"></i>
       <span><span id="callFabName3">নাম ৩</span><span class="callFabNum" id="callFabNum3">01XXXXXXXXX</span></span>
     </a>
@@ -708,34 +719,53 @@
   </button>
 </div>
 
-<!-- Calling Card Popup Modal — opened from header phone chips; styled like a
-     phone's full-screen incoming-call display (background photo + name +
-     number on top, 3 round contact buttons anchored at the bottom). -->
+<!-- Calling Card Popup Modal — opened from header phone chips; redesigned as
+     a donor ID badge / ticket-stub card: a square photo box + barcode-style
+     divider up top (like a laminated ID card), tearing at a perforated line
+     into a ticket-stub action row at the bottom. (Kept the same element IDs
+     so app.js needs no changes.) -->
 <div class="callingCardOverlay" id="callingCardOverlay">
   <div class="callingCard">
     <button type="button" class="callingCardClose" id="callingCardClose" aria-label="বন্ধ করুন">
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
-    <div class="callingCardBg" id="callingCardBg"></div>
-    <div class="callingCardScrim"></div>
-    <div class="callingCardBrand" id="callingCardBrand">
-      <img id="callingCardBrandLogo" src="fav.jpeg" alt="">
-      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
+    <div class="callingCardPunch" aria-hidden="true"></div>
+
+    <div class="callingCardMain">
+      <div class="callingCardBrand" id="callingCardBrand">
+        <img id="callingCardBrandLogo" src="fav.jpeg" alt="">
+        <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
+        <span class="callingCardTag"><i class="fa-solid fa-droplet" aria-hidden="true"></i>সক্রিয়</span>
+      </div>
+
+      <div class="callingCardIdRow">
+        <div class="callingCardPhotoBox">
+          <div class="callingCardBg" id="callingCardBg"><i class="fa-solid fa-user callingCardAvatarFallback" aria-hidden="true"></i></div>
+        </div>
+        <div class="callingCardIdInfo">
+          <span class="callingCardIdLabel">রক্তের প্রয়োজনে কল করুন</span>
+          <div class="callingCardName"><span id="callingCardName">নাম</span><i class="fa-solid fa-circle-check callingCardVerified" aria-hidden="true" title="যাচাইকৃত"></i></div>
+          <div class="callingCardPhone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span id="callingCardPhone">01XXXXXXXXX</span></div>
+        </div>
+      </div>
+
+      <div class="callingCardBarcode" aria-hidden="true"></div>
     </div>
-    <div class="callingCardTop">
-      <span class="callingCardTag">ইনকামিং কল</span>
-      <div class="callingCardName" id="callingCardName">নাম</div>
-      <div class="callingCardPhone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span id="callingCardPhone">01XXXXXXXXX</span></div>
-    </div>
+
+    <div class="callingCardPerf" aria-hidden="true"></div>
+
     <div class="callingCardActions">
       <a class="callingCardActionBtn callAction" id="callingCardCallBtn" href="tel:">
         <span class="callingCardActionIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+        <span class="callingCardActionLabel">কল করুন</span>
       </a>
       <a class="callingCardActionBtn waAction" id="callingCardWaBtn" href="#" target="_blank" rel="noopener">
         <span class="callingCardActionIcon"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
+        <span class="callingCardActionLabel">হোয়াটসঅ্যাপ</span>
       </a>
       <a class="callingCardActionBtn msgAction" id="callingCardMsgBtn" href="#" target="_blank" rel="noopener">
         <span class="callingCardActionIcon"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i></span>
+        <span class="callingCardActionLabel">মেসেঞ্জার</span>
       </a>
     </div>
   </div>
