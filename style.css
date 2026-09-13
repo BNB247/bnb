@@ -496,6 +496,13 @@
   body.adminMode .donationResultClose { display: none; }
   body.adminMode .donationResultModal { border-radius: 0; }
 
+  /* ---- hidden gesture toggle: double-tap/double-click the blood group
+     badge to switch the card to this same square-corner, no-close-button
+     look (see JS) — handy for a clean screenshot. Tap twice again to
+     undo. */
+  .donationResultModal.sharpMode { border-radius: 0; transition: border-radius .2s ease; }
+  .donationResultModal.sharpMode .donationResultClose { opacity: 0; pointer-events: none; }
+
 
   /* ---- print stage: hidden on screen, used only to print the card
      as a single page with a 9:16 aspect ratio ---- */
@@ -628,6 +635,7 @@
     color: #fff; letter-spacing: 0.02em; flex-shrink: 0;
     background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
     box-shadow: 0 6px 14px rgba(158,27,50,0.28);
+    touch-action: manipulation;
   }
 
   /* total donation count — modern pill under the name/blood-group row */
@@ -1606,43 +1614,68 @@
   }
   .recordsBgFilter:focus, .recordsSearchBox:focus-within { outline: none; border-color: var(--crimson); }
 
-  .recordsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+  .recordsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
   .recordCard {
-    display: flex; flex-direction: column; text-align: left; font-family: inherit;
+    position: relative; display: flex; flex-direction: column; text-align: left; font-family: inherit;
     background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg);
     box-shadow: var(--shadow); overflow: hidden; cursor: pointer; padding: 0;
+    transition: transform .18s var(--ease), box-shadow .18s var(--ease);
   }
   .recordCard:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(33,22,19,0.09); }
   .recordCardPhotoWrap {
-    position: relative; width: 100%; aspect-ratio: 4 / 3; background: var(--crimson-tint); overflow: hidden;
+    position: relative; width: 100%; aspect-ratio: 1 / 1; background: var(--crimson-tint); overflow: hidden;
   }
   .recordCardImg { width: 100%; height: 100%; object-fit: cover; display: block; }
   .recordCardPhotoWrap.placeholderMode .recordCardImg { display: none; }
   .recordCardPlaceholder { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
-  .recordCardPlaceholder i { font-size: 32px; color: var(--crimson); opacity: 0.5; }
+  .recordCardPlaceholder i { font-size: 30px; color: var(--crimson); opacity: 0.5; }
   .recordCardPhotoWrap.placeholderMode .recordCardPlaceholder { display: flex; }
-  .recordCardBody { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .recordCardTopRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .recordCardPhotoWrap::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 46%;
+    background: linear-gradient(0deg, rgba(20,12,10,0.62) 0%, rgba(20,12,10,0) 100%); pointer-events: none;
+  }
   .recordCardNo {
-    font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: var(--muted);
-    display: flex; align-items: center; gap: 4px;
+    position: absolute; top: 9px; left: 9px; z-index: 2;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: #fff;
+    background: rgba(20,12,10,0.5); backdrop-filter: blur(2px); border-radius: 999px; padding: 3px 9px;
+    display: flex; align-items: center; gap: 3px; line-height: 1;
   }
   .recordCardBg {
-    font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--crimson);
-    background: var(--crimson-tint); border-radius: 999px; padding: 2px 10px; flex-shrink: 0;
+    position: absolute; top: 9px; right: 9px; z-index: 2;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 800; color: #fff;
+    background: var(--crimson); border-radius: 999px; padding: 3px 10px; line-height: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-  .recordCardName { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--ink); }
+  .recordCardName {
+    position: absolute; left: 12px; right: 12px; bottom: 8px; z-index: 2;
+    font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+  .recordCardBody { padding: 10px 13px 13px; display: flex; flex-direction: column; gap: 6px; }
   .recordCardHospital {
-    font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .recordCardHospital i { color: var(--crimson); flex-shrink: 0; }
+  .recordCardHospital i { color: var(--crimson); flex-shrink: 0; font-size: 11px; }
   .recordCardMetaRow {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    font-size: 11.5px; color: var(--muted); padding-top: 8px; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--muted); padding-top: 6px; border-top: 1px solid var(--line);
   }
-  .recordCardMetaRow span { display: flex; align-items: center; gap: 5px; }
-  .recordCardMetaRow i { color: var(--sage); }
+  .recordCardMetaRow span { display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recordCardMetaRow i { color: var(--sage); flex-shrink: 0; }
+
+  @media (max-width: 640px) {
+    .recordsToolbar { margin-bottom: 18px; gap: 8px; }
+    .recordsSearchBox { padding: 9px 15px; flex-basis: 100%; }
+    .recordsBgFilter { padding: 9px 14px; font-size: 12.5px; flex: 1 1 auto; }
+    .recordsGrid { grid-template-columns: repeat(2, 1fr); gap: 11px; }
+    .recordCardBody { padding: 8px 10px 10px; gap: 4px; }
+    .recordCardName { font-size: 13px; left: 9px; right: 9px; bottom: 6px; }
+    .recordCardNo, .recordCardBg { font-size: 10px; padding: 2px 7px; top: 6px; }
+    .recordCardNo { left: 6px; } .recordCardBg { right: 6px; }
+    .recordCardHospital { font-size: 10.5px; }
+    .recordCardMetaRow { font-size: 9.5px; padding-top: 5px; }
+  }
 
   /* ============================================================
      CTA BAND

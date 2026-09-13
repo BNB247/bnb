@@ -400,13 +400,11 @@ function recordCardTemplate(r) {
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
         (showPhoto ? '<img class="recordCardImg" alt="' + escAttr(r.name) + '">' : "") +
         '<span class="recordCardPlaceholder"><i class="fa-solid ' + placeholderIcon + '" aria-hidden="true"></i></span>' +
+        '<span class="recordCardNo"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>' + escAttr(r.donationNo || "") + '</span>' +
+        '<span class="recordCardBg">' + escAttr(r.bloodGroup || "—") + '</span>' +
+        '<span class="recordCardName">' + escAttr(r.name || "") + '</span>' +
       '</div>' +
       '<div class="recordCardBody">' +
-        '<div class="recordCardTopRow">' +
-          '<span class="recordCardNo"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>' + escAttr(r.donationNo || "") + '</span>' +
-          '<span class="recordCardBg">' + escAttr(r.bloodGroup || "—") + '</span>' +
-        '</div>' +
-        '<div class="recordCardName">' + escAttr(r.name || "") + '</div>' +
         '<div class="recordCardHospital"><i class="fa-solid fa-hospital" aria-hidden="true"></i>' + escAttr(r.hospitalName || "—") + '</div>' +
         '<div class="recordCardMetaRow">' +
           (dateBn ? '<span><i class="fa-regular fa-calendar" aria-hidden="true"></i>' + escAttr(dateBn) + '</span>' : "<span></span>") +
@@ -1650,6 +1648,7 @@ document.addEventListener("click", e => {
   function renderDonationResult(found) {
     currentDonationRecord = found || null;
     resultContent.innerHTML = "";
+    if (resultModal) resultModal.classList.remove("sharpMode");
 
     /* ---- watermark (logo + "BNB") behind everything in the card ---- */
     const watermarkLogoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
@@ -1839,6 +1838,21 @@ document.addEventListener("click", e => {
   searchInput.addEventListener("keydown", e => { if (e.key === "Enter") performDonationSearch(); });
   if (resultCloseBtn) resultCloseBtn.addEventListener("click", () => { resultOverlay.style.display = "none"; });
   resultOverlay.addEventListener("click", e => { if (e.target === resultOverlay) resultOverlay.style.display = "none"; });
+
+  /* ---- hidden gesture: double-tap/double-click the blood group badge
+     on the record card to toggle a "clean" look — square corners
+     (border-radius: 0) and the close (X) button fades out (opacity: 0,
+     and made unclickable while hidden). Tap it twice again to bring
+     the rounded corners and close button back. Not shown anywhere in
+     the UI on purpose — it's a hidden shortcut, useful for a clean
+     screenshot of the card. */
+  if (resultModal) {
+    resultModal.addEventListener("dblclick", e => {
+      if (!e.target.closest(".donationResultBgBadge")) return;
+      resultModal.classList.toggle("sharpMode");
+    });
+  }
+
 
   /* ---- admin-only: print the currently open card, forced onto a
      single 9:16 page. The card is cloned into a dedicated print stage
