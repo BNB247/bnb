@@ -1,0 +1,33 @@
+{
+  "name": "Blood Network Baraikhali",
+  "short_name": "B.N.B",
+  "description": "জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#9E1B32",
+  "lang": "bn",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "fav.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "fav.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "fav.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -9,6 +9,12 @@
 <link rel="apple-touch-icon" href="fav.jpeg">
 <link rel="icon" type="image/x-icon" href="fav.jpeg">
 <meta name="theme-color" content="#9E1B32">
+<!-- PWA: installable home-screen app + offline app-shell (see manifest.json / service-worker.js) -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B.N.B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,13 +39,18 @@
       <img class="siteNavLogo" id="heroBrandLogo" src="fav.jpeg" alt="Blood Network Baraikhali">
       <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
     </a>
+    <a class="siteNavRouteBrand" id="siteNavRouteBrand" href="#top" aria-label="হোমে ফিরে যান">
+      <span class="siteNavRouteBackIcon"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></span>
+      <span class="siteNavRouteBackTitle" id="siteNavRouteBackTitle">হোম</span>
+    </a>
     <div class="siteNavLinks" id="siteNavLinks">
       <a href="#top" data-nav-route="home"><i class="fa-solid fa-house" aria-hidden="true"></i>হোম</a>
       <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
       <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
       <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
       <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
-      <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
+      <a href="#news" data-nav-route="news"><i class="fa-solid fa-book-open" aria-hidden="true"></i>ব্লগ</a>
+      <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
       <a href="#" class="siteNavCta joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>যোগ দিন</a>
     </div>
     <button type="button" class="siteNavToggle" id="siteNavToggle" aria-label="মেনু খুলুন" aria-expanded="false">
@@ -52,7 +63,8 @@
     <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
     <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
     <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
-    <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
+    <a href="#news" data-nav-route="news"><i class="fa-solid fa-book-open" aria-hidden="true"></i>ব্লগ</a>
+    <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
     <a href="#" class="siteNavCtaMobile joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>রক্তদাতা হিসেবে যোগ দিন</a>
   </div>
 </nav>
@@ -71,6 +83,10 @@
   <div class="heroContent">
     <h1 class="heroTitle editable-field" data-key="heroTitle" contenteditable="false">প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প</h1>
     <p class="heroSubtitle editable-field" data-key="heroSubtitle" contenteditable="false">জরুরি মুহূর্তে নির্ভরযোগ্য রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়। বিনামূল্যে ও স্বেচ্ছাসেবী রক্তদাতাদের নেটওয়ার্কে আজই যুক্ত হোন, জীবন বাঁচাতে হাত বাড়ান।</p>
+    <button type="button" class="heroEmergencyBtn" id="heroEmergencyBtn">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      জরুরি রক্তের প্রয়োজন? অনুরোধ পাঠান
+    </button>
     <div class="heroPhoneRow" id="heroPhoneRow">
       <a class="heroPhoneChip ccTrigger" id="heroPhoneChip1" href="tel:">
         <i class="fa-solid fa-phone" aria-hidden="true"></i>
@@ -188,6 +204,26 @@
     </div>
   </section>
 
+  <section class="heroDonorSection reveal dataSection sectionHidden" id="heroDonorSection">
+    <span class="sectionEyebrow">আজকের হিরো</span>
+    <div class="heroDonorCard">
+      <div class="heroDonorPhotoWrap placeholderMode" id="heroDonorPhotoWrap">
+        <div class="imgSkeleton" aria-hidden="true"></div>
+        <img class="heroDonorPhoto" id="heroDonorPhoto" alt="সাম্প্রতিক রক্তদাতা">
+        <span class="heroDonorPhotoMark"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i></span>
+      </div>
+      <div class="heroDonorInfo">
+        <span class="heroDonorBadge"><i class="fa-solid fa-medal" aria-hidden="true"></i> সাম্প্রতিক রক্তদাতা</span>
+        <h3 class="heroDonorName" id="heroDonorName"></h3>
+        <div class="heroDonorMeta">
+          <span class="heroDonorGroup" id="heroDonorGroup"></span>
+          <span class="heroDonorHospital" id="heroDonorHospital"></span>
+        </div>
+        <span class="heroDonorDate" id="heroDonorDate"></span>
+      </div>
+    </div>
+  </section>
+
   <section class="donationGallery reveal">
     <span class="sectionEyebrow">আমাদের যাত্রা</span>
     <div class="donationGalleryHead">
@@ -298,14 +334,19 @@
         <span class="exploreLinkDesc">কোন গ্রুপ কাকে রক্ত দিতে বা নিতে পারবেন, বিস্তারিত চার্ট।</span>
       </a>
       <a class="exploreLinkCard" href="#news">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">সংবাদ ও ঘোষণা</span>
-        <span class="exploreLinkDesc">নেটওয়ার্কের সর্বশেষ সংবাদ, ঘোষণা ও আপডেট পড়ুন।</span>
+        <span class="exploreLinkIcon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+        <span class="exploreLinkTitle">ব্লগ ও স্বাস্থ্য টিপস</span>
+        <span class="exploreLinkDesc">রক্তদান নিয়ে স্বাস্থ্য টিপস, মিথ ভাঙা লেখা ও সর্বশেষ আপডেট পড়ুন।</span>
       </a>
       <a class="exploreLinkCard" href="#donations">
         <span class="exploreLinkIcon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
         <span class="exploreLinkTitle">রক্তদান রেকর্ড</span>
         <span class="exploreLinkDesc">এ পর্যন্ত হওয়া সব রক্তদানের রেকর্ড কার্ড আকারে দেখুন।</span>
+      </a>
+      <a class="exploreLinkCard" href="#hospitals">
+        <span class="exploreLinkIcon"><i class="fa-solid fa-hospital" aria-hidden="true"></i></span>
+        <span class="exploreLinkTitle">হাসপাতাল ও ব্লাড ব্যাংক</span>
+        <span class="exploreLinkDesc">নিকটস্থ হাসপাতাল ও ব্লাড ব্যাংকের তালিকা, ফোন নম্বরসহ।</span>
       </a>
     </div>
   </section>
@@ -326,13 +367,6 @@
      ============================================================ -->
 <section class="routePage" id="route-process">
   <div class="routePageInner">
-    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-    <div class="routeHero">
-      <span class="sectionEyebrow">প্রক্রিয়া</span>
-      <h1>কীভাবে কাজ করে</h1>
-      <p>মাত্র কয়েকটি সহজ ধাপে রক্তদাতা খুঁজে পান অথবা নিজে রক্তদাতা হয়ে অন্যের জীবনে পাশে দাঁড়ান — পুরো প্রক্রিয়াটি সম্পূর্ণ বিনামূল্যে ও ঝামেলাবিহীন।</p>
-    </div>
-
     <div class="processCols">
       <div class="processColCard dataSection recipientCol" id="processColRecipient">
         <div class="processColHead">
@@ -360,13 +394,6 @@
      ============================================================ -->
 <section class="routePage" id="route-testimonials">
   <div class="routePageInner">
-    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-    <div class="routeHero">
-      <span class="sectionEyebrow">অভিজ্ঞতা</span>
-      <h1>সফলতার গল্প</h1>
-      <p>আমাদের নেটওয়ার্কের মাধ্যমে জরুরি মুহূর্তে রক্ত পাওয়া ও রক্ত দেওয়া মানুষদের সত্যিকারের কিছু অভিজ্ঞতা।</p>
-    </div>
-
     <div class="testimonialsBody dataSection" id="testimonialsBody">
       <div class="testimonialGrid" id="testimonialGrid"></div>
       <div class="sectionEmptyState" id="testimonialsEmptyState"><i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>এখনও কোনো গল্প যোগ করা হয়নি — এডিট মোডে যোগ করুন</span></div>
@@ -380,13 +407,6 @@
      ============================================================ -->
 <section class="routePage" id="route-blood-group">
   <div class="routePageInner">
-    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-    <div class="routeHero">
-      <span class="sectionEyebrow">সামঞ্জস্য</span>
-      <h1>রক্তের গ্রুপ চার্ট</h1>
-      <p>কোন রক্তের গ্রুপ কাকে রক্ত দিতে পারবে এবং কার কাছ থেকে রক্ত নিতে পারবে — সহজভাবে জেনে নিন সম্পূর্ণ চার্ট।</p>
-    </div>
-
     <div class="bgIntroGrid">
       <div class="bgIntroCard">
         <span class="bgIntroIcon"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i></span>
@@ -552,20 +572,25 @@
 </section>
 
 <!-- ============================================================
-     রুট পেজ ৪ — সংবাদ ও ঘোষণা
+     রুট পেজ ৪ — ব্লগ ও স্বাস্থ্য টিপস
      ============================================================ -->
 <section class="routePage" id="route-news">
   <div class="routePageInner">
-    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-    <div class="routeHero">
-      <span class="sectionEyebrow">সর্বশেষ আপডেট</span>
-      <h1>সংবাদ ও ঘোষণা</h1>
-      <p>নেটওয়ার্কের সাম্প্রতিক সংবাদ, ঘোষণা ও কার্যক্রম — নতুন পোস্টটি সবার আগে দেখা যাবে। ভালো লাগলে লাইক দিন, কাউকে জানাতে চাইলে শেয়ার করুন।</p>
-    </div>
-
     <div class="newsBody dataSection" id="newsSection">
       <div class="newsGrid" id="newsList"></div>
-      <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
+      <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>এখনও কোনো ব্লগ পোস্ট প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     রুট পেজ — নিকটস্থ হাসপাতাল ও ব্লাড ব্যাংক
+     ============================================================ -->
+<section class="routePage" id="route-hospitals">
+  <div class="routePageInner">
+    <div class="hospitalsBody dataSection" id="hospitalsSection">
+      <div class="hospitalGrid" id="hospitalsList"></div>
+      <div class="sectionEmptyState" id="hospitalsEmptyState"><i class="fa-solid fa-hospital" aria-hidden="true"></i><span>এখনও কোনো হাসপাতাল/ব্লাড ব্যাংক যোগ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
     </div>
   </div>
 </section>
@@ -575,13 +600,6 @@
      ============================================================ -->
 <section class="routePage" id="route-donations">
   <div class="routePageInner">
-    <a href="#top" class="routeBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
-    <div class="routeHero">
-      <span class="sectionEyebrow">আর্কাইভ</span>
-      <h1>সকল রক্তদান রেকর্ড</h1>
-      <p>আমাদের নেটওয়ার্কের মাধ্যমে সম্পন্ন হওয়া প্রতিটি রক্তদানের রেকর্ড এখানে কার্ড আকারে রাখা হয়েছে — নাম, ID বা হাসপাতালের নাম দিয়ে খুঁজুন, অথবা রক্তের গ্রুপ অনুযায়ী ফিল্টার করুন।</p>
-    </div>
-
     <div class="recordsToolbar">
       <div class="recordsSearchBox">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
@@ -647,20 +665,79 @@
       <div class="footerRow"><a href="#testimonials">সফলতার গল্প</a></div>
       <div class="footerRow"><a href="#blood-group">রক্তের গ্রুপ চার্ট</a></div>
       <div class="footerRow"><a href="#donations">রক্তদান রেকর্ড</a></div>
-      <div class="footerRow"><a href="#news">সংবাদ ও ঘোষণা</a></div>
+      <div class="footerRow"><a href="#news">ব্লগ ও স্বাস্থ্য টিপস</a></div>
+      <div class="footerRow"><a href="#hospitals">হাসপাতাল ও ব্লাড ব্যাংক</a></div>
       <div class="footerRow"><a href="#top">উপরে ফিরে যান</a></div>
       <div class="footerRow"><i class="fa-brands fa-facebook" aria-hidden="true"></i> <span class="editable-field" data-key="footerFacebook" contenteditable="false">facebook.com/bloodnetworkbaraikhali</span></div>
     </div>
   </div>
   <div class="footerBottom">
     <div class="footerVersionRow">
-      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span><span class="footerDivider">•</span>© <span id="footerYear">2026</span> সর্বস্বত্ব সংরক্ষিত (All Rights Reserved)<span class="footerDivider">•</span>Version <span class="editable-field" data-key="siteVersion" contenteditable="false">1.0.0</span>
+      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span><span class="footerDivider">•</span>© <span id="footerYear">2026</span> সর্বস্বত্ব সংরক্ষিত (All Rights Reserved)<span class="footerDivider">•</span>last update <span class="editable-field" data-key="siteVersion" contenteditable="false">1.0.0</span>
     </div>
     <div class="footerBottomRow">
       <span>Development by <u class="editable-field" data-key="footerDevName1" contenteditable="false">IBRAHIM KHALIL</u> | <u class="editable-field" data-key="footerDevName2" contenteditable="false">SAMIN KHAN</u></span>
     </div>
   </div>
 </footer>
+
+<div class="modalOverlay" id="emergencyRequestModalOverlay" style="display:none;">
+  <div class="joinFormModal">
+    <button type="button" class="joinFormCloseBtn" id="emergencyRequestCloseBtn" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    <h3><i class="fa-solid fa-triangle-exclamation" aria-hidden="true" style="color:var(--crimson); margin-right:6px;"></i>জরুরি রক্তের অনুরোধ</h3>
+    <p>নিচের তথ্যগুলো পূরণ করে পাঠান। আপনার অনুরোধ সরাসরি এডমিনের কাছে চলে যাবে, তারা দ্রুত যোগাযোগ করবে।</p>
+    <form id="emergencyRequestForm" novalidate>
+      <div class="joinFormGrid">
+        <label class="joinFormField joinFormFull">
+          <span>রোগীর নাম *</span>
+          <input type="text" id="emrPatientName" required placeholder="যেমন: karim miya">
+        </label>
+        <label class="joinFormField">
+          <span>যোগাযোগের নাম্বার *</span>
+          <input type="tel" id="emrPhone" required placeholder="01XXXXXXXXX" inputmode="numeric" autocomplete="tel">
+        </label>
+        <label class="joinFormField">
+          <span>প্রয়োজনীয় রক্তের গ্রুপ *</span>
+          <select id="emrBloodGroup" required>
+            <option value="">-- নির্বাচন করুন --</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </label>
+        <label class="joinFormField">
+          <span>কতব্যাগ প্রয়োজন</span>
+          <input type="number" id="emrUnits" min="1" max="20" placeholder="যেমন: ১">
+        </label>
+        <label class="joinFormField">
+          <span>হাসপাতাল / স্থান *</span>
+          <input type="text" id="emrHospital" required placeholder="যেমন: ঢাকা মেডিকেল কলেজ হাসপাতাল">
+        </label>
+        <label class="joinFormField joinFormFull">
+          <span>রোগীর সমস্যা</span>
+          <input type="text" id="emrProblem" placeholder="যেমন: অপারেশনের জন্য রক্তের প্রয়োজন">
+        </label>
+        <label class="joinFormField">
+          <span>হিমোগ্লোবিনের পরিমাণ (g/dL)</span>
+          <input type="number" id="emrHemoglobin" min="0" max="25" step="0.1" placeholder="যেমন: ৭.৫">
+        </label>
+        <label class="joinFormField joinFormFull">
+          <span>বিস্তারিত (ঐচ্ছিক)</span>
+          <input type="text" id="emrNote" placeholder="যেমন: আজ রাতের মধ্যে প্রয়োজন">
+        </label>
+      </div>
+      <div class="modalBtns">
+        <button type="button" id="emergencyRequestCancelBtn">বাতিল</button>
+        <button type="submit" id="emergencyRequestSubmitBtn">অনুরোধ পাঠান</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="modalOverlay" id="joinFormModalOverlay" style="display:none;">
   <div class="joinFormModal">
@@ -671,7 +748,7 @@
       <div class="joinFormGrid">
         <label class="joinFormField">
           <span>পূর্ণ নাম *</span>
-          <input type="text" id="joinName" required placeholder="যেমন: করিম উদ্দিন" autocomplete="name">
+          <input type="text" id="joinName" required placeholder="যেমন: karim miya" autocomplete="name">
         </label>
         <label class="joinFormField">
           <span>মোবাইল নাম্বার *</span>
@@ -679,7 +756,7 @@
         </label>
         <label class="joinFormField joinFormFull">
           <span>ঠিকানা *</span>
-          <input type="text" id="joinAddress" required placeholder="যেমন: বড়াইখালী, ...">
+          <input type="text" id="joinAddress" required placeholder="যেমন: Baraikhali, ...">
         </label>
         <label class="joinFormField">
           <span>রক্তের গ্রুপ *</span>
