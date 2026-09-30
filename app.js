@@ -211,6 +211,22 @@ function escAttr(str) {
    (so it keeps counting up even if an earlier record was deleted). */
 /* Card numbers are now "ABN-0001" style (permanent Donor ID) or legacy "0001".
    This reads the trailing digits of either. */
+/* সর্বশেষ রক্তদানের তারিখ অনুযায়ী পুরনো → নতুন ক্রম (তারিখ সমান হলে ID ক্রমে) */
+function donationDateCompare(a, b) {
+  const ta = new Date(a && a.date).getTime(), tb = new Date(b && b.date).getTime();
+  const va = isNaN(ta) ? -Infinity : ta, vb = isNaN(tb) ? -Infinity : tb;
+  if (va !== vb) return va < vb ? -1 : 1;
+  return donationNoNum(a && a.donationNo) - donationNoNum(b && b.donationNo);
+}
+/* কত তম ডোনার: সর্বশেষ রক্তদানের তারিখ অনুযায়ী সবচেয়ে পুরনো = ১, সবচেয়ে নতুন = সর্বশেষ নাম্বার */
+function donorSerialNo(record) {
+  const recs = ((landingData && landingData.donationRecords) || []).filter(r => r);
+  if (!record) return 0;
+  const sorted = recs.slice().sort(donationDateCompare);
+  const idx = sorted.findIndex(r => r === record || (r.id && r.id === record.id) ||
+    (donationNoNum(r.donationNo) && donationNoNum(r.donationNo) === donationNoNum(record.donationNo)));
+  return idx < 0 ? 0 : idx + 1;
+}
 function donationNoNum(no) { const m = String(no || "").match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : 0; }
 /* Finds a card by Donor ID ("ABN-0001"), plain number ("1" / "0001"), or an old
    legacy number that was merged into the donor's single card. */
@@ -472,10 +488,8 @@ function renderRecordsGrid() {
   const grid = document.getElementById("recordsGrid");
   if (!grid) return;
   const emptyState = document.getElementById("recordsEmptyState");
-  const all = (landingData.donationRecords || []).slice().sort((a, b) => {
-    const na = donationNoNum(a.donationNo), nb = donationNoNum(b.donationNo);
-    return nb - na;
-  });
+  /* সর্বশেষ রক্তদানের তারিখ অনুযায়ী — সবচেয়ে নতুন আগে */
+  const all = (landingData.donationRecords || []).slice().sort((a, b) => donationDateCompare(b, a));
   const q = recordsFilterState.q.trim().toLowerCase();
   const bg = recordsFilterState.bg;
   const filtered = all.filter(r => {
@@ -989,6 +1003,21 @@ function renderHospitalsSection() {
   const containers = [document.getElementById("newsList"), document.getElementById("newsDetail")].filter(Boolean);
   if (!containers.length) return;
 
+  /* মেনু যেন স্ক্রিনের বাইরে কেটে না যায় — ভিউপোর্টের ভেতরে ক্ল্যাম্প করে বসায় */
+  function positionShareMenu(wrap, menu) {
+    menu.style.left = "auto"; menu.style.right = "0";
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    const menuW = menu.offsetWidth || 178;
+    const wr = wrap.getBoundingClientRect();
+    const margin = 10;
+    let left = wr.right - menuW;                        // বাটনের ডান প্রান্তের সাথে মিলিয়ে
+    left = Math.max(margin, Math.min(left, vw - menuW - margin));
+    menu.style.right = "auto";
+    menu.style.left = (left - wr.left) + "px";
+    const originX = Math.max(0, Math.min(menuW, wr.left + wr.width / 2 - left));
+    menu.style.transformOrigin = originX + "px top";
+  }
+
   function closeAllShareMenus(except) {
     document.querySelectorAll(".newsShareMenu.open").forEach(m => { if (m !== except) m.classList.remove("open"); });
   }
@@ -1004,7 +1033,10 @@ function renderHospitalsSection() {
       const menu = shareBtn.parentElement.querySelector(".newsShareMenu");
       const willOpen = menu && !menu.classList.contains("open");
       closeAllShareMenus();
-      if (menu && willOpen) menu.classList.add("open");
+      if (menu && willOpen) {
+        positionShareMenu(shareBtn.parentElement, menu);
+        menu.classList.add("open");
+      }
       return;
     }
     const copyBtn = e.target.closest(".copyShare");
@@ -2013,6 +2045,15 @@ document.addEventListener("click", e => {
       noPill.appendChild(document.createTextNode("ID: " + found.donationNo));
       body.appendChild(noPill);
 
+      /* ---- কত তম ডোনার ---- */
+      const serialNo = donorSerialNo(found);
+      if (serialNo > 0) {
+        const serialEl = document.createElement("div");
+        serialEl.className = "donationResultSerial";
+        serialEl.innerHTML = '<i class="fa-solid fa-ranking-star" aria-hidden="true"></i><b>' + toBengaliDigits(serialNo) + ' নাম্বার</b> ডোনার';
+        body.appendChild(serialEl);
+      }
+
       /* ---- name + blood group, same row ---- */
       const nameRow = document.createElement("div");
       nameRow.className = "donationResultNameRow";
@@ -2044,17 +2085,6 @@ document.addEventListener("click", e => {
         lastRow.appendChild(lastIcon);
         lastRow.appendChild(document.createTextNode("সর্বশেষ রক্তদান: " + (recordDateBn(found.date) || found.date)));
         body.appendChild(lastRow);
-      }
-      const allDates = Array.isArray(found.donationDates) ? found.donationDates.filter(Boolean) : [];
-      if (allDates.length > 1) {
-        const histWrap = document.createElement("div");
-        histWrap.className = "donationResultDates";
-        allDates.forEach(dt => {
-          const chip = document.createElement("span");
-          chip.textContent = recordDateBn(dt) || dt;
-          histWrap.appendChild(chip);
-        });
-        body.appendChild(histWrap);
       }
 
       /* হাসপাতাল — plain text line, no icon/box design; hospital name itself is bold */
@@ -2355,8 +2385,10 @@ document.addEventListener("click", e => {
     measure.font = "italic 600 14.5px 'Fraunces',Georgia,serif";
     const thanksLines = wrapCanvasText(measure, thanksText, contentW);
 
+    const serialNoCv = donorSerialNo(record);
     let bodyH = 18;   // top padding
     bodyH += 30;      // #ID row
+    bodyH += serialNoCv > 0 ? 20 : 0; // serial row
     bodyH += 32;      // name + blood-group row
     bodyH += 26;      // visit-count row
     if (record.date) bodyH += 22; // last donation date row
@@ -2500,7 +2532,15 @@ document.addEventListener("click", e => {
     ctx.fillStyle = "#211613";
     ctx.font = "700 12px 'IBM Plex Mono',monospace";
     ctx.fillText("#ID: " + (record.donationNo || ""), PAD, y);
-    y += 32;
+    y += 24;
+    if (serialNoCv > 0) {
+      ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
+      ctx.fillStyle = "#9E1B32";
+      ctx.fillText(toBengaliDigits(serialNoCv) + " নাম্বার ডোনার", PAD, y);
+      y += 28;
+    } else {
+      y += 8;
+    }
 
     ctx.font = "700 23px 'Fraunces',Georgia,serif";
     ctx.fillStyle = "#211613";
