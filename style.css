@@ -2253,3 +2253,18 @@
   background: var(--amber-tint); border: 1px solid rgba(185,114,46,0.3);
   border-radius: 999px; padding: 3px 10px;
 }
+
+
+/* ---- News list: title + button only, extra top padding ---- */
+#route-news, #route-news-detail { padding-top: calc(var(--navH) + 24px); }
+.newsGrid { gap: 14px; }
+.newsCard.newsCardCompact {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px;
+}
+.newsCardCompact .newsCardTitle { margin: 0; font-size: 18px; line-height: 1.5; }
+.newsCardCompact .newsTitleLink { color: var(--ink); text-decoration: none; }
+.newsCardCompact .newsReadMore { align-self: flex-end; }
+
+.newsCardCompact .newsCardTopActions { position: static; }
+.newsCompactFoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.newsCardCompact .newsReadMore { align-self: auto; margin-left: auto; }

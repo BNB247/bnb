@@ -716,38 +716,26 @@ function formatNewsDateBn(dateStr) {
 }
 
 function newsCardTemplate(n) {
+  const href = "#news/" + encodeURIComponent(n.id);
+  const id = escAttr(n.id);
   return (
-    '<article class="newsCard" data-news-id="' + n.id + '">' +
-      '<div class="newsCardTopActions">' +
-        '<button type="button" class="newsLikeBtn" data-news-id="' + n.id + '" aria-label="লাইক">' +
-          '<i class="fa-regular fa-heart" aria-hidden="true"></i>' +
-          '<span class="newsLikeCount"></span>' +
-        '</button>' +
-        '<div class="newsShareWrap">' +
-          '<button type="button" class="newsShareBtn" data-news-id="' + n.id + '" aria-label="শেয়ার">' +
-            '<i class="fa-solid fa-share-nodes" aria-hidden="true"></i>' +
-          '</button>' +
-          '<div class="newsShareMenu">' +
-            '<a class="newsShareOpt waShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>WhatsApp</a>' +
-            '<a class="newsShareOpt fbShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook" aria-hidden="true"></i>Facebook</a>' +
-            '<a class="newsShareOpt msgShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i>Messenger</a>' +
-            '<button type="button" class="newsShareOpt copyShare" data-news-id="' + n.id + '"><i class="fa-solid fa-link" aria-hidden="true"></i>লিংক কপি</button>' +
+    '<article class="newsCard newsCardCompact" data-news-id="' + id + '">' +
+      '<div class="newsDetailMeta"><span class="newsCardCategoryTag"></span><span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> <span class="newsCardDateText"></span></span></div>' +
+      '<h3 class="newsCardTitle"><a class="newsTitleLink" href="' + href + '"></a></h3>' +
+      '<div class="newsCompactFoot">' +
+        '<div class="newsCardTopActions">' +
+          '<button type="button" class="newsLikeBtn" data-news-id="' + id + '" aria-label="লাইক"><i class="fa-regular fa-heart" aria-hidden="true"></i><span class="newsLikeCount"></span></button>' +
+          '<div class="newsShareWrap">' +
+            '<button type="button" class="newsShareBtn" data-news-id="' + id + '" aria-label="শেয়ার"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>' +
+            '<div class="newsShareMenu">' +
+              '<a class="newsShareOpt waShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>WhatsApp</a>' +
+              '<a class="newsShareOpt fbShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook" aria-hidden="true"></i>Facebook</a>' +
+              '<a class="newsShareOpt msgShare" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i>Messenger</a>' +
+              '<button type="button" class="newsShareOpt copyShare" data-news-id="' + id + '"><i class="fa-solid fa-link" aria-hidden="true"></i>লিংক কপি</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="newsCardImageWrap placeholderMode">' +
-        '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        '<img class="newsCardImage" alt="' + escAttr(n.title) + '">' +
-        '<span class="newsCardPlaceholderMark"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>' +
-      '</div>' +
-      '<div class="newsCardTitleBox">' +
-        '<span class="newsCardDate"><span class="newsCardCategoryTag"></span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span class="newsCardDateText"></span></span>' +
-        '<h3 class="newsCardTitle"><a class="newsTitleLink" href="#news/' + encodeURIComponent(n.id) + '"></a></h3>' +
-      '</div>' +
-      '<p class="newsCardText"></p>' +
-      '<div class="newsCardFoot">' +
-        '<span class="newsPdfTag" style="display:none;"><i class="fa-solid fa-images" aria-hidden="true"></i>রিপোর্ট সংযুক্ত</span>' +
-        '<a class="newsReadMore" href="#news/' + encodeURIComponent(n.id) + '">বিস্তারিত পড়ুন <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>' +
+        '<a class="newsReadMore" href="' + href + '">ওপেন করুন <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>' +
       '</div>' +
     '</article>'
   );
@@ -764,31 +752,15 @@ function renderNewsSection() {
     container.innerHTML = sorted.map(newsCardTemplate).join("");
   }
   sorted.forEach(n => {
-    const card = container.querySelector('.newsCard[data-news-id="' + n.id + '"]');
+    const card = Array.from(container.children).find(c => c.getAttribute("data-news-id") === n.id);
     if (!card) return;
     const titleEl = card.querySelector(".newsTitleLink");
-    const textEl = card.querySelector(".newsCardText");
-    const dateEl = card.querySelector(".newsCardDateText");
     if (titleEl) titleEl.textContent = n.title || "শিরোনামহীন";
+    const dateEl = card.querySelector(".newsCardDateText");
     if (dateEl) dateEl.textContent = formatNewsDateBn(n.date);
-    const pdfTag = card.querySelector(".newsPdfTag");
-    if (pdfTag) pdfTag.style.display = newsReportImages(n).length ? "inline-flex" : "none";
-    if (textEl) textEl.textContent = n.content || "";
     const catEl = card.querySelector(".newsCardCategoryTag");
     if (catEl) catEl.textContent = n.category || "সাধারণ";
 
-    const wrap = card.querySelector(".newsCardImageWrap");
-    const img = card.querySelector(".newsCardImage");
-    if (n.newsImage) {
-      wrap.classList.remove("placeholderMode");
-      loadImageWithFallback(img, n.newsImage, wrap);
-    } else {
-      wrap.classList.add("placeholderMode");
-      wrap.classList.remove("loadingImg", "imgLoadFailed");
-      img.removeAttribute("src");
-    }
-
-    // like button state + count
     const likeBtn = card.querySelector(".newsLikeBtn");
     const likeIcon = likeBtn ? likeBtn.querySelector("i") : null;
     const likeCountEl = card.querySelector(".newsLikeCount");
@@ -797,7 +769,6 @@ function renderNewsSection() {
     if (likeBtn) likeBtn.classList.toggle("liked", isNewsLiked(n.id));
     if (likeIcon) likeIcon.className = isNewsLiked(n.id) ? "fa-solid fa-heart" : "fa-regular fa-heart";
 
-    // share links — a fresh, correct URL per post, rebuilt every render
     const shareUrl = buildNewsShareUrl(n.id);
     const shareText = encodeURIComponent((n.title || "") + " — " + (landingData.siteName || ""));
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -845,8 +816,7 @@ function newsReportImages(n) {
 }
 
 function newsDetailStateHtml(icon, msg, spinner) {
-  return '<a class="newsBackLink" href="#news"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> সব সংবাদ</a>' +
-    '<div class="newsDetailState">' + (spinner ? '<span class="newsLoadingSpinner" aria-hidden="true"></span>' : '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>') +
+  return     '<div class="newsDetailState">' + (spinner ? '<span class="newsLoadingSpinner" aria-hidden="true"></span>' : '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>') +
     '<span>' + escAttr(msg) + '</span></div>';
 }
 
@@ -878,8 +848,7 @@ function renderNewsDetail() {
       '</div>'
     ) : '';
     box.innerHTML =
-      '<a class="newsBackLink" href="#news"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> সব সংবাদ</a>' +
-      '<article class="newsDetailCard" data-news-id="' + escAttr(n.id) + '">' +
+            '<article class="newsDetailCard" data-news-id="' + escAttr(n.id) + '">' +
         '<div class="newsDetailTop">' +
           (n.newsImage ? '<div class="newsDetailImageWrap"><div class="imgSkeleton" aria-hidden="true"></div><img alt="' + escAttr(n.title) + '"></div>' : '') +
           '<div class="newsDetailHead">' +
@@ -1453,6 +1422,7 @@ renderLanding();
 
   const siteNavEl = document.getElementById("siteNav");
   const routeBackTitleEl = document.getElementById("siteNavRouteBackTitle");
+  const routeBackEl = document.getElementById("siteNavRouteBrand");
   const navLinks = document.querySelectorAll("[data-nav-route]");
 
   function markActiveNav(currentRoute) {
@@ -1488,6 +1458,11 @@ renderLanding();
     markActiveNav(!isRoute ? "home" : (parsed.route === "news-detail" ? "news" : parsed.route));
     if (siteNavEl) siteNavEl.classList.toggle("inRoutePage", isRoute);
     if (routeBackTitleEl) routeBackTitleEl.textContent = isRoute ? (ROUTE_TITLES[parsed.route] || "") : "হোম";
+    if (routeBackEl) {
+      const toNews = parsed.route === "news-detail";
+      routeBackEl.setAttribute("href", toNews ? "#news" : "#top");
+      routeBackEl.setAttribute("aria-label", toNews ? "সংবাদ তালিকায় ফিরে যান" : "হোমে ফিরে যান");
+    }
     if (parsed.route === "news-detail") {
       currentNewsDetailId = parsed.newsId;
       renderNewsDetail();
