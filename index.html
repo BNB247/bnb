@@ -46,10 +46,9 @@
     <div class="siteNavLinks" id="siteNavLinks">
       <a href="#top" data-nav-route="home"><i class="fa-solid fa-house" aria-hidden="true"></i>হোম</a>
       <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
-      <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
       <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
       <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
-      <a href="#news" data-nav-route="news"><i class="fa-solid fa-book-open" aria-hidden="true"></i>ব্লগ</a>
+      <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
       <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
       <a href="#" class="siteNavCta joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>যোগ দিন</a>
     </div>
@@ -60,10 +59,9 @@
   <div class="siteNavMobile" id="siteNavMobile">
     <a href="#top" data-nav-route="home"><i class="fa-solid fa-house" aria-hidden="true"></i>হোম</a>
     <a href="#process" data-nav-route="process"><i class="fa-solid fa-route" aria-hidden="true"></i>কীভাবে কাজ করে</a>
-    <a href="#testimonials" data-nav-route="testimonials"><i class="fa-solid fa-quote-left" aria-hidden="true"></i>সফলতার গল্প</a>
     <a href="#blood-group" data-nav-route="blood-group"><i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্তের গ্রুপ চার্ট</a>
     <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
-    <a href="#news" data-nav-route="news"><i class="fa-solid fa-book-open" aria-hidden="true"></i>ব্লগ</a>
+    <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
     <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
     <a href="#" class="siteNavCtaMobile joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>রক্তদাতা হিসেবে যোগ দিন</a>
   </div>
@@ -323,20 +321,15 @@
         <span class="exploreLinkTitle">কীভাবে কাজ করে</span>
         <span class="exploreLinkDesc">ধাপে ধাপে জেনে নিন রক্তদাতা খোঁজা ও রক্তদানের পুরো প্রক্রিয়া।</span>
       </a>
-      <a class="exploreLinkCard" href="#testimonials">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">সফলতার গল্প</span>
-        <span class="exploreLinkDesc">রক্তদাতা ও গ্রহীতাদের সত্যিকারের অভিজ্ঞতা পড়ুন।</span>
-      </a>
       <a class="exploreLinkCard" href="#blood-group">
         <span class="exploreLinkIcon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
         <span class="exploreLinkTitle">রক্তের গ্রুপ চার্ট</span>
         <span class="exploreLinkDesc">কোন গ্রুপ কাকে রক্ত দিতে বা নিতে পারবেন, বিস্তারিত চার্ট।</span>
       </a>
       <a class="exploreLinkCard" href="#news">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">ব্লগ ও স্বাস্থ্য টিপস</span>
-        <span class="exploreLinkDesc">রক্তদান নিয়ে স্বাস্থ্য টিপস, মিথ ভাঙা লেখা ও সর্বশেষ আপডেট পড়ুন।</span>
+        <span class="exploreLinkIcon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
+        <span class="exploreLinkTitle">সংবাদ ও আপডেট</span>
+        <span class="exploreLinkDesc">গত মাসের কার্যক্রম, ডোনেশন হিস্ট্রি রিপোর্ট ও সর্বশেষ খবর পড়ুন।</span>
       </a>
       <a class="exploreLinkCard" href="#donations">
         <span class="exploreLinkIcon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
@@ -388,19 +381,6 @@
     </div>
   </div>
 </section>
-
-<!-- ============================================================
-     রুট পেজ ২ — সফলতার গল্প
-     ============================================================ -->
-<section class="routePage" id="route-testimonials">
-  <div class="routePageInner">
-    <div class="testimonialsBody dataSection" id="testimonialsBody">
-      <div class="testimonialGrid" id="testimonialGrid"></div>
-      <div class="sectionEmptyState" id="testimonialsEmptyState"><i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>এখনও কোনো গল্প যোগ করা হয়নি — এডিট মোডে যোগ করুন</span></div>
-    </div>
-  </div>
-</section>
-
 
 <!-- ============================================================
      রুট পেজ ৩ — রক্তের গ্রুপ চার্ট
@@ -572,14 +552,24 @@
 </section>
 
 <!-- ============================================================
-     রুট পেজ ৪ — ব্লগ ও স্বাস্থ্য টিপস
+     রুট পেজ ৪ — সংবাদ ও আপডেট (তালিকা) + বিস্তারিত পেজ
      ============================================================ -->
 <section class="routePage" id="route-news">
   <div class="routePageInner">
+    <div class="newsLoading" id="newsLoading" role="status" aria-live="polite">
+      <span class="newsLoadingSpinner" aria-hidden="true"></span><span>সংবাদ লোড হচ্ছে…</span>
+    </div>
     <div class="newsBody dataSection" id="newsSection">
       <div class="newsGrid" id="newsList"></div>
-      <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>এখনও কোনো ব্লগ পোস্ট প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
+      <div class="sectionEmptyState" id="newsEmptyState"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি — এডমিন প্যানেল থেকে যোগ করুন</span></div>
     </div>
+    <div class="newsEmptyPublic" id="newsEmptyPublic" style="display:none;"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>এখনও কোনো সংবাদ প্রকাশ করা হয়নি।</span></div>
+  </div>
+</section>
+
+<section class="routePage" id="route-news-detail">
+  <div class="routePageInner">
+    <div class="newsDetailWrap" id="newsDetail" aria-live="polite"></div>
   </div>
 </section>
 
@@ -662,10 +652,9 @@
       <div class="footerColTitle">লিংক</div>
       <div class="footerRow"><a href="index-9.html">রক্তদাতা তালিকা</a></div>
       <div class="footerRow"><a href="#process">কীভাবে কাজ করে</a></div>
-      <div class="footerRow"><a href="#testimonials">সফলতার গল্প</a></div>
       <div class="footerRow"><a href="#blood-group">রক্তের গ্রুপ চার্ট</a></div>
       <div class="footerRow"><a href="#donations">রক্তদান রেকর্ড</a></div>
-      <div class="footerRow"><a href="#news">ব্লগ ও স্বাস্থ্য টিপস</a></div>
+      <div class="footerRow"><a href="#news">সংবাদ ও আপডেট</a></div>
       <div class="footerRow"><a href="#hospitals">হাসপাতাল ও ব্লাড ব্যাংক</a></div>
       <div class="footerRow"><a href="#top">উপরে ফিরে যান</a></div>
       <div class="footerRow"><i class="fa-brands fa-facebook" aria-hidden="true"></i> <span class="editable-field" data-key="footerFacebook" contenteditable="false">facebook.com/bloodnetworkbaraikhali</span></div>
