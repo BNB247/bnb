@@ -228,54 +228,6 @@
   }
 
   /* ============================================================
-     PAGE LOADER (scale-in loading screen)
-     ============================================================ */
-  #pageLoader {
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 18px;
-    background: var(--cream);
-    background-image: radial-gradient(circle at 50% 40%, rgba(158,27,50,0.06), transparent 60%);
-    transition: opacity .55s var(--ease), transform .55s var(--ease), visibility .55s var(--ease);
-  }
-  #pageLoader.loaderHidden {
-    opacity: 0; transform: scale(1.06); visibility: hidden; pointer-events: none;
-  }
-  .loaderMark {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: var(--crimson); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-weight: 700; font-size: 26px;
-    box-shadow: 0 10px 30px rgba(158,27,50,0.28);
-    animation: loaderPulse 1.15s var(--ease) infinite;
-  }
-  .loaderMark img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-  @keyframes loaderPulse {
-    0%   { transform: scale(0.85); box-shadow: 0 10px 22px rgba(158,27,50,0.22); }
-    50%  { transform: scale(1.08); box-shadow: 0 14px 34px rgba(158,27,50,0.32); }
-    100% { transform: scale(0.85); box-shadow: 0 10px 22px rgba(158,27,50,0.22); }
-  }
-  .loaderText {
-    font-family: var(--font-bn); font-size: 13.5px; font-weight: 600;
-    color: var(--muted); letter-spacing: 0.02em;
-  }
-  .loaderBar {
-    width: 130px; height: 3px; border-radius: 999px; background: var(--line); overflow: hidden;
-  }
-  .loaderBarFill {
-    width: 40%; height: 100%; border-radius: 999px; background: var(--crimson);
-    animation: loaderSlide 1.1s ease-in-out infinite;
-  }
-  @keyframes loaderSlide {
-    0%   { transform: translateX(-110%); }
-    100% { transform: translateX(340%); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .loaderMark { animation: none; }
-    .loaderBarFill { animation: none; width: 100%; }
-  }
-
-  /* ============================================================
      IMAGE LOADING — Google Drive links occasionally fail to load
      on certain devices/networks (blocked hotlink format, flaky
      redirect). Every dynamic image is loaded through a fallback
@@ -2276,3 +2228,605 @@
 /* share menu: never wider than the screen */
 .newsShareMenu { max-width: calc(100vw - 20px); box-sizing: border-box; }
 .newsShareOpt { white-space: nowrap; }
+
+
+/* ============================================================
+   SKELETON LOADING (লোডিং স্ক্রিনের বদলে)
+   ============================================================ */
+@keyframes skelShimmer {
+  0%   { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+.skel {
+  background: linear-gradient(100deg, rgba(158,27,50,0.07) 20%, rgba(158,27,50,0.16) 42%, rgba(158,27,50,0.07) 64%);
+  background-size: 250% 100%;
+  animation: skelShimmer 1.4s ease-in-out infinite;
+}
+.skelLine { height: 12px; border-radius: 6px; margin: 7px 0; }
+.recordCardSkel { cursor: default; pointer-events: none; }
+.recordCardSkel:hover { transform: none; box-shadow: var(--shadow); }
+.recordCardSkel .recordCardPhotoWrap::after { display: none; }
+.teamCardSkel, .partnerCardSkel { pointer-events: none; }
+.teamCardSkel .skelLine, .partnerCardSkel .skelLine { margin: 9px auto; }
+.newsCardSkel { display: flex; gap: 14px; align-items: flex-start; pointer-events: none; }
+.skelNewsImg { width: 120px; height: 90px; border-radius: 12px; flex: none; }
+.skelNewsBody { flex: 1; min-width: 0; }
+
+/* প্রথমবার ঢুকলে সাইটের সব লেখা স্কেলিটন বার হিসেবে দেখায় */
+html.skelMode .editable-field[data-key] {
+  color: transparent !important; -webkit-text-fill-color: transparent;
+  text-shadow: none !important; border-radius: 6px;
+  pointer-events: none; user-select: none;
+  background: linear-gradient(100deg, rgba(33,22,19,0.06) 20%, rgba(33,22,19,0.14) 42%, rgba(33,22,19,0.06) 64%);
+  background-size: 250% 100%;
+  animation: skelShimmer 1.4s ease-in-out infinite;
+}
+html.skelMode .hero .editable-field[data-key],
+html.skelMode .ctaBand .editable-field[data-key] {
+  background-image: linear-gradient(100deg, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.30) 42%, rgba(255,255,255,0.10) 64%);
+}
+html.skelMode .sectionEmptyState,
+html.skelMode .donationEmptyState { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skel, html.skelMode .editable-field[data-key] { animation: none; }
+}
+
+/* ============================================================
+   রক্তদান রেকর্ড — পেজ নম্বর
+   ============================================================ */
+.recordsPager {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 8px; margin: 28px 0 6px;
+}
+.recordsPager:empty { display: none; }
+.pgBtn {
+  min-width: 40px; height: 40px; padding: 0 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 12px; font-family: var(--font-bn); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: border-color .18s var(--ease), color .18s var(--ease), background .18s var(--ease);
+}
+.pgBtn:hover:not(:disabled):not(.active) { border-color: var(--crimson); color: var(--crimson); }
+.pgBtn.active { background: var(--crimson); border-color: var(--crimson); color: #fff; cursor: default; }
+.pgBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pgBtn i { font-size: 11px; }
+.pgDots { color: var(--muted); padding: 0 2px; }
+.pgInfo { flex-basis: 100%; text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 6px; font-family: var(--font-bn); }
+@media (max-width: 640px) {
+  .recordsPager { gap: 6px; }
+  .pgBtn { min-width: 36px; height: 36px; padding: 0 10px; font-size: 13px; }
+  .pgNav span { display: none; }
+}
+
+
+/* ============================================================
+   UPDATE — সব ছবি বাটন, সব-ছবি পেজ, নতুন টিম কার্ড
+   ============================================================ */
+.seeAllWrap { text-align: center; margin-top: 10px; }
+.seeAllBtn {
+  display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-body); font-weight: 700; font-size: 14px;
+  background: var(--crimson); color: #fff; border-radius: 999px; padding: 11px 24px; text-decoration: none;
+  box-shadow: 0 8px 18px rgba(158,27,50,0.25); transition: background .2s var(--ease), transform .2s var(--ease);
+}
+.seeAllBtn:hover { background: var(--crimson-dark); transform: translateY(-2px); }
+.seeAllBtn i { font-size: 12px; }
+
+.galleryAllGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+@media (max-width: 640px) { .galleryAllGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+.galleryAllItem {
+  position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: var(--radius-md);
+  box-shadow: var(--shadow); border: 1px solid var(--line);
+  background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 55%, var(--sage-tint) 100%);
+}
+.galleryAllItem .donationImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* টিম কার্ড — একজনের বড় ছবি + নিচে নাম ও পদবি */
+.teamCard { padding: 0; align-items: stretch; flex: 0 0 250px; text-align: center; }
+.teamCard::before { display: none; }
+.teamCard:hover { transform: translateY(-6px); box-shadow: 0 18px 34px rgba(33,22,19,0.14); }
+.teamPhotoWrap {
+  width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 0; padding: 0; margin: 0; box-shadow: none;
+  background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 60%, var(--sage-tint) 100%);
+}
+.teamCard:hover .teamPhotoWrap { transform: none; background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 60%, var(--sage-tint) 100%); }
+.teamPhoto { border-radius: 0; transition: transform .5s var(--ease); }
+.teamCard:hover .teamPhoto { transform: scale(1.05); }
+.teamPlaceholderMark i { font-size: 64px; }
+.teamPhotoWrap .imgEditBtn { border-radius: 0; }
+.teamBody { padding: 16px 18px 20px; display: flex; flex-direction: column; align-items: center; }
+.teamName { font-size: 19px; }
+.teamRole { margin: 8px 0 0; }
+.teamRole:empty { display: none; }
+.teamBio { margin-top: 12px; padding-top: 12px; font-size: 13.5px; }
+.teamBio:empty { display: none; }
+body.adminMode .teamRole:empty, body.adminMode .teamBio:empty { display: block; min-height: 22px; min-width: 60px; }
+.teamCardSkel { padding-bottom: 16px; }
+@media (max-width: 640px) {
+  .teamCard { flex: 0 0 72%; max-width: 300px; }
+}
+
+
+/* ==========================================================================
+   ADMIN-CONTROLLED ORDER / VISIBILITY
+   ========================================================================== */
+.adminHidden { display: none !important; }
+.navHiddenByAdmin { display: none !important; }
+
+/* ==========================================================================
+   TEAM — নতুন কার্ড ডিজাইন (.tmCard)
+   বড় ছবি + নিচে গ্রেডিয়েন্টের উপরে পদবি ও নাম; কার্ডের নিচে পরিচিতি ও কল/ফেসবুক।
+   ========================================================================== */
+.teamSubtitle {
+  margin: -10px auto 26px; max-width: 520px; text-align: center;
+  font-size: 14px; line-height: 1.7; color: var(--muted);
+}
+.tmCard {
+  position: relative; flex: 0 0 250px; display: flex; flex-direction: column; text-align: left;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 22px; overflow: hidden;
+  box-shadow: var(--shadow); scroll-snap-align: start;
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
+}
+.tmCard:hover { transform: translateY(-6px); box-shadow: 0 20px 38px rgba(33,22,19,0.15); border-color: var(--crimson-tint); }
+.tmPhoto {
+  position: relative; width: 100%; aspect-ratio: 4 / 5; flex: 1 0 auto; overflow: hidden; /* বাকি কার্ডের চেয়ে ছোট হলে ছবিটাই বাড়ে — ফাঁকা সাদা জায়গা থাকে না */
+  background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 60%, var(--sage-tint) 100%);
+}
+.tmImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease), opacity .35s var(--ease); }
+.tmCard:hover .tmImg { transform: scale(1.06); }
+.tmPhoto.placeholderMode .tmImg { display: none; }
+.loadingImg .tmImg { opacity: 0; }
+.tmPlaceholder { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+.tmPlaceholder i { font-size: 72px; color: var(--crimson); opacity: .35; }
+.tmPhoto.placeholderMode .tmPlaceholder, .imgLoadFailed .tmPlaceholder { display: flex; }
+.tmShade {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 2; pointer-events: none;
+  background: linear-gradient(to top, rgba(33,22,19,0.88) 0%, rgba(33,22,19,0.5) 45%, rgba(33,22,19,0) 100%);
+}
+.tmOverlay { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 18px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.tmRole {
+  display: inline-block; max-width: 100%; padding: 4px 11px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .01em; line-height: 1.4; color: #fff;
+  background: rgba(158,27,50,0.92); border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.tmName { font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.25; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+.tmBody { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
+.tmBio {
+  font-size: 13.5px; line-height: 1.7; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tmLinks { display: flex; gap: 8px; margin-top: auto; }
+.tmLink {
+  width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; border: 1.5px solid var(--line); background: var(--cream); color: var(--crimson);
+  transition: background .2s var(--ease), color .2s var(--ease), transform .2s var(--ease), border-color .2s var(--ease);
+}
+.tmLink:hover { background: var(--crimson); color: #fff; border-color: var(--crimson); transform: translateY(-2px); }
+.tmLinkFb { color: #1877F2; }
+.tmLinkFb:hover { background: #1877F2; border-color: #1877F2; }
+.tmCardSkel { pointer-events: none; }
+.tmCardSkel .tmPhoto { aspect-ratio: 4 / 5.6; }
+@media (max-width: 640px) {
+  .tmCard { flex: 0 0 78%; max-width: 300px; scroll-snap-align: center; }
+}
+
+/* ==========================================================================
+   NEWS LIKE — সবসময় দৃশ্যমান কাউন্টসহ পিল বাটন (রিয়েল-টাইম আপডেট)
+   ========================================================================== */
+.newsCardTopActions .newsLikeBtn {
+  width: auto; min-width: 38px; padding: 0 13px 0 11px; gap: 6px; border-radius: 999px;
+}
+.newsLikeCount {
+  position: static; transform: none; background: none; color: var(--ink);
+  font-family: var(--font-bn); font-size: 13px; font-weight: 700; line-height: 1;
+  padding: 0; min-width: 0; text-align: left; display: inline-block;
+}
+.newsLikeCount:empty { display: inline-block; }
+.newsLikeBtn.liked .newsLikeCount { color: var(--crimson-dark); }
+@keyframes likeCountPop { 0% { transform: translateY(5px) scale(.7); opacity: .3; } 60% { transform: translateY(-2px) scale(1.3); } 100% { transform: none; opacity: 1; } }
+@keyframes likeHeartBeat { 0% { transform: scale(1); } 25% { transform: scale(1.5); } 50% { transform: scale(.9); } 75% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.newsLikeCount.likePop { animation: likeCountPop .4s var(--ease); }
+.newsLikeBtn.likeBurst i { animation: likeHeartBeat .55s var(--ease); }
+@media (max-width: 640px) {
+  .newsCardTopActions .newsLikeBtn { width: auto; height: 34px; padding: 0 11px 0 9px; }
+  .newsLikeCount { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .newsLikeCount.likePop, .newsLikeBtn.likeBurst i { animation: none; }
+}
+
+/* ==========================================================================
+   SPONSORS — সবার নিচে (ফুটারের ঠিক উপরে), হোম ও সব পেজে
+   ========================================================================== */
+.sponsorsSection {
+  position: relative; margin-top: 56px; padding: 46px 22px 54px; text-align: center;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(158,27,50,0.06), transparent 45%),
+    radial-gradient(circle at 90% 100%, rgba(63,122,93,0.07), transparent 45%),
+    var(--paper);
+  border-top: 1px solid var(--line);
+}
+.sponsorsSection::before {
+  content: ""; position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--crimson), var(--amber), var(--sage));
+}
+.sponsorsInner { max-width: 1120px; margin: 0 auto; }
+.sponsorsHeading { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; margin: 10px 0 8px; }
+.sponsorsSubtitle { max-width: 560px; margin: 0 auto 30px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.sponsorsTiers { display: flex; flex-direction: column; gap: 34px; }
+.sponsorTierLabel {
+  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 6px 16px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
+  background: var(--cream); border: 1px solid var(--line); color: var(--ink);
+}
+.sponsorTier-main .sponsorTierLabel { background: linear-gradient(135deg, #F7EAD8, #F0DCB6); border-color: var(--amber); color: #7A4A18; }
+.sponsorTier-gold .sponsorTierLabel { background: var(--amber-tint); border-color: #E3C79B; color: #7A4A18; }
+.sponsorTier-silver .sponsorTierLabel { background: #F1F2F4; border-color: #D9DCE1; color: #4A5260; }
+.sponsorTier-support .sponsorTierLabel { background: var(--sage-tint); border-color: #C3DCCD; color: var(--sage); }
+.sponsorTierLabel i { font-size: 12px; }
+.sponsorGrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+.sponsorCard {
+  position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+  padding: 18px 16px 16px; width: 200px; overflow: hidden;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease);
+}
+.sponsorCard::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; opacity: 0;
+  background: linear-gradient(90deg, var(--crimson), var(--amber), var(--sage)); transition: opacity .3s var(--ease);
+}
+a.sponsorCard:hover, .sponsorCard:hover { transform: translateY(-5px); box-shadow: 0 16px 30px rgba(33,22,19,0.12); border-color: var(--crimson-tint); }
+.sponsorCard:hover::before { opacity: 1; }
+.sponsorLogoWrap {
+  position: relative; width: 100%; height: 84px; margin-bottom: 12px; border-radius: 12px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; background: #fff;
+}
+.sponsorLogo { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; transition: opacity .35s var(--ease), transform .4s var(--ease); }
+.sponsorCard:hover .sponsorLogo { transform: scale(1.05); }
+.loadingImg .sponsorLogo { opacity: 0; }
+.sponsorLogoWrap.placeholderMode .sponsorLogo { display: none; }
+.sponsorPlaceholderMark { display: none; align-items: center; justify-content: center; }
+.sponsorPlaceholderMark i { font-size: 30px; color: var(--crimson); opacity: .4; }
+.sponsorLogoWrap.placeholderMode .sponsorPlaceholderMark, .imgLoadFailed .sponsorPlaceholderMark { display: flex; }
+.sponsorName { font-family: var(--font-display); font-size: 15px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+.sponsorTagline { margin-top: 4px; font-size: 12px; line-height: 1.55; color: var(--muted); }
+.sponsorVisit { margin-top: 10px; font-size: 11.5px; font-weight: 700; color: var(--crimson); display: inline-flex; align-items: center; gap: 5px; opacity: .85; }
+.sponsorVisit i { font-size: 10px; }
+/* টিয়ার অনুযায়ী আকার */
+.sponsorTier-main .sponsorCard { width: 300px; padding: 24px 22px 20px; border-color: #E3C79B; box-shadow: 0 10px 28px rgba(185,114,46,0.16); }
+.sponsorTier-main .sponsorLogoWrap { height: 130px; }
+.sponsorTier-main .sponsorName { font-size: 18px; }
+.sponsorTier-main .sponsorCard::before { opacity: 1; background: linear-gradient(90deg, #F3D8A8, #B9722E, #8F5A20); }
+.sponsorTier-gold .sponsorCard { width: 236px; }
+.sponsorTier-gold .sponsorLogoWrap { height: 100px; }
+.sponsorTier-silver .sponsorCard { width: 200px; }
+.sponsorTier-support .sponsorCard { width: 160px; padding: 14px 12px 12px; }
+.sponsorTier-support .sponsorLogoWrap { height: 64px; }
+.sponsorTier-support .sponsorName { font-size: 13px; }
+@media (max-width: 640px) {
+  .sponsorsSection { padding: 38px 14px 44px; margin-top: 40px; }
+  .sponsorGrid { gap: 12px; }
+  .sponsorTier-main .sponsorCard { width: 100%; max-width: 360px; }
+  .sponsorTier-gold .sponsorCard { width: calc(50% - 6px); }
+  .sponsorTier-silver .sponsorCard { width: calc(50% - 6px); }
+  .sponsorTier-support .sponsorCard { width: calc(50% - 6px); }
+  .sponsorTier-gold .sponsorLogoWrap { height: 84px; }
+}
+
+
+/* ===== সেকশনের ছোট বর্ণনা (এডমিন-নিয়ন্ত্রিত) ===== */
+.secSubtitle { max-width: 560px; margin: 4px auto 24px; font-size: 14px; line-height: 1.7; color: var(--muted); text-align: center; }
+
+/* ===== TEAM v2 — সব তথ্য ছবির ভেতরেই ===== */
+.tmCard { flex: 0 0 250px; }
+.tmPhoto { aspect-ratio: 3 / 4; flex: 1 0 auto; }
+.tmPhoto.placeholderMode, .tmPhoto.imgLoadFailed { background: linear-gradient(155deg, #9E1B32 0%, #5E1020 100%); }
+.tmPhoto.placeholderMode .tmPlaceholder i, .imgLoadFailed .tmPlaceholder i { color: #fff; opacity: .22; }
+.tmShade { height: 78%; background: linear-gradient(to top, rgba(20,10,10,0.94) 0%, rgba(20,10,10,0.78) 40%, rgba(20,10,10,0) 100%); }
+.tmOverlay { padding: 0 16px 16px; gap: 6px; }
+.tmName { font-size: 20px; }
+.tmBio {
+  font-size: 12.5px; line-height: 1.6; color: rgba(255,255,255,0.88); margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tmContact { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tmPhone, .tmFb {
+  display: inline-flex; align-items: center; gap: 7px; color: #fff; font-size: 12.5px; font-weight: 700;
+  background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; padding: 6px 12px;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); transition: background .2s var(--ease), transform .2s var(--ease);
+}
+.tmFb { width: 32px; height: 32px; padding: 0; justify-content: center; }
+.tmPhone:hover, .tmFb:hover { background: var(--crimson); transform: translateY(-2px); }
+.tmPhone i { font-size: 11px; }
+@media (max-width: 640px) { .tmCard { flex: 0 0 78%; max-width: 300px; } }
+
+
+/* ==========================================================================
+   MOBILE TEAM — এক স্ক্রিনে ৩ জন (ছোট কার্ড) + ট্যাপে বটম-শিট
+   ========================================================================== */
+@media (max-width: 640px) {
+  #teamRow {
+    display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+    overflow: visible !important; scroll-snap-type: none !important; padding: 0 12px !important; margin: 0 !important;
+  }
+  #teamRow .tmCard { flex: none; width: auto; max-width: none; min-width: 0; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(33,22,19,0.12); }
+  #teamRow .tmCard:hover { transform: none; }
+  #teamRow .tmPhoto { aspect-ratio: 3 / 4.2; }
+  #teamRow .tmShade { height: 70%; }
+  #teamRow .tmOverlay { padding: 0 7px 8px; gap: 3px; align-items: stretch; }
+  #teamRow .tmRole { font-size: 8.5px; padding: 2px 6px; align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(158,27,50,0.95); }
+  #teamRow .tmName { font-size: 11.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  #teamRow .tmBio { display: none; }
+  #teamRow .tmContact { gap: 4px; margin-top: 3px; flex-wrap: nowrap; }
+  #teamRow .tmPhone, #teamRow .tmFb { width: 24px; height: 24px; padding: 0; justify-content: center; font-size: 10px; flex: 0 0 auto; }
+  #teamRow .tmPhone span { display: none; }
+  #teamRow .tmPhone i { font-size: 10px; }
+  #teamRow .tmPlaceholder i { font-size: 34px; }
+  #teamRow .tmCardSkel .tmPhoto { aspect-ratio: 3 / 4.2; }
+  .teamSubtitle { margin: -8px auto 18px; padding: 0 16px; font-size: 13px; }
+}
+.tsLock { overflow: hidden; }
+.teamSheet { position: fixed; inset: 0; z-index: 1200; display: none; }
+.teamSheet.open { display: block; }
+.tsBackdrop { position: absolute; inset: 0; background: rgba(20,10,10,0.55); animation: tsFade .25s ease both; }
+.tsPanel {
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 85vh; overflow-y: auto;
+  background: var(--paper); border-radius: 24px 24px 0 0; padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.25); animation: tsUp .32s var(--ease) both;
+}
+.tsGrab { display: block; width: 42px; height: 4px; border-radius: 4px; background: var(--line); margin: -8px auto 14px; }
+.tsClose { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--cream); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; }
+.tsHead { display: flex; align-items: center; gap: 14px; padding-right: 36px; }
+.tsPhoto { position: relative; width: 76px; height: 76px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; background: linear-gradient(155deg, #9E1B32, #5E1020); border: 3px solid var(--crimson-tint); }
+.tsPhoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tsPhoto.placeholderMode img { display: none; }
+.tsPh { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: rgba(255,255,255,.4); font-size: 30px; }
+.tsPhoto.placeholderMode .tsPh, .tsPhoto.imgLoadFailed .tsPh { display: flex; }
+.tsRole { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--crimson-tint); color: var(--crimson); margin-bottom: 6px; }
+.tsName { font-family: var(--font-display); font-size: 20px; font-weight: 600; line-height: 1.3; }
+.tsBio { margin: 16px 0 0; font-size: 14px; line-height: 1.8; color: var(--muted); }
+.tsActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.tsBtn { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #fff; }
+.tsCall { background: var(--crimson); }
+.tsFb { background: #1877F2; }
+@keyframes tsUp { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes tsFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==========================================================================
+   SPONSORS v2 — নতুন ডিজাইন
+   ========================================================================== */
+.sponsorsSection {
+  padding: 56px 22px 64px; margin-top: 64px; overflow: hidden;
+  background:
+    radial-gradient(520px 260px at 8% 0%, rgba(158,27,50,0.09), transparent 70%),
+    radial-gradient(520px 260px at 95% 100%, rgba(185,114,46,0.12), transparent 70%),
+    linear-gradient(180deg, var(--cream) 0%, #fff 100%);
+}
+.sponsorsHeading { position: relative; display: inline-block; padding-bottom: 12px; }
+.sponsorsHeading::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--crimson), var(--amber)); }
+.sponsorsSubtitle { margin-top: 10px; }
+.sponsorsTiers { gap: 40px; }
+.sponsorTierLabel {
+  display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0 auto 20px; padding: 0; background: none !important; border: 0 !important;
+  font-size: 13px; letter-spacing: .04em; text-transform: none;
+}
+.sponsorTierLabel::before, .sponsorTierLabel::after { content: ""; flex: 1; max-width: 130px; height: 1px; background: linear-gradient(90deg, transparent, currentColor); opacity: .45; }
+.sponsorTierLabel::after { transform: scaleX(-1); }
+.sponsorTierLabel i { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; background: var(--tc, currentColor); position: relative; }
+.sponsorTierLabel i::before { position: relative; z-index: 1; color: #fff; }
+.sponsorTier-main .sponsorTierLabel { color: #B9722E; --tc: #B9722E; }
+.sponsorTier-gold .sponsorTierLabel { color: #C08A2E; --tc: #C08A2E; }
+.sponsorTier-silver .sponsorTierLabel { color: #7B8494; --tc: #7B8494; }
+.sponsorTier-support .sponsorTierLabel { color: var(--sage); --tc: var(--sage); }
+
+.sponsorGrid { gap: 18px; }
+.sponsorCard {
+  border-radius: 20px; background: #fff; border: 1px solid var(--line); padding: 16px 16px 18px;
+  animation: sponsorIn .55s var(--ease) both;
+}
+.sponsorCard:nth-child(2) { animation-delay: .06s; } .sponsorCard:nth-child(3) { animation-delay: .12s; }
+.sponsorCard:nth-child(4) { animation-delay: .18s; } .sponsorCard:nth-child(5) { animation-delay: .24s; } .sponsorCard:nth-child(n+6) { animation-delay: .3s; }
+@keyframes sponsorIn { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+.sponsorCard::after { /* হোভারে আলোর ঝলক */
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent); transform: skewX(-20deg); transition: left .7s var(--ease);
+}
+.sponsorCard:hover::after { left: 130%; }
+.sponsorLogoWrap { background: #fff; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; }
+.sponsorInfo { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.sponsorVisit {
+  margin-top: 10px; padding: 5px 12px; border-radius: 999px; background: var(--crimson-tint); color: var(--crimson); opacity: 1; font-size: 11.5px;
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+.sponsorCard:hover .sponsorVisit { background: var(--crimson); color: #fff; }
+
+/* প্রধান স্পনসর: চওড়া ফিচারড কার্ড */
+.sponsorTier-main .sponsorCard {
+  width: min(100%, 660px); flex-direction: row; align-items: center; text-align: left; gap: 24px; padding: 22px 26px;
+  background: linear-gradient(135deg, #fff 0%, #FCF4E6 100%); border: 1px solid #E8CFA0; box-shadow: 0 16px 36px rgba(185,114,46,0.18);
+}
+.sponsorTier-main .sponsorCard::before { opacity: 1; height: 4px; background: linear-gradient(90deg, #F3D8A8, #B9722E, #8F5A20); }
+.sponsorTier-main .sponsorCard .sponsorInfo { align-items: flex-start; flex: 1; }
+.sponsorTier-main .sponsorLogoWrap { width: 180px; height: 120px; flex: 0 0 180px; margin: 0; border-color: #F0E2C8; }
+.sponsorTier-main .sponsorName { font-size: 21px; }
+.sponsorTier-main .sponsorTagline { font-size: 13.5px; }
+.sponsorTier-main .sponsorCard .sponsorRibbon, .sponsorTier-main .sponsorCard:not(a)::marker { display: none; }
+.sponsorTier-gold .sponsorCard { width: 240px; border-color: #EBD3A5; }
+.sponsorTier-gold .sponsorCard::before { opacity: 1; height: 3px; background: linear-gradient(90deg, #F3D8A8, #C08A2E); }
+.sponsorTier-silver .sponsorCard { width: 200px; }
+.sponsorTier-silver .sponsorCard::before { opacity: 1; height: 3px; background: linear-gradient(90deg, #E3E6EB, #9AA3B2); }
+.sponsorTier-support .sponsorCard { width: 156px; padding: 12px 10px 12px; border-radius: 16px; }
+.sponsorTier-support .sponsorVisit { display: none; }
+
+@media (max-width: 640px) {
+  .sponsorsSection { padding: 40px 12px 48px; margin-top: 44px; }
+  .sponsorsTiers { gap: 30px; }
+  .sponsorGrid { gap: 10px; }
+  .sponsorTier-main .sponsorCard { flex-direction: column; text-align: center; gap: 12px; padding: 18px 16px; width: 100%; max-width: 360px; }
+  .sponsorTier-main .sponsorCard .sponsorInfo { align-items: center; }
+  .sponsorTier-main .sponsorLogoWrap { width: 100%; flex: none; height: 104px; }
+  .sponsorTier-main .sponsorName { font-size: 18px; }
+  .sponsorTier-gold .sponsorCard { width: calc(50% - 5px); padding: 12px 10px 14px; }
+  .sponsorTier-gold .sponsorLogoWrap { height: 76px; }
+  .sponsorTier-silver .sponsorCard, .sponsorTier-support .sponsorCard { width: calc(33.333% - 7px); padding: 9px 7px 10px; border-radius: 14px; }
+  .sponsorTier-silver .sponsorLogoWrap, .sponsorTier-support .sponsorLogoWrap { height: 56px; margin-bottom: 8px; border-radius: 10px; }
+  .sponsorTier-silver .sponsorName, .sponsorTier-support .sponsorName { font-size: 11.5px; }
+  .sponsorTier-silver .sponsorTagline, .sponsorTier-support .sponsorTagline, .sponsorTier-silver .sponsorVisit { display: none; }
+  .sponsorTierLabel { font-size: 12px; margin-bottom: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .sponsorCard { animation: none; } .sponsorCard::after { display: none; } }
+
+
+/* ==========================================================================
+   SPONSORS v3 — সব কার্ড সমান সাইজ, ফ্ল্যাট ও প্রফেশনাল (কোনো গ্রেডিয়েন্ট নেই)
+   ========================================================================== */
+.sponsorsSection {
+  background: #fff; border-top: 1px solid var(--line); padding: 56px 22px 60px; margin-top: 56px;
+}
+.sponsorsSection::before { background: var(--crimson); width: 64px; height: 3px; }
+.sponsorsHeading::after { background: var(--crimson); left: 38%; right: 38%; height: 2px; }
+.sponsorsTiers { gap: 34px; }
+
+/* ক্যাটাগরির শিরোনাম: সাদামাটা লেখা + দুপাশে সরল রেখা */
+.sponsorTierLabel {
+  display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0 auto 18px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .06em; color: var(--muted) !important;
+}
+.sponsorTierLabel::before, .sponsorTierLabel::after { content: ""; flex: 1; max-width: 140px; height: 1px; background: var(--line); opacity: 1; transform: none; }
+.sponsorTierLabel i { width: auto; height: auto; background: none !important; color: var(--crimson) !important; font-size: 12px; margin-right: 6px; display: inline; }
+.sponsorTierLabel i::before { color: var(--crimson); }
+.sponsorTier-main .sponsorTierLabel, .sponsorTier-gold .sponsorTierLabel,
+.sponsorTier-silver .sponsorTierLabel, .sponsorTier-support .sponsorTierLabel { color: var(--muted) !important; --tc: var(--crimson); }
+
+/* সব কার্ড একই মাপের */
+.sponsorGrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+.sponsorTier .sponsorCard,
+.sponsorTier-main .sponsorCard, .sponsorTier-gold .sponsorCard,
+.sponsorTier-silver .sponsorCard, .sponsorTier-support .sponsorCard {
+  width: 220px; flex: 0 0 220px; flex-direction: column; align-items: stretch; text-align: center; gap: 0;
+  padding: 16px 16px 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: none; overflow: hidden;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.sponsorCard::before, .sponsorCard::after,
+.sponsorTier-main .sponsorCard::before, .sponsorTier-gold .sponsorCard::before, .sponsorTier-silver .sponsorCard::before { display: none !important; }
+.sponsorTier .sponsorCard:hover { transform: translateY(-2px); border-color: #CFC4BB; box-shadow: 0 6px 18px rgba(33,22,19,0.08); }
+
+.sponsorTier .sponsorLogoWrap {
+  width: 100%; height: 100px; flex: none; margin: 0 0 12px; padding: 10px; background: #fff;
+  border: 1px solid var(--line); border-radius: 8px; box-sizing: border-box;
+}
+.sponsorTier .sponsorCard:hover .sponsorLogo { transform: none; }
+.sponsorTier .sponsorInfo { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; }
+.sponsorTier .sponsorName { font-size: 14.5px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+.sponsorTier .sponsorTagline {
+  font-size: 12px; line-height: 1.5; color: var(--muted); margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* ভিজিট লিংক: সরল লেখা, পিল/গ্রেডিয়েন্ট নয় */
+.sponsorTier .sponsorVisit, .sponsorTier-silver .sponsorVisit, .sponsorTier-support .sponsorVisit {
+  display: inline-flex; margin-top: auto; padding: 8px 0 0; background: none !important; border-radius: 0;
+  font-size: 12px; font-weight: 600; color: var(--muted); opacity: 1; transition: color .2s ease;
+}
+.sponsorTier .sponsorCard:hover .sponsorVisit { background: none !important; color: var(--crimson); }
+.sponsorTier .sponsorTagline, .sponsorTier-silver .sponsorTagline, .sponsorTier-support .sponsorTagline { display: -webkit-box; }
+
+@media (max-width: 640px) {
+  .sponsorsSection { padding: 40px 14px 44px; margin-top: 40px; }
+  .sponsorGrid { gap: 10px; }
+  .sponsorTier .sponsorCard,
+  .sponsorTier-main .sponsorCard, .sponsorTier-gold .sponsorCard,
+  .sponsorTier-silver .sponsorCard, .sponsorTier-support .sponsorCard {
+    width: calc(50% - 5px); flex: 0 0 calc(50% - 5px); max-width: none; padding: 12px 10px 12px;
+  }
+  .sponsorTier .sponsorLogoWrap { height: 76px; padding: 8px; margin-bottom: 10px; }
+  .sponsorTier .sponsorName { font-size: 13px; }
+  .sponsorTier .sponsorTagline { font-size: 11.5px; }
+}
+.sponsorTier .sponsorCard .sponsorInfo { align-items: center; text-align: center; }
+@media (max-width: 640px) { .sponsorTier-main .sponsorCard .sponsorInfo { align-items: center; } }
+
+
+/* ==========================================================================
+   SPONSORS v4 — একটাই সারি, বাম থেকে ডানে। ফ্ল্যাট ও পরিচ্ছন্ন।
+   ========================================================================== */
+.sponsorsSection { background: #fff; border-top: 1px solid var(--line); padding: 48px 0 52px; margin-top: 56px; text-align: center; }
+.sponsorsSection::before { display: none; }
+.sponsorsInner { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.sponsorsHeading { display: block; padding: 0; margin: 8px 0 6px; font-size: clamp(22px, 3vw, 28px); font-weight: 600; }
+.sponsorsHeading::after { display: none; }
+.sponsorsSubtitle { margin: 0 auto 28px; max-width: 520px; font-size: 14px; color: var(--muted); }
+.sponsorsTiers { display: block; }
+
+.sponsorRow { overflow: hidden; width: 100%; padding: 4px 0; }
+.sponsorTrack { display: flex; align-items: stretch; justify-content: center; width: 100%; }
+.sponsorTrack.marquee { justify-content: flex-start; width: max-content; animation: sponsorScroll var(--dur, 30s) linear infinite; }
+.sponsorRow:hover .sponsorTrack.marquee, .sponsorRow:focus-within .sponsorTrack.marquee, .sponsorRow:active .sponsorTrack.marquee { animation-play-state: paused; }
+@keyframes sponsorScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.spCard {
+  flex: 0 0 auto; width: 188px; margin: 0 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 14px 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; text-align: center; color: var(--ink);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 4px 14px rgba(33,22,19,0.08); }
+.spCard .sponsorLogoWrap { position: relative; width: 100%; height: 76px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; display: flex; align-items: center; justify-content: center; }
+.spCard .sponsorLogo { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; transform: none !important; }
+.spCard .sponsorLogoWrap.placeholderMode .sponsorLogo { display: none; }
+.spCard .sponsorName {  }
+.spName { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--muted); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spCard:hover .spName { color: var(--ink); }
+
+@media (max-width: 640px) {
+  .sponsorsSection { padding: 36px 0 40px; margin-top: 40px; }
+  .spCard { width: 140px; margin: 0 6px; padding: 10px 10px 9px; }
+  .spCard .sponsorLogoWrap { height: 56px; }
+  .spName { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sponsorRow { overflow-x: auto; }
+  .sponsorTrack.marquee { animation: none; width: max-content; }
+}
+.sponsorsInner { max-width: none; padding: 0; }
+.sponsorsInner > .sectionEyebrow, .sponsorsHeading, .sponsorsSubtitle { padding-left: 20px; padding-right: 20px; }
+
+
+/* ==========================================================================
+   SPONSORS v5 — কার্ড: উপরে গোল লোগো, নিচে নাম / ধরন / পরিচিতি (বামে সাজানো)
+   ========================================================================== */
+.spCard {
+  width: 270px; margin: 0 9px; padding: 22px 22px 18px; align-items: flex-start; justify-content: flex-start; gap: 0;
+  text-align: left; border-radius: 14px; border: 1px solid var(--line); background: #fff;
+}
+a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 8px 22px rgba(33,22,19,0.09); }
+.spCard .sponsorLogoWrap {
+  width: 100px; height: 100px; margin: 0 0 14px; border-radius: 9%; overflow: hidden;
+  background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(33,22,19,0.06); box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+}
+.spCard .sponsorLogo { max-width: 100%; max-height: 100%; object-fit: contain; }
+.spCard .sponsorPlaceholderMark i { font-size: 26px; }
+.spCard .spName {
+  width: 100%; font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); text-align: left;
+  white-space: normal; overflow: visible; text-overflow: clip;
+}
+.spCard:hover .spName { color: var(--ink); }
+.spTier {
+  display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  color: var(--crimson); background: var(--crimson-tint);
+}
+.spKind { margin-top: 12px; font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--ink); text-align: left; }
+.spKind span { display: block; font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--muted); margin-bottom: 1px; }
+.spIntro {
+  margin: 8px 0 0; font-size: 13px; line-height: 1.7; color: var(--muted); text-align: left;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.spLink { margin-top: auto; padding-top: 14px; font-size: 12.5px; font-weight: 700; color: var(--crimson); display: inline-flex; align-items: center; gap: 6px; }
+.spLink i { font-size: 11px; transition: transform .2s ease; }
+.spCard:hover .spLink i { transform: translateX(3px); }
+@media (max-width: 640px) {
+  .spCard { width: 236px; margin: 0 7px; padding: 18px 18px 15px; }
+  .spCard .sponsorLogoWrap { width: 64px; height: 64px; flex-basis: 64px; margin-bottom: 12px; }
+  .spCard .spName { font-size: 15px; }
+}

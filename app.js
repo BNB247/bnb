@@ -14,7 +14,7 @@ let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef, newsLikesRef;
 const CACHE_APPCONFIG_KEY = "blood_donor_appconfig_cache";
 const CACHE_LANDING_KEY = "blood_donor_landing_cache";
 const CACHE_DONORS_KEY = "blood_donor_cache";
-const CACHE_VISITOR_KEY = "blood_donor_visitor_cache";
+const CACHE_VISITOR_KEY = "blood_donor_views_cache"; // মোট ভিউ (অ্যাডমিন প্যানেলের সাথে একই সংখ্যা)
 
 function readCache(key, fallback) {
   try {
@@ -49,26 +49,53 @@ function isCacheFresh(key) {
 }
 
 /* ============================================================
-   PAGE LOADER (scale-in loading screen)
-   Stays visible until the page has finished loading (including
-   images), with a minimum show time so it never just flashes, and
-   a hard maximum so it can never get stuck if something is slow.
+   SKELETON LOADING  (আগের পূর্ণ-স্ক্রিন লোডিং স্ক্রিনের বদলে)
+   প্রথমবার (কোনো লোকাল ক্যাশ নেই) সাইটে ঢুকলে লেখা ও কার্ডের জায়গায়
+   ঝিকমিক স্কেলিটন দেখায়; Firebase-এর প্রথম ডেটা এলেই আসল কনটেন্ট বসে।
+   ক্যাশ থাকলে (রিপিট ভিজিট) কনটেন্ট সঙ্গে সঙ্গে ক্যাশ থেকে আসে, তাই
+   স্কেলিটন লাগেই না।
    ============================================================ */
-let pageLoaderHidden = false;
-function hidePageLoader() {
-  if (pageLoaderHidden) return;
-  pageLoaderHidden = true;
-  const loader = document.getElementById("pageLoader");
-  if (loader) loader.classList.add("loaderHidden");
+let skeletonDone = false; // নিচে landingReady-এর সঙ্গে মেলানো হয়
+function isSkeletonLoading() { return !skeletonDone; }
+function endSkeleton(rerender) {
+  if (skeletonDone) return;
+  skeletonDone = true;
+  document.documentElement.classList.remove("skelMode");
+  if (rerender) { try { renderLanding(); } catch (e) { /* ignore */ } }
 }
-(function setupPageLoader() {
-  const minTimer = new Promise(res => setTimeout(res, 450));
-  const maxTimer = new Promise(res => setTimeout(res, 5000));
-  const windowLoad = new Promise(res => {
-    if (document.readyState === "complete") res();
-    else window.addEventListener("load", res, { once: true });
-  });
-  Promise.race([windowLoad, maxTimer]).then(() => minTimer).then(hidePageLoader);
+function skelLine(w) { return '<div class="skel skelLine" style="width:' + w + '"></div>'; }
+const SKELETON_TPL = {
+  record: () => '<div class="recordCard recordCardSkel" aria-hidden="true"><div class="recordCardPhotoWrap skel"></div><div class="recordCardBody">' + skelLine("82%") + skelLine("56%") + '</div></div>',
+  donation: () => '<div class="donationItem skel" aria-hidden="true"></div>',
+  galleryAll: () => '<div class="galleryAllItem skel" aria-hidden="true"></div>',
+  team: () => '<div class="tmCard tmCardSkel" aria-hidden="true"><div class="tmPhoto skel"></div></div>',
+  partner: () => '<div class="partnerCard partnerCardSkel" aria-hidden="true"><div class="partnerLogoWrap skel"></div>' + skelLine("70%") + '</div>',
+  news: () => '<div class="newsCard newsCardSkel" aria-hidden="true"><div class="skel skelNewsImg"></div><div class="skelNewsBody">' + skelLine("34%") + skelLine("92%") + skelLine("74%") + '</div></div>'
+};
+function skeletonFill(container, kind, n) {
+  if (!container || container.getAttribute("data-skel") === kind) return;
+  container.setAttribute("data-skel", kind);
+  container.innerHTML = new Array(n).fill(SKELETON_TPL[kind]()).join("");
+}
+
+/* ============================================================
+   LAZY LOAD — সাইটের সব ছবি (স্ট্যাটিক + পরে JS দিয়ে বসানো)
+   স্ক্রিনের কাছাকাছি এলে তবেই ডাউনলোড হয়।
+   ============================================================ */
+(function lazyAllImages() {
+  const mark = img => {
+    if (!img.hasAttribute("loading")) img.loading = "lazy";
+    if (!img.hasAttribute("decoding")) img.decoding = "async";
+  };
+  document.querySelectorAll("img").forEach(mark);
+  if (!("MutationObserver" in window)) return;
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return;
+      if (n.tagName === "IMG") mark(n);
+      else if (n.querySelectorAll) n.querySelectorAll("img").forEach(mark);
+    }));
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
 /* ============================================================
@@ -76,7 +103,7 @@ function hidePageLoader() {
    ============================================================ */
 const DEFAULT_LANDING = {
   siteName: "Blood Network Baraikhali",
-  siteVersion: "1.0.0",
+  siteVersion: "11 Nov 2026",
   importantNotice: "",
   importantNoticeActive: false,
   heroTitle: "প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প",
@@ -100,6 +127,21 @@ const DEFAULT_LANDING = {
   partners: [],
   news: [],
   hospitals: [],
+  sponsors: [],
+  navOrder: [],
+  homeOrder: [],
+  secTitle_gallery: "সাম্প্রতিক রক্তদান",
+  secSub_gallery: "",
+  secTitle_features: "আমরা যা নিশ্চিত করি",
+  secSub_features: "",
+  secTitle_team: "যাদের নিয়ে আমরা",
+  secSub_team: "স্বেচ্ছাসেবার মানসিকতা নিয়ে যারা প্রতিদিন জীবন বাঁচাতে কাজ করছেন",
+  secTitle_faq: "প্রশ্ন ও উত্তর",
+  secSub_faq: "",
+  secTitle_partners: "আমাদের সহযোগী প্রতিষ্ঠান",
+  secSub_partners: "",
+  sponsorHeading: "আমাদের স্পনসর",
+  sponsorSubtitle: "যাদের সহযোগিতায় আমরা মানুষের পাশে দাঁড়াতে পারছি",
   processStepsRecipient: [
     { id: "r1", title: "রক্তের গ্রুপ ও এলাকা লিখে সার্চ করুন", text: "ওয়েবসাইটে গিয়ে প্রয়োজনীয় রক্তের গ্রুপ এবং আপনার এলাকা নির্বাচন করুন — কোনো সাইনআপ ছাড়াই।" },
     { id: "r2", title: "তালিকা থেকে রক্তদাতা বাছাই করুন", text: "যাচাইকৃত ও সক্রিয় রক্তদাতাদের একটি তালিকা মুহূর্তেই দেখতে পাবেন।" },
@@ -135,6 +177,9 @@ let landingData = Object.assign({}, DEFAULT_LANDING, readCache(CACHE_LANDING_KEY
    the first Firebase snapshot) is available; "failed" if Firebase can't load. */
 let landingReady = Object.keys(readCache(CACHE_LANDING_KEY, {})).length > 0;
 let landingLoadFailed = false;
+skeletonDone = landingReady;
+if (skeletonDone) document.documentElement.classList.remove("skelMode");
+else setTimeout(() => endSkeleton(true), 9000); // ইন্টারনেট খুব ধীর/বন্ধ হলেও স্কেলিটন আটকে থাকবে না
 let appConfigData = readCache(CACHE_APPCONFIG_KEY, { logoImage: "" });
 let isAdmin = false;
 
@@ -179,6 +224,9 @@ function normalizeLandingData() {
   landingData.partners = toArrayField(landingData.partners);
   landingData.news = toArrayField(landingData.news);
   landingData.hospitals = toArrayField(landingData.hospitals);
+  landingData.sponsors = toArrayField(landingData.sponsors);
+  landingData.navOrder = toArrayField(landingData.navOrder);
+  landingData.homeOrder = toArrayField(landingData.homeOrder);
   landingData.processStepsRecipient = toArrayField(landingData.processStepsRecipient);
   landingData.processStepsDonor = toArrayField(landingData.processStepsDonor);
 }
@@ -418,14 +466,24 @@ function loadBackgroundWithFallback(el, rawUrl, hasImageClass, lazy) {
 /* ============================================================
    RENDER
    ============================================================ */
+const HOME_GALLERY_LIMIT = 10;   // হোম পেজে সর্বশেষ ১০টি ছবি
+const GALLERY_PER_PAGE = 20;     // "সব ছবি" পেজে প্রতি পেজে ২০টি
+const galleryPageState = { page: 1 };
+
 function renderDonationGallery() {
+  renderGalleryAll();
   const grid = document.getElementById("donationGrid");
   if (!grid) return;
+  const seeAll = document.getElementById("donationSeeAllWrap");
+  if (seeAll) seeAll.style.display = (!isSkeletonLoading() && landingData.donationPhotos.length > HOME_GALLERY_LIMIT) ? "" : "none";
+  if (isSkeletonLoading()) { skeletonFill(grid, "donation", 8); return; }
   if (!landingData.donationPhotos.length) {
     grid.innerHTML = '<div class="donationEmptyState"><i class="fa-solid fa-images" aria-hidden="true"></i><span>এখনও কোনো ছবি যোগ করা হয়নি</span></div>';
     return;
   }
-  grid.innerHTML = landingData.donationPhotos.map(p => (
+  const homePhotos = landingData.donationPhotos.slice(0, HOME_GALLERY_LIMIT);
+  grid.removeAttribute("data-skel");
+  grid.innerHTML = homePhotos.map(p => (
     '<div class="donationItem" data-donation-id="' + p.id + '">' +
       '<div class="imgSkeleton" aria-hidden="true"></div>' +
       '<img class="donationImg" alt="সাম্প্রতিক রক্তদান">' +
@@ -434,12 +492,76 @@ function renderDonationGallery() {
       '<button type="button" class="imgRemoveBtn" data-img-key="donation:' + p.id + '" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
     '</div>'
   )).join("");
-  landingData.donationPhotos.forEach(p => {
+  homePhotos.forEach(p => {
     const item = grid.querySelector('.donationItem[data-donation-id="' + p.id + '"]');
     if (!item) return;
     loadImageWithFallback(item.querySelector(".donationImg"), p.src, item);
   });
 }
+
+/* ============================================================
+   সব ছবি পেজ (#gallery) — প্রতি পেজে ২০টি ছবি, আগের/পরের বাটন সহ
+   ============================================================ */
+function renderGalleryAll() {
+  const grid = document.getElementById("galleryAllGrid");
+  if (!grid) return;
+  const empty = document.getElementById("galleryAllEmpty");
+  const pager = document.getElementById("galleryAllPager");
+  if (isSkeletonLoading()) {
+    if (empty) empty.style.display = "none";
+    if (pager) pager.innerHTML = "";
+    skeletonFill(grid, "galleryAll", 8);
+    return;
+  }
+  const all = landingData.donationPhotos || [];
+  grid.removeAttribute("data-skel");
+  if (!all.length) {
+    grid.innerHTML = "";
+    if (pager) pager.innerHTML = "";
+    if (empty) empty.style.display = "flex";
+    return;
+  }
+  if (empty) empty.style.display = "none";
+  const totalPages = Math.max(1, Math.ceil(all.length / GALLERY_PER_PAGE));
+  if (galleryPageState.page > totalPages) galleryPageState.page = totalPages;
+  if (galleryPageState.page < 1) galleryPageState.page = 1;
+  const page = galleryPageState.page;
+  const items = all.slice((page - 1) * GALLERY_PER_PAGE, page * GALLERY_PER_PAGE);
+  grid.innerHTML = items.map(p => (
+    '<div class="galleryAllItem" data-gallery-id="' + p.id + '">' +
+      '<div class="imgSkeleton" aria-hidden="true"></div>' +
+      '<img class="donationImg" alt="রক্তদানের ছবি">' +
+      '<span class="donationFailMark" aria-hidden="true"><i class="fa-solid fa-image"></i></span>' +
+    '</div>'
+  )).join("");
+  items.forEach(p => {
+    const item = grid.querySelector('.galleryAllItem[data-gallery-id="' + p.id + '"]');
+    if (item) loadImageWithFallback(item.querySelector(".donationImg"), p.src, item);
+  });
+  if (pager) {
+    if (totalPages <= 1) { pager.innerHTML = ""; }
+    else {
+      pager.innerHTML =
+        '<button type="button" class="pgBtn pgNav" data-gpage="' + (page - 1) + '"' + (page <= 1 ? " disabled" : "") + ' aria-label="আগের পেজ"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i><span>আগের</span></button>' +
+        '<button type="button" class="pgBtn pgNav" data-gpage="' + (page + 1) + '"' + (page >= totalPages ? " disabled" : "") + ' aria-label="পরের পেজ"><span>পরের</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
+        '<div class="pgInfo">পেজ ' + toBengaliDigits(page) + ' / ' + toBengaliDigits(totalPages) + ' · মোট ' + toBengaliDigits(all.length) + 'টি ছবি</div>';
+    }
+  }
+}
+
+(function initGalleryAllPager() {
+  const pager = document.getElementById("galleryAllPager");
+  if (!pager) return;
+  pager.addEventListener("click", e => {
+    const b = e.target.closest(".pgBtn");
+    if (!b || b.disabled) return;
+    const p = parseInt(b.getAttribute("data-gpage"), 10);
+    if (!p) return;
+    galleryPageState.page = p;
+    renderGalleryAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+})();
 
 const DONATION_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -484,10 +606,78 @@ function recordCardTemplate(r) {
   );
 }
 
+/* ============================================================
+   পেজিনেশন — প্রতি পেজে প্রায় ৩০০vh (স্ক্রিনের উচ্চতার ৩ গুণ) জায়গায়
+   যত রেকর্ড ধরে ততটাই থাকে, বাকিগুলো পরের পেজে যায়।
+   কলামের সংখ্যা ও কার্ডের উচ্চতা একটি অদৃশ্য নমুনা-কার্ড মেপে বের করা হয়,
+   তাই মোবাইল/ডেস্কটপ/স্ক্রিন ঘোরানো সবকিছুতেই নিজে থেকে ঠিক হয়।
+   ============================================================ */
+const RECORDS_PAGE_VH = 3; // ৩ × স্ক্রিনের উচ্চতা (300vh)
+const recordsPageState = { page: 1, perPage: 0, key: "" };
+
+function recordsProbePerPage(grid, sampleRecord) {
+  const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+  const gw = grid.clientWidth;
+  const w = gw > 0 ? gw : Math.max(240, Math.min(1120, (document.documentElement.clientWidth || window.innerWidth || 360) - 20));
+  const key = Math.round(w) + "x" + vh;
+  if (recordsPageState.key === key && recordsPageState.perPage) return recordsPageState.perPage;
+
+  const probe = document.createElement("div");
+  probe.setAttribute("aria-hidden", "true");
+  probe.style.cssText = "position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;width:" + w + "px;";
+  probe.innerHTML = '<div class="recordsGrid">' + recordCardTemplate(sampleRecord) + '</div>';
+  document.body.appendChild(probe);
+  const g = probe.firstElementChild;
+  const card = g.firstElementChild;
+  const cs = getComputedStyle(g);
+  const cols = Math.max(1, cs.gridTemplateColumns.split(" ").filter(Boolean).length);
+  const gap = parseFloat(cs.rowGap) || 0;
+  const cardH = card ? card.getBoundingClientRect().height : 0;
+  probe.remove();
+
+  let perPage = 12;
+  if (cardH > 0) {
+    const rows = Math.max(1, Math.floor((vh * RECORDS_PAGE_VH + gap) / (cardH + gap)));
+    perPage = cols * rows;
+  }
+  recordsPageState.key = key;
+  recordsPageState.perPage = perPage;
+  return perPage;
+}
+
+function renderRecordsPager(pager, page, totalPages, total) {
+  if (!pager) return;
+  if (totalPages <= 1) { pager.innerHTML = ""; return; }
+  const set = new Set([1, totalPages, page - 1, page, page + 1]);
+  if (page <= 3) { set.add(2); set.add(3); }
+  if (page >= totalPages - 2) { set.add(totalPages - 1); set.add(totalPages - 2); }
+  const list = Array.from(set).filter(p => p >= 1 && p <= totalPages).sort((x, y) => x - y);
+  let html = '<button type="button" class="pgBtn pgNav" data-page="' + (page - 1) + '"' + (page <= 1 ? " disabled" : "") + ' aria-label="আগের পেজ"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i><span>আগের</span></button>';
+  let prev = 0;
+  list.forEach(p => {
+    if (prev && p - prev > 1) html += '<span class="pgDots" aria-hidden="true">…</span>';
+    html += '<button type="button" class="pgBtn pgNum' + (p === page ? " active" : "") + '" data-page="' + p + '"' + (p === page ? ' aria-current="page"' : "") + '>' + toBengaliDigits(p) + '</button>';
+    prev = p;
+  });
+  html += '<button type="button" class="pgBtn pgNav" data-page="' + (page + 1) + '"' + (page >= totalPages ? " disabled" : "") + ' aria-label="পরের পেজ"><span>পরের</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>';
+  html += '<div class="pgInfo">পেজ ' + toBengaliDigits(page) + ' / ' + toBengaliDigits(totalPages) + ' · মোট ' + toBengaliDigits(total) + 'টি রেকর্ড</div>';
+  pager.innerHTML = html;
+}
+
 function renderRecordsGrid() {
   const grid = document.getElementById("recordsGrid");
   if (!grid) return;
   const emptyState = document.getElementById("recordsEmptyState");
+  const pager = document.getElementById("recordsPager");
+
+  /* প্রথম ডেটা আসার আগে: স্কেলিটন কার্ড */
+  if (isSkeletonLoading()) {
+    if (emptyState) emptyState.style.display = "none";
+    if (pager) pager.innerHTML = "";
+    skeletonFill(grid, "record", 8);
+    return;
+  }
+
   /* সর্বশেষ রক্তদানের তারিখ অনুযায়ী — সবচেয়ে নতুন আগে */
   const all = (landingData.donationRecords || []).slice().sort((a, b) => donationDateCompare(b, a));
   const q = recordsFilterState.q.trim().toLowerCase();
@@ -502,8 +692,10 @@ function renderRecordsGrid() {
     );
   });
 
+  grid.removeAttribute("data-skel");
   if (!filtered.length) {
     grid.innerHTML = "";
+    if (pager) pager.innerHTML = "";
     if (emptyState) {
       emptyState.style.display = "flex";
       const span = emptyState.querySelector("span");
@@ -512,13 +704,28 @@ function renderRecordsGrid() {
     return;
   }
   if (emptyState) emptyState.style.display = "none";
-  grid.innerHTML = filtered.map(recordCardTemplate).join("");
-  filtered.forEach(r => {
+
+  /* প্রতি পেজে কয়টি রেকর্ড (≈৩০০vh) */
+  const prevPerPage = recordsPageState.perPage;
+  const perPage = recordsProbePerPage(grid, filtered[0]);
+  if (prevPerPage && prevPerPage !== perPage) {
+    /* স্ক্রিনের মাপ বদলালে, যে রেকর্ড দেখছিলেন সেটি যে পেজে পড়ে সেই পেজেই থাকুন */
+    recordsPageState.page = Math.floor(((recordsPageState.page - 1) * prevPerPage) / perPage) + 1;
+  }
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  if (recordsPageState.page > totalPages) recordsPageState.page = totalPages;
+  if (recordsPageState.page < 1) recordsPageState.page = 1;
+
+  const start = (recordsPageState.page - 1) * perPage;
+  const pageItems = filtered.slice(start, start + perPage);
+  grid.innerHTML = pageItems.map(recordCardTemplate).join("");
+  pageItems.forEach(r => {
     const card = grid.querySelector('.recordCard[data-record-id="' + r.id + '"]');
     if (!card) return;
     const img = card.querySelector(".recordCardImg");
     if (img) loadImageWithFallback(img, r.image, card.querySelector(".recordCardPhotoWrap"));
   });
+  renderRecordsPager(pager, recordsPageState.page, totalPages, filtered.length);
 }
 
 (function initRecordsGridPage() {
@@ -529,14 +736,53 @@ function renderRecordsGrid() {
   if (searchInput) {
     searchInput.addEventListener("input", () => {
       recordsFilterState.q = searchInput.value || "";
+      recordsPageState.page = 1;
       renderRecordsGrid();
     });
   }
   if (bgFilter) {
     bgFilter.addEventListener("change", () => {
       recordsFilterState.bg = bgFilter.value || "";
+      recordsPageState.page = 1;
       renderRecordsGrid();
     });
+  }
+  /* পেজ বাটনে ক্লিক */
+  const pager = document.getElementById("recordsPager");
+  if (pager) {
+    pager.addEventListener("click", e => {
+      const b = e.target.closest(".pgBtn");
+      if (!b || b.disabled) return;
+      const p = parseInt(b.getAttribute("data-page"), 10);
+      if (!p) return;
+      recordsPageState.page = p;
+      renderRecordsGrid();
+      const tb = document.querySelector("#route-donations .recordsToolbar") || grid;
+      const top = tb.getBoundingClientRect().top + window.pageYOffset - 76;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    });
+  }
+  /* স্ক্রিনের মাপ বদলালে (ফোন ঘোরানো, উইন্ডো বড়-ছোট) পেজের হিসাব নতুন করে */
+  let lastW = window.innerWidth, lastH = window.innerHeight, rt = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      const w = window.innerWidth, h = window.innerHeight;
+      if (w === lastW && Math.abs(h - lastH) < 150) return; // মোবাইলে ঠিকানা-বার ওঠানামা উপেক্ষা
+      lastW = w; lastH = h;
+      renderRecordsGrid();
+    }, 250);
+  });
+  /* রেকর্ড পেজটি প্রথমবার দেখানো হলে (display:none → দৃশ্যমান) সঠিক মাপে আবার হিসাব */
+  if ("ResizeObserver" in window) {
+    let lastGW = -1, ro = null;
+    new ResizeObserver(() => {
+      const gw = grid.clientWidth;
+      if (gw === lastGW) return;
+      lastGW = gw;
+      clearTimeout(ro);
+      ro = setTimeout(renderRecordsGrid, 80);
+    }).observe(grid);
   }
   grid.addEventListener("click", e => {
     const card = e.target.closest(".recordCard");
@@ -549,54 +795,99 @@ function renderRecordsGrid() {
   });
 })();
 
+/* ============================================================
+   টিম — নতুন ডিজাইন: বড় ছবির উপরে নাম ও পদবি (গ্রেডিয়েন্ট ওভারলে),
+   নিচে সংক্ষিপ্ত পরিচিতি + কল / ফেসবুক বাটন। ক্রম এডমিন প্যানেল থেকে ঠিক করা হয়।
+   ============================================================ */
 function teamCardTemplate(m) {
+  const fb = safeHttpsUrl(m.facebook);
+  const phoneRaw = String(m.phone || "").trim();
+  const phone = phoneRaw.replace(/[^0-9+]/g, "");
+  const bio = (m.bio || "").trim();
+  const role = (m.role || "").trim();
+  const contact =
+    (phone ? '<a class="tmPhone" href="tel:' + escAttr(phone) + '" aria-label="কল করুন"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>' + escAttr(phoneRaw) + '</span></a>' : "") +
+    (fb ? '<a class="tmFb" href="' + escAttr(fb) + '" target="_blank" rel="noopener noreferrer" aria-label="ফেসবুক"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>' : "");
   return (
-    '<div class="teamCard" data-team-id="' + m.id + '">' +
-      '<button type="button" class="teamRemoveBtn" data-team-id="' + m.id + '" title="সদস্য মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
-      '<div class="teamPhotoWrap placeholderMode">' +
+    '<article class="tmCard" data-team-id="' + escAttr(m.id) + '">' +
+      '<div class="tmPhoto placeholderMode">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        '<img class="teamPhoto" alt="' + escAttr(m.name) + '">' +
-        '<span class="teamPlaceholderMark"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
-        '<button type="button" class="imgEditBtn" data-img-key="team:' + m.id + ':photo"><i class="fa-solid fa-camera" aria-hidden="true"></i> ছবি পরিবর্তন</button>' +
-        '<button type="button" class="imgRemoveBtn" data-img-key="team:' + m.id + ':photo" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+        '<img class="tmImg" alt="' + escAttr(m.name) + '">' +
+        '<span class="tmPlaceholder"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
+        '<div class="tmShade" aria-hidden="true"></div>' +
+        '<div class="tmOverlay">' +
+          (role ? '<span class="tmRole">' + escAttr(role) + '</span>' : "") +
+          '<h3 class="tmName">' + escAttr(m.name || "") + '</h3>' +
+          (bio ? '<p class="tmBio">' + escAttr(bio) + '</p>' : "") +
+          (contact ? '<div class="tmContact">' + contact + '</div>' : "") +
+        '</div>' +
       '</div>' +
-      '<div class="teamName editable-field" data-team-id="' + m.id + '" data-field="name" contenteditable="false"></div>' +
-      '<div class="teamRole editable-field" data-team-id="' + m.id + '" data-field="role" contenteditable="false"></div>' +
-      '<p class="teamBio editable-field" data-team-id="' + m.id + '" data-field="bio" contenteditable="false"></p>' +
-    '</div>'
+    '</article>'
   );
 }
+
+/* মোবাইলে টিমের কার্ড ছোট (৩ জন এক সারিতে) — ট্যাপ করলে পুরো তথ্য নিচ থেকে উঠে আসে */
+function closeTeamSheet() {
+  const sh = document.getElementById("teamSheet");
+  if (sh) { sh.classList.remove("open"); document.body.classList.remove("tsLock"); }
+}
+function openTeamSheet(id) {
+  const m = (landingData.team || []).find(x => String(x.id) === String(id));
+  if (!m) return;
+  let sh = document.getElementById("teamSheet");
+  if (!sh) {
+    sh = document.createElement("div");
+    sh.id = "teamSheet";
+    sh.className = "teamSheet";
+    sh.innerHTML = '<div class="tsBackdrop" data-ts-close></div><div class="tsPanel" role="dialog" aria-modal="true" aria-label="টিম সদস্যের তথ্য"><span class="tsGrab" aria-hidden="true"></span><button type="button" class="tsClose" data-ts-close aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><div class="tsContent"></div></div>';
+    document.body.appendChild(sh);
+    sh.addEventListener("click", e => { if (e.target.closest("[data-ts-close]")) closeTeamSheet(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeTeamSheet(); });
+  }
+  const fb = safeHttpsUrl(m.facebook);
+  const phoneRaw = String(m.phone || "").trim();
+  const phone = phoneRaw.replace(/[^0-9+]/g, "");
+  const box = sh.querySelector(".tsContent");
+  box.innerHTML =
+    '<div class="tsHead"><div class="tsPhoto placeholderMode"><div class="imgSkeleton" aria-hidden="true"></div><img alt="' + escAttr(m.name) + '"><span class="tsPh"><i class="fa-solid fa-user" aria-hidden="true"></i></span></div>' +
+    '<div class="tsHeadText">' + (m.role ? '<span class="tsRole">' + escAttr(m.role) + '</span>' : "") + '<h3 class="tsName">' + escAttr(m.name || "") + '</h3></div></div>' +
+    (m.bio ? '<p class="tsBio">' + escAttr(m.bio) + '</p>' : "") +
+    ((phone || fb) ? '<div class="tsActions">' +
+      (phone ? '<a class="tsBtn tsCall" href="tel:' + escAttr(phone) + '"><i class="fa-solid fa-phone" aria-hidden="true"></i> ' + escAttr(phoneRaw) + '</a>' : "") +
+      (fb ? '<a class="tsBtn tsFb" href="' + escAttr(fb) + '" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i> ফেসবুক</a>' : "") +
+    '</div>' : "");
+  if (m.photo) {
+    const wrap = box.querySelector(".tsPhoto");
+    wrap.classList.remove("placeholderMode");
+    loadImageWithFallback(wrap.querySelector("img"), m.photo, wrap);
+  }
+  sh.classList.add("open");
+  document.body.classList.add("tsLock");
+}
+document.addEventListener("click", e => {
+  const card = e.target.closest ? e.target.closest("#teamRow .tmCard") : null;
+  if (!card || e.target.closest("a")) return;
+  if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
+  openTeamSheet(card.getAttribute("data-team-id"));
+});
 
 function renderTeamSection() {
   const container = document.getElementById("teamRow");
   if (!container) return;
-  const existingIds = Array.from(container.children).map(c => c.getAttribute("data-team-id"));
-  const newIds = landingData.team.map(m => m.id);
-  const structureChanged = existingIds.length !== newIds.length || existingIds.some((id, i) => id !== newIds[i]);
-  if (structureChanged) {
+  if (isSkeletonLoading()) { skeletonFill(container, "team", 4); return; }
+  const sig = JSON.stringify(landingData.team.map(m => [m.id, m.name, m.role, m.bio, m.photo, m.phone, m.facebook]));
+  if (container.getAttribute("data-sig") !== sig || container.getAttribute("data-skel")) {
+    container.removeAttribute("data-skel");
+    container.setAttribute("data-sig", sig);
     container.innerHTML = landingData.team.map(teamCardTemplate).join("");
-    if (isAdmin) container.querySelectorAll(".editable-field").forEach(el => el.setAttribute("contenteditable", "true"));
-  }
-  landingData.team.forEach(m => {
-    const card = container.querySelector('.teamCard[data-team-id="' + m.id + '"]');
-    if (!card) return;
-    const nameEl = card.querySelector(".teamName");
-    const roleEl = card.querySelector(".teamRole");
-    const bioEl = card.querySelector(".teamBio");
-    if (nameEl && document.activeElement !== nameEl) nameEl.textContent = m.name;
-    if (roleEl && document.activeElement !== roleEl) roleEl.textContent = m.role;
-    if (bioEl && document.activeElement !== bioEl) bioEl.textContent = m.bio;
-    const wrap = card.querySelector(".teamPhotoWrap");
-    const img = card.querySelector(".teamPhoto");
-    if (m.photo) {
+    container.querySelectorAll(".tmCard").forEach((card, i) => {
+      const m = landingData.team[i];
+      if (!m || !m.photo) return;
+      const wrap = card.querySelector(".tmPhoto");
       wrap.classList.remove("placeholderMode");
-      loadImageWithFallback(img, m.photo, wrap);
-    } else {
-      wrap.classList.add("placeholderMode");
-      wrap.classList.remove("loadingImg", "imgLoadFailed");
-      img.removeAttribute("src");
-    }
-  });
+      loadImageWithFallback(card.querySelector(".tmImg"), m.photo, wrap);
+    });
+  }
   setSectionVisible(document.getElementById("teamSection"), landingData.team.length > 0);
 }
 
@@ -650,6 +941,7 @@ function partnerCardTemplate(p) {
 function renderPartnersSection() {
   const container = document.getElementById("partnersGrid");
   if (!container) return;
+  if (isSkeletonLoading()) { skeletonFill(container, "partner", 5); return; }
   const existingIds = Array.from(container.children).map(c => c.getAttribute("data-partner-id"));
   const newIds = landingData.partners.map(p => p.id);
   const structureChanged = existingIds.length !== newIds.length || existingIds.some((id, i) => id !== newIds[i]);
@@ -697,7 +989,45 @@ function getLikedNewsIds() { return readCache(LIKED_NEWS_KEY, []); }
 function setLikedNewsIds(arr) { writeCache(LIKED_NEWS_KEY, arr); }
 function isNewsLiked(id) { return getLikedNewsIds().indexOf(id) !== -1; }
 
+/* ক্লিক-লক: একই বাটনে দ্রুত পরপর ট্যাপ করলে ডাবল কাউন্ট হবে না */
+let newsLikeBusy = {};
+
+/* ১২৩ → "১২৩", ১২৫০ → "১.২k" */
+function formatLikeCount(n) {
+  n = Math.max(0, parseInt(n, 10) || 0);
+  if (n >= 1000) return toBengaliDigits((Math.floor(n / 100) / 10).toString().replace(/\.0$/, "")) + "k";
+  return toBengaliDigits(n);
+}
+
+/* পেজের সব লাইক বাটন (তালিকা + ডিটেইল) একসাথে আপডেট — পুরো কার্ড আবার না এঁকে,
+   তাই ফায়ারবেস থেকে নতুন লাইক এলেই (অন্য কারো লাইকও) সঙ্গে সঙ্গে সংখ্যা বদলায়। */
+function updateNewsLikeUI() {
+  document.querySelectorAll(".newsLikeBtn[data-news-id]").forEach(btn => {
+    const id = btn.getAttribute("data-news-id");
+    const count = Math.max(0, parseInt(newsLikesData && newsLikesData[id], 10) || 0);
+    const liked = isNewsLiked(id);
+    btn.classList.toggle("liked", liked);
+    btn.setAttribute("aria-pressed", liked ? "true" : "false");
+    btn.setAttribute("aria-label", (liked ? "লাইক সরান" : "লাইক দিন") + " — মোট " + count);
+    const icon = btn.querySelector("i");
+    if (icon) icon.className = liked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+    const cEl = btn.querySelector(".newsLikeCount");
+    if (cEl) {
+      const prev = cEl.getAttribute("data-count");
+      if (prev !== String(count)) {
+        cEl.setAttribute("data-count", String(count));
+        cEl.textContent = formatLikeCount(count);
+        if (prev !== null) { cEl.classList.remove("likePop"); void cEl.offsetWidth; cEl.classList.add("likePop"); }
+      }
+    }
+  });
+}
+
 function toggleNewsLike(id) {
+  if (!id || newsLikeBusy[id]) return;
+  newsLikeBusy[id] = true;
+  setTimeout(() => { newsLikeBusy[id] = false; }, 450);
+
   const liked = isNewsLiked(id);
   const likedIds = getLikedNewsIds();
   if (liked) {
@@ -708,10 +1038,23 @@ function toggleNewsLike(id) {
     newsLikesData[id] = (newsLikesData[id] || 0) + 1;
   }
   writeCache(CACHE_NEWS_LIKES_KEY, newsLikesData);
-  renderNewsSection(); // instant local feedback
-  renderNewsDetail();
+  updateNewsLikeUI(); // ইনস্ট্যান্ট ফিডব্যাক
+  if (!liked) {
+    document.querySelectorAll(".newsLikeBtn[data-news-id]").forEach(b => {
+      if (b.getAttribute("data-news-id") !== id) return;
+      b.classList.remove("likeBurst"); void b.offsetWidth; b.classList.add("likeBurst");
+    });
+  }
   if (firebaseAvailable && newsLikesRef) {
-    newsLikesRef.child(id).transaction(curr => Math.max(0, (curr || 0) + (liked ? -1 : 1)));
+    newsLikesRef.child(id).transaction(curr => Math.max(0, (curr || 0) + (liked ? -1 : 1)), (err) => {
+      if (!err) return;
+      /* সার্ভারে লেখা না গেলে লোকাল পরিবর্তন ফিরিয়ে নিই */
+      setLikedNewsIds(liked ? getLikedNewsIds().concat([id]) : getLikedNewsIds().filter(x => x !== id));
+      newsLikesData[id] = Math.max(0, (newsLikesData[id] || 0) + (liked ? 1 : -1));
+      writeCache(CACHE_NEWS_LIKES_KEY, newsLikesData);
+      updateNewsLikeUI();
+      showToast("লাইক সেভ করা যায়নি, আবার চেষ্টা করুন");
+    });
   }
 }
 
@@ -738,7 +1081,7 @@ function newsCardTemplate(n) {
       '<h3 class="newsCardTitle"><a class="newsTitleLink" href="' + href + '"></a></h3>' +
       '<div class="newsCompactFoot">' +
         '<div class="newsCardTopActions">' +
-          '<button type="button" class="newsLikeBtn" data-news-id="' + id + '" aria-label="লাইক"><i class="fa-regular fa-heart" aria-hidden="true"></i><span class="newsLikeCount"></span></button>' +
+          '<button type="button" class="newsLikeBtn" data-news-id="' + id + '" aria-label="লাইক"><i class="fa-regular fa-heart" aria-hidden="true"></i><span class="newsLikeCount">০</span></button>' +
           '<div class="newsShareWrap">' +
             '<button type="button" class="newsShareBtn" data-news-id="' + id + '" aria-label="শেয়ার"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>' +
             '<div class="newsShareMenu">' +
@@ -758,6 +1101,7 @@ function newsCardTemplate(n) {
 function renderNewsSection() {
   const container = document.getElementById("newsList");
   if (!container) return;
+  if (isSkeletonLoading()) { skeletonFill(container, "news", 3); return; }
   const sorted = landingData.news.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const existingIds = Array.from(container.children).map(c => c.getAttribute("data-news-id"));
   const newIds = sorted.map(n => n.id);
@@ -775,14 +1119,6 @@ function renderNewsSection() {
     const catEl = card.querySelector(".newsCardCategoryTag");
     if (catEl) catEl.textContent = n.category || "সাধারণ";
 
-    const likeBtn = card.querySelector(".newsLikeBtn");
-    const likeIcon = likeBtn ? likeBtn.querySelector("i") : null;
-    const likeCountEl = card.querySelector(".newsLikeCount");
-    const likeCount = (newsLikesData && newsLikesData[n.id]) || 0;
-    if (likeCountEl) likeCountEl.textContent = likeCount > 0 ? likeCount : "";
-    if (likeBtn) likeBtn.classList.toggle("liked", isNewsLiked(n.id));
-    if (likeIcon) likeIcon.className = isNewsLiked(n.id) ? "fa-solid fa-heart" : "fa-regular fa-heart";
-
     const shareUrl = buildNewsShareUrl(n.id);
     const shareText = encodeURIComponent((n.title || "") + " — " + (landingData.siteName || ""));
     const encodedUrl = encodeURIComponent(shareUrl);
@@ -795,6 +1131,7 @@ function renderNewsSection() {
     if (msgLink) msgLink.setAttribute("href", "fb-messenger://share/?link=" + encodedUrl);
     if (copyBtn) copyBtn.setAttribute("data-share-url", shareUrl);
   });
+  updateNewsLikeUI();
   setSectionVisible(document.getElementById("newsSection"), landingData.news.length > 0);
 
   // loading / empty / error states for public visitors
@@ -870,7 +1207,7 @@ function renderNewsDetail() {
             '<h2 class="newsDetailTitle"></h2>' +
             '<div class="newsDetailActions">' +
               '<div class="newsCardTopActions">' +
-                '<button type="button" class="newsLikeBtn" data-news-id="' + escAttr(n.id) + '" aria-label="লাইক"><i class="fa-regular fa-heart" aria-hidden="true"></i><span class="newsLikeCount"></span></button>' +
+                '<button type="button" class="newsLikeBtn" data-news-id="' + escAttr(n.id) + '" aria-label="লাইক"><i class="fa-regular fa-heart" aria-hidden="true"></i><span class="newsLikeCount">০</span></button>' +
                 '<div class="newsShareWrap">' +
                   '<button type="button" class="newsShareBtn" data-news-id="' + escAttr(n.id) + '" aria-label="শেয়ার"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>' +
                   '<div class="newsShareMenu">' +
@@ -904,15 +1241,7 @@ function renderNewsDetail() {
     box.querySelector(".copyShare").setAttribute("data-share-url", shareUrl);
   }
 
-  // like state (cheap, runs every render without rebuilding the page)
-  const likeBtn = box.querySelector(".newsLikeBtn");
-  if (likeBtn) {
-    const liked = isNewsLiked(n.id);
-    const count = (newsLikesData && newsLikesData[n.id]) || 0;
-    likeBtn.classList.toggle("liked", liked);
-    likeBtn.querySelector("i").className = liked ? "fa-solid fa-heart" : "fa-regular fa-heart";
-    likeBtn.querySelector(".newsLikeCount").textContent = count > 0 ? count : "";
-  }
+  updateNewsLikeUI(); // লাইক অবস্থা ও সংখ্যা (পেজ না ভেঙেই)
 }
 
 /* ============================================================
@@ -1136,6 +1465,170 @@ function renderNoticeBar() {
   }
 }
 
+/* ============================================================
+   এডমিন-নিয়ন্ত্রিত ক্রম — মেনু/পেজের ক্রম (navOrder) ও হোমের সেকশন ক্রম (homeOrder)
+   সংরক্ষিত তালিকা + ডিফল্ট মিলিয়ে চূড়ান্ত ক্রম বানানো হয় (নতুন কিছু যোগ হলে নিজে থেকে শেষে আসে)।
+   ============================================================ */
+const NAV_ROUTE_DEFAULTS = ["process", "blood-group", "donations", "news", "hospitals"];
+const HOME_SECTION_DEFAULTS = ["stats", "heroDonor", "gallery", "about", "features", "team", "faq", "partners", "cta", "sponsors"];
+function mergeOrder(saved, defaults) {
+  const out = [], seen = {};
+  toArrayField(saved).forEach(it => {
+    const key = it && (typeof it === "string" ? it : it.key);
+    if (!key || seen[key] || defaults.indexOf(key) === -1) return;
+    seen[key] = true;
+    out.push({ key: key, visible: !(it && typeof it === "object" && it.visible === false) });
+  });
+  defaults.forEach(k => { if (!seen[k]) out.push({ key: k, visible: true }); });
+  return out;
+}
+let lastNavOrderSig = "", lastHomeOrderSig = "";
+
+function renderNavOrder() {
+  const order = mergeOrder(landingData.navOrder, NAV_ROUTE_DEFAULTS);
+  const sig = order.map(o => o.key).join(",");
+  const reorder = sig !== lastNavOrderSig;
+  lastNavOrderSig = sig;
+  ["siteNavLinks", "siteNavMobile"].forEach(id => {
+    const box = document.getElementById(id);
+    if (!box) return;
+    const cta = box.querySelector(".siteNavCta, .siteNavCtaMobile");
+    order.forEach(o => {
+      const a = box.querySelector('a[data-nav-route="' + o.key + '"]');
+      if (!a) return;
+      a.classList.toggle("navHiddenByAdmin", !o.visible);
+      if (reorder) box.insertBefore(a, cta || null);
+    });
+  });
+  const fbox = document.getElementById("footerLinks");
+  if (fbox) {
+    order.forEach(o => {
+      const a = fbox.querySelector('a[data-footer-route="' + o.key + '"]');
+      const row = a && a.closest(".footerRow");
+      if (!row) return;
+      row.classList.toggle("navHiddenByAdmin", !o.visible);
+      if (reorder) fbox.appendChild(row);
+    });
+  }
+}
+
+function renderHomeOrder() {
+  const main = document.getElementById("main");
+  if (!main) return;
+  const order = mergeOrder(landingData.homeOrder, HOME_SECTION_DEFAULTS);
+  const sig = order.map(o => o.key).join(",");
+  const reorder = sig !== lastHomeOrderSig;
+  lastHomeOrderSig = sig;
+  const footer = document.querySelector("footer.siteFooter");
+  order.forEach((o, idx) => {
+    const el = document.querySelector('[data-home-section="' + o.key + '"]');
+    if (!el) return;
+    el.classList.toggle("adminHidden", !o.visible);
+    if (!reorder) return;
+    /* স্পনসর সবার শেষে থাকলে ফুটারের উপরে (সব পেজে দেখায়); মাঝে সরালে হোমের ভেতরে ঠিক সেই জায়গায় */
+    if (o.key === "sponsors" && idx === order.length - 1 && footer && footer.parentNode) footer.parentNode.insertBefore(el, footer);
+    else main.appendChild(el);
+  });
+}
+
+/* প্রতিটি সেকশনের শিরোনাম ও ছোট বর্ণনা — এডমিন থেকে বদলানো যায় (secTitle_* / secSub_*) */
+function renderSectionTexts() {
+  document.querySelectorAll("[data-sec-title]").forEach(el => {
+    const v = (landingData["secTitle_" + el.getAttribute("data-sec-title")] || "").trim();
+    if (v) el.textContent = v;
+  });
+  document.querySelectorAll("[data-sec-sub]").forEach(el => {
+    const v = (landingData["secSub_" + el.getAttribute("data-sec-sub")] || "").trim();
+    el.textContent = v;
+    el.style.display = v ? "" : "none";
+  });
+}
+
+/* ============================================================
+   স্পনসর সেকশন — সবসময় সবার নিচে (ফুটারের উপরে), হোম ও সব পেজে।
+   টিয়ার অনুযায়ী ভাগ করা: প্রধান → গোল্ড → সিলভার → সহায়ক।
+   ============================================================ */
+const SPONSOR_TIERS = [
+  { key: "প্রধান স্পনসর", cls: "main", icon: "fa-crown" },
+  { key: "গোল্ড স্পনসর", cls: "gold", icon: "fa-star" },
+  { key: "সিলভার স্পনসর", cls: "silver", icon: "fa-medal" },
+  { key: "সহায়ক স্পনসর", cls: "support", icon: "fa-hand-holding-heart" }
+];
+function sponsorCardTemplate(s) {
+  const link = safeHttpsUrl(s.link);
+  const tag = link ? "a" : "div";
+  const attrs = link ? ' href="' + escAttr(link) + '" target="_blank" rel="noopener noreferrer sponsored"' : "";
+  const tier = SPONSOR_TIERS.some(t => t.key === s.tier) ? s.tier : "";
+  const kind = (s.kind || "").trim(), intro = (s.tagline || "").trim();
+  return (
+    '<' + tag + ' class="spCard" data-sponsor-id="' + escAttr(s.id) + '"' + attrs + '>' +
+      '<div class="sponsorLogoWrap placeholderMode">' +
+        '<div class="imgSkeleton" aria-hidden="true"></div>' +
+        '<img class="sponsorLogo" alt="' + escAttr(s.name) + '">' +
+        '<span class="sponsorPlaceholderMark"><i class="fa-solid fa-building" aria-hidden="true"></i></span>' +
+      '</div>' +
+      '<div class="spName">' + escAttr(s.name || "") + '</div>' +
+      (tier ? '<span class="spTier">' + escAttr(tier) + '</span>' : "") +
+      (kind ? '<div class="spKind"><span>স্পনসর করছেন</span>' + escAttr(kind) + '</div>' : "") +
+      (intro ? '<p class="spIntro">' + escAttr(intro) + '</p>' : "") +
+      (link ? '<span class="spLink">ওয়েবসাইট দেখুন <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>' : "") +
+    '</' + tag + '>'
+  );
+}
+
+/* সব স্পনসর একটাই সারিতে, বাম থেকে ডানে (ক্যাটাগরি অনুযায়ী আগে-পরে সাজানো)।
+   জায়গায় কুলালে মাঝখানে স্থির; বেশি হলে নিজে নিজে ধীরে সরতে থাকে (হোভার/ট্যাপে থামে)। */
+let sponsorRowHtml = "", sponsorRowList = [];
+function fitSponsorRow() {
+  const row = document.getElementById("sponsorsRow");
+  const track = document.getElementById("sponsorsTrack");
+  if (!row || !track || !sponsorRowHtml) return;
+  track.classList.remove("marquee");
+  track.style.removeProperty("--dur");
+  track.innerHTML = sponsorRowHtml;
+  const load = () => track.querySelectorAll(".spCard").forEach(card => {
+    const s = sponsorRowList.find(x => String(x.id) === card.getAttribute("data-sponsor-id"));
+    if (!s || !s.logo) return;
+    const wrap = card.querySelector(".sponsorLogoWrap");
+    wrap.classList.remove("placeholderMode");
+    loadImageWithFallback(card.querySelector(".sponsorLogo"), s.logo, wrap);
+  });
+  load();
+  if (track.scrollWidth > row.clientWidth + 1) {
+    const w = track.scrollWidth;
+    track.innerHTML = sponsorRowHtml + sponsorRowHtml.replace(/<(a|div) class="spCard"/g, '<$1 aria-hidden="true" tabindex="-1" class="spCard"');
+    track.classList.add("marquee");
+    track.style.setProperty("--dur", Math.max(14, Math.round(w / 45)) + "s");
+    load();
+  }
+}
+let sponsorResizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(sponsorResizeTimer); sponsorResizeTimer = setTimeout(fitSponsorRow, 200); });
+
+function renderSponsorsSection() {
+  const section = document.getElementById("sponsorsSection");
+  const box = document.getElementById("sponsorsTiers");
+  if (!section || !box) return;
+  const list = (landingData.sponsors || []).filter(s => s && (s.name || s.logo));
+  setSectionVisible(section, list.length > 0 && !isSkeletonLoading());
+  if (!list.length) { box.innerHTML = ""; box.removeAttribute("data-sig"); sponsorRowHtml = ""; return; }
+
+  const h = document.getElementById("sponsorsHeading");
+  const sub = document.getElementById("sponsorsSubtitle");
+  if (h) h.textContent = landingData.sponsorHeading || "আমাদের স্পনসর";
+  if (sub) { sub.textContent = landingData.sponsorSubtitle || ""; sub.style.display = sub.textContent ? "" : "none"; }
+
+  const sig = JSON.stringify(list.map(s => [s.id, s.name, s.logo, s.link, s.tier, s.tagline, s.kind]));
+  if (box.getAttribute("data-sig") === sig) return;
+  box.setAttribute("data-sig", sig);
+
+  const rank = s => { const i = SPONSOR_TIERS.findIndex(t => t.key === s.tier); return i < 0 ? SPONSOR_TIERS.length : i; };
+  sponsorRowList = list.map((s, i) => ({ s: s, i: i })).sort((x, y) => rank(x.s) - rank(y.s) || x.i - y.i).map(o => o.s);
+  sponsorRowHtml = sponsorRowList.map(sponsorCardTemplate).join("");
+  box.innerHTML = '<div class="sponsorRow" id="sponsorsRow"><div class="sponsorTrack" id="sponsorsTrack"></div></div>';
+  fitSponsorRow();
+}
+
 function renderLanding() {
   normalizeLandingData();
   renderNoticeBar();
@@ -1163,6 +1656,10 @@ function renderLanding() {
   const ctaBand = document.getElementById("ctaBand");
   loadBackgroundWithFallback(ctaBand, landingData.impactImage, "hasImage", true); // lazy: far below the fold
 
+  renderNavOrder();
+  renderHomeOrder();
+  renderSectionTexts();
+  renderSponsorsSection();
   renderDonationGallery();
   renderRecordsGrid();
   renderNewsSection();
@@ -1439,14 +1936,15 @@ renderLanding();
    লুকিয়ে সংশ্লিষ্ট রুট পেজ দেখানো হয়।
    ============================================================ */
 (function initRoutePages() {
-  const ROUTES = ["process", "blood-group", "news", "news-detail", "donations", "hospitals"];
+  const ROUTES = ["process", "blood-group", "news", "news-detail", "donations", "hospitals", "gallery"];
   const ROUTE_TITLES = {
     "process": "কীভাবে কাজ করে",
     "blood-group": "রক্তের গ্রুপ চার্ট",
     "news": "সংবাদ ও আপডেট",
     "news-detail": "সংবাদ",
     "donations": "সকল রক্তদান রেকর্ড",
-    "hospitals": "হাসপাতাল ও ব্লাড ব্যাংক"
+    "hospitals": "হাসপাতাল ও ব্লাড ব্যাংক",
+    "gallery": "সব রক্তদানের ছবি"
   };
   const heroEl = document.getElementById("top");
   const mainEl = document.getElementById("main");
@@ -1494,6 +1992,10 @@ renderLanding();
       const toNews = parsed.route === "news-detail";
       routeBackEl.setAttribute("href", toNews ? "#news" : "#top");
       routeBackEl.setAttribute("aria-label", toNews ? "সংবাদ তালিকায় ফিরে যান" : "হোমে ফিরে যান");
+    }
+    if (parsed.route === "gallery") {
+      galleryPageState.page = 1;
+      renderGalleryAll();
     }
     if (parsed.route === "news-detail") {
       currentNewsDetailId = parsed.newsId;
@@ -2755,6 +3257,49 @@ function bumpVisitorIfNewDevice() {
 }
 
 /* ============================================================
+   LIVE VIEWERS + TOTAL VIEWS  (এডমিন ড্যাশবোর্ডে দেখা যায়)
+   - siteStats/live/{sessionId}  : এখন যারা সাইটে আছে (ট্যাব বন্ধ হলে নিজে মুছে যায়)
+   - siteStats/totalViews        : মোট ভিউ
+   - siteStats/daily/{YYYY-MM-DD}: প্রতিদিনের ভিউ (বাংলাদেশ সময়, গ্রাফের জন্য)
+   একই ট্যাবে রিলোড করলে ভিউ বাড়ে না — নতুন ট্যাব/সেশনে একবার গোনা হয়।
+   ============================================================ */
+function bdDateKey(ts) {
+  return new Date((ts || Date.now()) + 6 * 3600 * 1000).toISOString().slice(0, 10);
+}
+function trackLiveAndViews() {
+  if (!firebaseAvailable || !db) return;
+  let sid = "";
+  try {
+    sid = sessionStorage.getItem("bnb_live_sid") || "";
+    if (!sid) { sid = genId(); sessionStorage.setItem("bnb_live_sid", sid); }
+  } catch (err) { sid = genId(); }
+
+  try {
+    if (!sessionStorage.getItem("bnb_view_counted")) {
+      sessionStorage.setItem("bnb_view_counted", "1");
+      db.ref("siteStats/totalViews").transaction(c => (c || 0) + 1);
+      db.ref("siteStats/daily/" + bdDateKey()).transaction(c => (c || 0) + 1);
+    }
+  } catch (err) { /* ignore */ }
+
+  const liveRef = db.ref("siteStats/live/" + sid);
+  const stamp = firebase.database.ServerValue.TIMESTAMP;
+  let connected = false;
+  db.ref(".info/connected").on("value", snap => {
+    connected = snap.val() === true;
+    if (!connected) return;
+    liveRef.onDisconnect().remove()
+      .then(() => liveRef.set(stamp))
+      .catch(err => console.log("Live presence failed:", err));
+  });
+  /* হার্টবিট: ট্যাব খোলা থাকলে প্রতি ৯০ সেকেন্ডে "আমি আছি" জানায় */
+  setInterval(() => { if (connected && !document.hidden) liveRef.set(stamp).catch(() => {}); }, 90000);
+  document.addEventListener("visibilitychange", () => { if (connected && !document.hidden) liveRef.set(stamp).catch(() => {}); });
+  window.addEventListener("pagehide", () => { try { liveRef.remove(); } catch (err) { /* ignore */ } });
+  window.addEventListener("pageshow", e => { if (e.persisted && connected) liveRef.set(stamp).catch(() => {}); });
+}
+
+/* ============================================================
    FIREBASE CONNECT
    ============================================================ */
 function loadScript(src) {
@@ -2788,7 +3333,7 @@ function initFirebase() {
     donorsRef = db.ref("donors");
     appConfigRef = db.ref("appConfig");
     landingPageRef = db.ref("landingPage");
-    visitorRef = db.ref("siteStats/visitorCount");
+    visitorRef = db.ref("siteStats/totalViews"); // ওয়েবসাইট ও অ্যাডমিন — দুই জায়গায় একই "মোট ভিউ"
     newsLikesRef = db.ref("newsLikes");
     firebaseAvailable = true;
 
@@ -2826,6 +3371,8 @@ function initFirebase() {
       const val = snapshot.val() || {};
       landingReady = true;
       landingLoadFailed = false;
+      skeletonDone = true;
+      document.documentElement.classList.remove("skelMode");
       landingData = Object.assign({}, DEFAULT_LANDING, val);
       normalizeLandingData();
       writeCache(CACHE_LANDING_KEY, landingData);
@@ -2836,6 +3383,7 @@ function initFirebase() {
     }, err => {
       console.log("Landing page listener failed:", err);
       landingLoadFailed = true;
+      endSkeleton(true);
       renderNewsSection();
       renderNewsDetail();
     });
@@ -2855,11 +3403,10 @@ function initFirebase() {
     newsLikesRef.on("value", snapshot => {
       newsLikesData = snapshot.val() || {};
       writeCache(CACHE_NEWS_LIKES_KEY, newsLikesData);
-      renderNewsSection();
-      renderNewsDetail();
+      updateNewsLikeUI(); // রিয়েল-টাইম: অন্য কেউ লাইক দিলেও সঙ্গে সঙ্গে বদলায়
     });
 
-    bumpVisitorIfNewDevice();
+    trackLiveAndViews(); // মোট ভিউ গোনা (আলাদা visitorCount আর বাড়ানো হয় না)
   } catch (err) {
     console.log("Firebase init failed, running from local cache only:", err);
   }

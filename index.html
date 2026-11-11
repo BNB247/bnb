@@ -1,22 +1,13 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SL16TBJ2FQ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-SL16TBJ2FQ');
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="description" content="Blood Network Baraikhali — জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
 <title>B.N.B</title>
 <link rel="stylesheet" href="style.css">
-<link rel="apple-touch-icon" href="fav.jpeg">
-<link rel="icon" type="image/x-icon" href="fav.jpeg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <meta name="theme-color" content="#9E1B32">
 <!-- PWA: installable home-screen app + offline app-shell (see manifest.json / service-worker.js) -->
 <link rel="manifest" href="manifest.json">
@@ -34,18 +25,13 @@
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script>try{if(!localStorage.getItem("blood_donor_landing_cache"))document.documentElement.classList.add("skelMode")}catch(e){document.documentElement.classList.add("skelMode")}</script>
 </head>
 <body>
-<div id="pageLoader" aria-hidden="true">
-  <div class="loaderMark"><img src="fav.jpeg" alt="" onerror="this.style.display='none'; this.parentElement.textContent='B';"></div>
-  <div class="loaderText">লোড হচ্ছে…</div>
-  <div class="loaderBar"><div class="loaderBarFill"></div></div>
-</div>
-
 <nav class="siteNav" id="siteNav">
   <div class="siteNavInner">
     <a class="siteNavBrand" href="#top">
-      <img class="siteNavLogo" id="heroBrandLogo" src="fav.jpeg" alt="Blood Network Baraikhali">
+      <img loading="eager" decoding="async" class="siteNavLogo" id="heroBrandLogo" src="fav.jpeg" alt="Blood Network Baraikhali">
       <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
     </a>
     <a class="siteNavRouteBrand" id="siteNavRouteBrand" href="#top" aria-label="হোমে ফিরে যান">
@@ -123,7 +109,7 @@
 
 <main id="main">
 
-  <section class="statsSection" id="stats">
+  <section class="statsSection" id="stats" data-home-section="stats">
     <div class="statsSectionInner reveal">
       <div class="statsGrid">
         <div class="statCard" style="--accent:var(--crimson);">
@@ -211,12 +197,12 @@
     </div>
   </section>
 
-  <section class="heroDonorSection reveal dataSection sectionHidden" id="heroDonorSection">
+  <section class="heroDonorSection reveal dataSection sectionHidden" id="heroDonorSection" data-home-section="heroDonor">
     <span class="sectionEyebrow">আজকের হিরো</span>
     <div class="heroDonorCard">
       <div class="heroDonorPhotoWrap placeholderMode" id="heroDonorPhotoWrap">
         <div class="imgSkeleton" aria-hidden="true"></div>
-        <img class="heroDonorPhoto" id="heroDonorPhoto" alt="সাম্প্রতিক রক্তদাতা">
+        <img loading="lazy" decoding="async" class="heroDonorPhoto" id="heroDonorPhoto" alt="সাম্প্রতিক রক্তদাতা">
         <span class="heroDonorPhotoMark"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i></span>
       </div>
       <div class="heroDonorInfo">
@@ -231,20 +217,24 @@
     </div>
   </section>
 
-  <section class="donationGallery reveal">
+  <section class="donationGallery reveal" id="gallerySection" data-home-section="gallery">
     <span class="sectionEyebrow">আমাদের যাত্রা</span>
     <div class="donationGalleryHead">
-      <h2 class="donationGalleryHeading">সাম্প্রতিক রক্তদান</h2>
+      <h2 class="donationGalleryHeading" data-sec-title="gallery">সাম্প্রতিক রক্তদান</h2>
     </div>
+    <p class="secSubtitle" data-sec-sub="gallery" style="display:none"></p>
     <div class="donationGrid scrollRowX" id="donationGrid"></div>
+    <div class="seeAllWrap" id="donationSeeAllWrap" style="display:none;">
+      <a class="seeAllBtn" href="#gallery">সব ছবি দেখুন</a>
+    </div>
   </section>
 
-  <section class="about reveal">
+  <section class="about reveal" id="aboutSection" data-home-section="about">
     <div class="aboutCard">
       <div class="aboutImageFrame">
         <div class="aboutImageWrap placeholderMode" id="aboutImageWrap">
           <div class="imgSkeleton" aria-hidden="true"></div>
-          <img class="aboutImage" id="aboutImageEl" src="" alt="Blood Network Baraikhali">
+          <img loading="lazy" decoding="async" class="aboutImage" id="aboutImageEl" src="" alt="Blood Network Baraikhali">
           <span class="aboutPlaceholderMark">
             <i class="fa-solid fa-droplet" aria-hidden="true"></i>
           </span>
@@ -264,9 +254,10 @@
     </div>
   </section>
 
-  <section class="features reveal">
+  <section class="features reveal" id="featuresSection" data-home-section="features">
     <span class="sectionEyebrow">কেন আমরা</span>
-    <h2 class="featuresHeading">আমরা যা নিশ্চিত করি</h2>
+    <h2 class="featuresHeading" data-sec-title="features">আমরা যা নিশ্চিত করি</h2>
+    <p class="secSubtitle" data-sec-sub="features" style="display:none"></p>
     <div class="featuresGrid">
       <div class="featureCard">
         <div class="featureIcon">
@@ -292,68 +283,40 @@
     </div>
   </section>
 
-  <section class="team reveal dataSection" id="teamSection">
+  <section class="team reveal dataSection" id="teamSection" data-home-section="team">
     <span class="sectionEyebrow">আমাদের টিম</span>
     <div class="teamHead">
-      <h2 class="teamHeading">যাদের নিয়ে আমরা</h2>
+      <h2 class="teamHeading" data-sec-title="team">যাদের নিয়ে আমরা</h2>
     </div>
+    <p class="teamSubtitle secSubtitle" data-sec-sub="team">স্বেচ্ছাসেবার মানসিকতা নিয়ে যারা প্রতিদিন জীবন বাঁচাতে কাজ করছেন</p>
     <div class="teamRow" id="teamRow"></div>
     <div class="sectionEmptyState" id="teamEmptyState"><i class="fa-solid fa-users" aria-hidden="true"></i><span>এখনও কোনো টিম সদস্য যোগ করা হয়নি — এডিট মোডে যোগ করুন</span></div>
   </section>
 
-  <section class="faqSection reveal dataSection" id="faqSection">
+  <section class="faqSection reveal dataSection" id="faqSection" data-home-section="faq">
     <span class="sectionEyebrow">সচরাচর জিজ্ঞাসা</span>
     <div class="faqHead">
-      <h2 class="faqHeading">প্রশ্ন ও উত্তর</h2>
+      <h2 class="faqHeading" data-sec-title="faq">প্রশ্ন ও উত্তর</h2>
     </div>
+    <p class="secSubtitle" data-sec-sub="faq" style="display:none"></p>
     <div class="faqList" id="faqList"></div>
     <div class="sectionEmptyState" id="faqEmptyState"><i class="fa-solid fa-circle-question" aria-hidden="true"></i><span>এখনও কোনো প্রশ্ন যোগ করা হয়নি — এডিট মোডে যোগ করুন</span></div>
   </section>
 
-  <section class="partnersSection reveal dataSection" id="partnersSection">
+  <section class="partnersSection reveal dataSection" id="partnersSection" data-home-section="partners">
     <span class="sectionEyebrow">সহযোগী</span>
     <div class="partnersHead">
-      <h2 class="partnersHeading">আমাদের সহযোগী প্রতিষ্ঠান</h2>
+      <h2 class="partnersHeading" data-sec-title="partners">আমাদের সহযোগী প্রতিষ্ঠান</h2>
     </div>
+    <p class="secSubtitle" data-sec-sub="partners" style="display:none"></p>
     <div class="partnersPanel">
       <div class="partnersGrid" id="partnersGrid"></div>
       <div class="sectionEmptyState" id="partnersEmptyState"><i class="fa-solid fa-handshake" aria-hidden="true"></i><span>এখনও কোনো সহযোগী যোগ করা হয়নি — এডিট মোডে যোগ করুন</span></div>
     </div>
   </section>
 
-  <section class="exploreLinks reveal">
-    <span class="sectionEyebrow">আরও জানুন</span>
-    <h2 class="exploreLinksHeading">বিস্তারিত জানতে দেখুন</h2>
-    <div class="exploreLinksGrid">
-      <a class="exploreLinkCard" href="#process">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">কীভাবে কাজ করে</span>
-        <span class="exploreLinkDesc">ধাপে ধাপে জেনে নিন রক্তদাতা খোঁজা ও রক্তদানের পুরো প্রক্রিয়া।</span>
-      </a>
-      <a class="exploreLinkCard" href="#blood-group">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">রক্তের গ্রুপ চার্ট</span>
-        <span class="exploreLinkDesc">কোন গ্রুপ কাকে রক্ত দিতে বা নিতে পারবেন, বিস্তারিত চার্ট।</span>
-      </a>
-      <a class="exploreLinkCard" href="#news">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">সংবাদ ও আপডেট</span>
-        <span class="exploreLinkDesc">গত মাসের কার্যক্রম, ডোনেশন হিস্ট্রি রিপোর্ট ও সর্বশেষ খবর পড়ুন।</span>
-      </a>
-      <a class="exploreLinkCard" href="#donations">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">রক্তদান রেকর্ড</span>
-        <span class="exploreLinkDesc">এ পর্যন্ত হওয়া সব রক্তদানের রেকর্ড কার্ড আকারে দেখুন।</span>
-      </a>
-      <a class="exploreLinkCard" href="#hospitals">
-        <span class="exploreLinkIcon"><i class="fa-solid fa-hospital" aria-hidden="true"></i></span>
-        <span class="exploreLinkTitle">হাসপাতাল ও ব্লাড ব্যাংক</span>
-        <span class="exploreLinkDesc">নিকটস্থ হাসপাতাল ও ব্লাড ব্যাংকের তালিকা, ফোন নম্বরসহ।</span>
-      </a>
-    </div>
-  </section>
 
-  <div class="container">
+  <div class="container" id="ctaSection" data-home-section="cta">
     <div class="ctaBand reveal" id="ctaBand">
       <div class="ctaBandOverlay" id="ctaBandOverlay"></div>
       <div class="ctaBandInner">
@@ -396,66 +359,6 @@
      ============================================================ -->
 <section class="routePage" id="route-blood-group">
   <div class="routePageInner">
-    <div class="bgIntroGrid">
-      <div class="bgIntroCard">
-        <span class="bgIntroIcon"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i></span>
-        <div>
-          <div class="bgIntroTitle">O- : সার্বজনীন রক্তদাতা</div>
-          <div class="bgIntroText">O- রক্তের গ্রুপের মানুষ যেকোনো রক্তের গ্রুপের রোগীকে রক্ত দিতে পারেন।</div>
-        </div>
-      </div>
-      <div class="bgIntroCard recipientCard">
-        <span class="bgIntroIcon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
-        <div>
-          <div class="bgIntroTitle">AB+ : সার্বজনীন গ্রহীতা</div>
-          <div class="bgIntroText">AB+ রক্তের গ্রুপের মানুষ যেকোনো রক্তের গ্রুপ থেকে রক্ত গ্রহণ করতে পারেন।</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="bgChartGrid">
-      <div class="bgChartCard">
-        <span class="bgChartLetter">A+</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>A+, AB+</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>A+, A-, O+, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">A-</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>A+, A-, AB+, AB-</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>A-, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">B+</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>B+, AB+</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>B+, B-, O+, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">B-</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>B+, B-, AB+, AB-</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>B-, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">AB+</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>শুধু AB+</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>সব গ্রুপ থেকে</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">AB-</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>AB+, AB-</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>A-, B-, AB-, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">O+</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>A+, B+, AB+, O+</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>O+, O-</span></div>
-      </div>
-      <div class="bgChartCard">
-        <span class="bgChartLetter">O-</span>
-        <div class="bgChartRow"><strong>দান করতে পারেন</strong><span>সব গ্রুপকে</span></div>
-        <div class="bgChartRow"><strong>গ্রহণ করতে পারেন</strong><span>শুধু O-</span></div>
-      </div>
-    </div>
-
     <div class="bgTableWrap">
       <table class="bgTable">
         <thead>
@@ -619,6 +522,29 @@
 
     <div class="recordsGrid" id="recordsGrid"></div>
     <div class="sectionEmptyState" id="recordsEmptyState"><i class="fa-solid fa-droplet" aria-hidden="true"></i><span>এখনও কোনো রেকর্ড যোগ করা হয়নি</span></div>
+    <div class="recordsPager" id="recordsPager" aria-label="পেজ নেভিগেশন"></div>
+  </div>
+</section>
+
+<!-- রুট পেজ — সব রক্তদানের ছবি (প্রতি পেজে ২০টি) -->
+<section class="routePage" id="route-gallery">
+  <div class="routePageInner">
+    <div class="galleryAllGrid" id="galleryAllGrid"></div>
+    <div class="sectionEmptyState" id="galleryAllEmpty"><i class="fa-solid fa-images" aria-hidden="true"></i><span>এখনও কোনো ছবি যোগ করা হয়নি</span></div>
+    <div class="recordsPager" id="galleryAllPager" aria-label="পেজ নেভিগেশন"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     স্পনসর সেকশন — সবার নিচে (হোম + সব রুট পেজেই ফুটারের ঠিক উপরে)।
+     স্পনসর যোগ/সম্পাদনা/ক্রম এডমিন প্যানেল → "স্পনসর" থেকে।
+     ============================================================ -->
+<section class="sponsorsSection dataSection sectionHidden" id="sponsorsSection" data-home-section="sponsors" aria-labelledby="sponsorsHeading">
+  <div class="sponsorsInner">
+    <span class="sectionEyebrow">স্পনসর</span>
+    <h2 class="sponsorsHeading" id="sponsorsHeading">আমাদের স্পনসর</h2>
+    <p class="sponsorsSubtitle" id="sponsorsSubtitle"></p>
+    <div class="sponsorsTiers" id="sponsorsTiers"></div>
   </div>
 </section>
 
@@ -626,7 +552,7 @@
   <div class="footerGrid">
     <div>
       <div class="footerBrand">
-        <img class="footerBrandLogo" id="footerBrandLogo" src="fav.jpeg" alt="Blood Network Baraikhali">
+        <img loading="lazy" decoding="async" class="footerBrandLogo" id="footerBrandLogo" src="fav.jpeg" alt="Blood Network Baraikhali">
         <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
       </div>
       <p class="footerTagline">স্বেচ্ছাসেবী রক্তদাতাদের একটি বিশ্বস্ত নেটওয়ার্ক — জরুরি প্রয়োজনে জীবন বাঁচাতে পাশে আছি।</p>
@@ -660,18 +586,20 @@
     <div>
       <div class="footerColTitle">লিংক</div>
       <div class="footerRow"><a href="index-9.html">রক্তদাতা তালিকা</a></div>
-      <div class="footerRow"><a href="#process">কীভাবে কাজ করে</a></div>
-      <div class="footerRow"><a href="#blood-group">রক্তের গ্রুপ চার্ট</a></div>
-      <div class="footerRow"><a href="#donations">রক্তদান রেকর্ড</a></div>
-      <div class="footerRow"><a href="#news">সংবাদ ও আপডেট</a></div>
-      <div class="footerRow"><a href="#hospitals">হাসপাতাল ও ব্লাড ব্যাংক</a></div>
+      <div id="footerLinks">
+        <div class="footerRow"><a href="#process" data-footer-route="process">কীভাবে কাজ করে</a></div>
+        <div class="footerRow"><a href="#blood-group" data-footer-route="blood-group">রক্তের গ্রুপ চার্ট</a></div>
+        <div class="footerRow"><a href="#donations" data-footer-route="donations">রক্তদান রেকর্ড</a></div>
+        <div class="footerRow"><a href="#news" data-footer-route="news">সংবাদ ও আপডেট</a></div>
+        <div class="footerRow"><a href="#hospitals" data-footer-route="hospitals">হাসপাতাল ও ব্লাড ব্যাংক</a></div>
+      </div>
       <div class="footerRow"><a href="#top">উপরে ফিরে যান</a></div>
       <div class="footerRow"><i class="fa-brands fa-facebook" aria-hidden="true"></i> <span class="editable-field" data-key="footerFacebook" contenteditable="false">facebook.com/bloodnetworkbaraikhali</span></div>
     </div>
   </div>
   <div class="footerBottom">
     <div class="footerVersionRow">
-      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span><span class="footerDivider">•</span>© <span id="footerYear">2026</span> সর্বস্বত্ব সংরক্ষিত (All Rights Reserved)<span class="footerDivider">•</span>last update <span class="editable-field" data-key="siteVersion" contenteditable="false">1.0.0</span>
+      <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span><span class="footerDivider">•</span>© <span id="footerYear">2026</span> সর্বস্বত্ব সংরক্ষিত (All Rights Reserved)<span class="footerDivider">•</span>last update <span class="editable-field" data-key="siteVersion" contenteditable="false">11 Nov 2026</span>
     </div>
     <div class="footerBottomRow">
       <span>Development by <u class="editable-field" data-key="footerDevName1" contenteditable="false">IBRAHIM KHALIL</u> | <u class="editable-field" data-key="footerDevName2" contenteditable="false">SAMIN KHAN</u></span>
@@ -867,7 +795,7 @@
 
     <div class="callingCardMain">
       <div class="callingCardBrand" id="callingCardBrand">
-        <img id="callingCardBrandLogo" src="fav.jpeg" alt="">
+        <img loading="lazy" decoding="async" id="callingCardBrandLogo" src="fav.jpeg" alt="">
         <span class="editable-field" data-key="siteName" contenteditable="false">Blood Network Baraikhali</span>
         <span class="callingCardTag"><i class="fa-solid fa-droplet" aria-hidden="true"></i>সক্রিয়</span>
       </div>
@@ -907,5 +835,21 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
+    <script>
+/* একবারের পরিষ্কার-করা: আগে নোটিফিকেশনের জন্য নিবন্ধিত Service Worker ও সাবস্ক্রিপশন ডিভাইস থেকে সরিয়ে দেয়।
+   সবার ডিভাইস পরিষ্কার হয়ে গেলে (কিছুদিন পর) এই ব্লকটি মুছে দিতে পারবেন। */
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function (regs) {
+    regs.forEach(function (r) {
+      if (r.scope.indexOf("/fcm-push/") === -1) return;
+      var done = function () { r.unregister(); };
+      if (r.pushManager) r.pushManager.getSubscription().then(function (s) { return s ? s.unsubscribe() : null; }).then(done, done);
+      else done();
+    });
+  }).catch(function () {});
+})();
+</script>
+    <script src="install-bar.js?v=4"></script>
 </body>
 </html>
