@@ -13,7 +13,7 @@ let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef, newsLikesRef;
    ============================================================ */
 const CACHE_APPCONFIG_KEY = "blood_donor_appconfig_cache";
 const CACHE_LANDING_KEY = "blood_donor_landing_cache";
-const CACHE_DONORS_KEY = "blood_donor_cache";
+const CACHE_DONORS_KEY = "blood_stats_cache_v2"; // siteStats summary (donors list itself is admin-only)
 const CACHE_VISITOR_KEY = "blood_donor_views_cache"; // মোট ভিউ (অ্যাডমিন প্যানেলের সাথে একই সংখ্যা)
 
 function readCache(key, fallback) {
@@ -103,7 +103,7 @@ function skeletonFill(container, kind, n) {
    ============================================================ */
 const DEFAULT_LANDING = {
   siteName: "Blood Network Baraikhali",
-  siteVersion: "11 Nov 2026",
+  siteVersion: "11-Nov-2026",
   importantNotice: "",
   importantNoticeActive: false,
   heroTitle: "প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প",
@@ -2299,21 +2299,19 @@ const BLOOD_GROUP_ID_MAP = {
   "AB+": "bgABPos", "AB-": "bgABNeg",
   "O+": "bgOPos", "O-": "bgONeg"
 };
-function computeAndRenderStats(donorsVal) {
-  const donors = donorsVal ? Object.values(donorsVal) : [];
-  const totalDonors = donors.length;
-  const totalDonations = donors.reduce((sum, d) => sum + (parseInt(d.donationCount, 10) || 0), 0);
+function computeAndRenderStats(agg) {
+  // agg = siteStats summary written by list.html:
+  // { donorCount, totalDonations, bloodGroups:{"A+":n,...}, lastDonateDates:{"YYYY-MM-DD":n} }
+  agg = (agg && typeof agg === "object" && !Array.isArray(agg)) ? agg : {};
+  const totalDonors = parseInt(agg.donorCount, 10) || 0;
+  const totalDonations = parseInt(agg.totalDonations, 10) || 0;
 
   animateNumber(document.getElementById("statDonors"), totalDonors);
   animateNumber(document.getElementById("statDonations"), totalDonations);
-  computeLast28DaysDonations(donors);
+  computeLast28DaysDonations(agg.lastDonateDates);
 
   const bgCounts = {};
-  Object.keys(BLOOD_GROUP_ID_MAP).forEach(g => { bgCounts[g] = 0; });
-  donors.forEach(d => {
-    const g = (d.bloodGroup || "").toString().trim().toUpperCase();
-    if (bgCounts.hasOwnProperty(g)) bgCounts[g]++;
-  });
+  Object.keys(BLOOD_GROUP_ID_MAP).forEach(g => { bgCounts[g] = parseInt((agg.bloodGroups || {})[g], 10) || 0; });
   Object.keys(BLOOD_GROUP_ID_MAP).forEach(g => {
     const el = document.getElementById(BLOOD_GROUP_ID_MAP[g]);
     if (el) animateNumber(el, bgCounts[g]);
@@ -2334,17 +2332,15 @@ function computeAndRenderStats(donorsVal) {
    history never got pushed there, so this counter silently
    undercounted (e.g. showing 1) while the PDF statement — which
    reads every donor's real lastDonateDate — correctly showed 9. */
-function computeLast28DaysDonations(donors) {
-  const list = donors || [];
+function computeLast28DaysDonations(dateCounts) {
+  const map = (dateCounts && typeof dateCounts === "object") ? dateCounts : {};
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 27);
   let count = 0;
-  list.forEach(d => {
-    const rawDate = (d.lastDonateDate || "").slice(0, 10);
-    if (!rawDate) return;
+  Object.keys(map).forEach(rawDate => {
     const dt = new Date(rawDate);
     if (isNaN(dt.getTime())) return;
-    if (dt >= cutoff && dt <= now) count++;
+    if (dt >= cutoff && dt <= now) count += parseInt(map[rawDate], 10) || 0;
   });
   const el = document.getElementById("statLast28");
   if (el) animateNumber(el, count);
@@ -2379,7 +2375,7 @@ const statsObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting && !statsAnimated) {
       statsAnimated = true;
-      computeAndRenderStats(readCache(CACHE_DONORS_KEY, []).reduce((acc, d) => { acc[d.id] = d; return acc; }, {}));
+      computeAndRenderStats(readCache(CACHE_DONORS_KEY, {}));
       animateNumber(document.getElementById("statVisitors"), latestVisitorCount);
       statsObserver.unobserve(entry.target);
     }
@@ -3416,18 +3412,30 @@ function initFirebase() {
    force a fresh copy — e.g. right before an admin starts editing,
    so they never overwrite someone else's newer change). */
 function fetchDonorsOnce() {
-  return donorsRef.once("value").then(snapshot => {
-    const val = snapshot.val() || {};
-    writeCache(CACHE_DONORS_KEY, Object.values(val));
+  // Public visitors may NOT read /donors (names, phones, addresses). They read
+  // only the small aggregate numbers under /siteStats (public-read in the rules).
+  const s = db.ref("siteStats");
+  return Promise.all([
+    s.child("donorCount").once("value"),
+    s.child("totalDonations").once("value"),
+    s.child("bloodGroups").once("value"),
+    s.child("lastDonateDates").once("value")
+  ]).then(r => {
+    const agg = {
+      donorCount: r[0].val() || 0,
+      totalDonations: r[1].val() || 0,
+      bloodGroups: r[2].val() || {},
+      lastDonateDates: r[3].val() || {}
+    };
+    writeCache(CACHE_DONORS_KEY, agg);
     markFetchedNow(CACHE_DONORS_KEY);
-    computeAndRenderStats(val);
-  }).catch(err => console.log("Donors fetch failed:", err));
+    computeAndRenderStats(agg);
+  }).catch(err => console.log("Stats fetch failed:", err));
 }
 
 function fetchAppConfigOnce() {
-  return appConfigRef.once("value").then(snapshot => {
-    const val = snapshot.val() || {};
-    appConfigData = { logoImage: val.logoImage || "" };
+  return appConfigRef.child("logoImage").once("value").then(snapshot => {
+    appConfigData = { logoImage: snapshot.val() || "" };
     writeCache(CACHE_APPCONFIG_KEY, appConfigData);
     markFetchedNow(CACHE_APPCONFIG_KEY);
     renderLanding();
