@@ -16,7 +16,7 @@
 
    BUMP THIS VERSION whenever index.html/app.js/style.css change,
    so old caches are dropped and the new files are fetched. ------ */
-const CACHE_VERSION = "bnb-v1";
+const CACHE_VERSION = "bnb-v2";
 const CACHE_NAME = "bnb-shell-" + CACHE_VERSION;
 
 const APP_SHELL = [
