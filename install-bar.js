@@ -13,8 +13,32 @@
   // উদাহরণ: "https://github.com/bnb247/bnb/releases/download/v1/BNB.apk"
   var APK_URL = "";
 
+  var COUNTED_KEY = "bnb_install_counted";
+
+  /* ---- অ্যাপ ইনস্টল গণনা ----
+     প্রতিটি ডিভাইস থেকে মাত্র একবার siteStats/appInstalls-এ +১ করে (অ্যাডমিন ড্যাশবোর্ডে দেখা যায়)।
+     দুই জায়গা থেকে গোনা হয়: (১) ইনস্টল সম্পন্নের মুহূর্তে ("appinstalled"),
+     (২) অ্যাপ হিসেবে প্রথমবার খুললে (iPhone-এ "Add to Home Screen" করলে ইনস্টল ইভেন্ট আসে না, তাই এটা দরকার)। */
+  function countInstallOnce() {
+    try { if (localStorage.getItem(COUNTED_KEY) === "1") return; } catch (e) {}
+    var tries = 0;
+    (function attempt() {
+      var ok = false;
+      try {
+        if (window.firebase && firebase.apps && firebase.apps.length && firebase.database) {
+          ok = true;
+          firebase.database().ref("siteStats/appInstalls").transaction(function (c) { return (c || 0) + 1; })
+            .then(function (res) {
+              if (res && res.committed) { try { localStorage.setItem(COUNTED_KEY, "1"); } catch (e) {} }
+            }).catch(function () {});
+        }
+      } catch (e) {}
+      if (!ok && ++tries < 40) setTimeout(attempt, 1500);   // ফায়ারবেস লোড হওয়া পর্যন্ত অপেক্ষা (সর্বোচ্চ ~১ মিনিট)
+    })();
+  }
+
   var standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  if (standalone) return;                                   // অ্যাপের ভেতরে আছে: বার দরকার নেই
+  if (standalone) { countInstallOnce(); return; }           // অ্যাপের ভেতরে আছে: বার দরকার নেই (শুধু গণনা)
 
   var ua = navigator.userAgent;
   var isIOS = /iphone|ipad|ipod/i.test(ua);
@@ -164,6 +188,7 @@
   window.addEventListener("appinstalled", function () {
     deferred = null; installed = true;
     try { localStorage.setItem(INSTALLED_KEY, "1"); localStorage.removeItem(DISMISS_KEY); } catch (e) {}
+    countInstallOnce();
     if (bar) render(); else showBar();
   });
 

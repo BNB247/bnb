@@ -6,6 +6,7 @@
 <meta name="description" content="Blood Network Baraikhali — জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
 <title>B.N.B</title>
 <link rel="stylesheet" href="style.css">
+<script src="i18n.js"></script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="theme-color" content="#9E1B32">
@@ -47,6 +48,10 @@
       <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
       <a href="#" class="siteNavCta joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>যোগ দিন</a>
     </div>
+    <div class="langSwitch" id="langSwitch" role="group" aria-label="Language / ভাষা" data-i18n-skip>
+      <button type="button" class="langBtn active" data-lang="bn" lang="bn" aria-pressed="true" title="বাংলা">বাং</button>
+      <button type="button" class="langBtn" data-lang="en" lang="en" aria-pressed="false" title="English">EN</button>
+    </div>
     <button type="button" class="siteNavToggle" id="siteNavToggle" aria-label="মেনু খুলুন" aria-expanded="false">
       <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
@@ -58,6 +63,13 @@
     <a href="#donations" data-nav-route="donations"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>রক্তদান রেকর্ড</a>
     <a href="#news" data-nav-route="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i>সংবাদ</a>
     <a href="#hospitals" data-nav-route="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i>হাসপাতাল</a>
+    <div class="langRowMobile" data-i18n-skip>
+      <span class="langLabel"><i class="fa-solid fa-language" aria-hidden="true"></i>ভাষা / Language</span>
+      <div class="langSwitch" role="group" aria-label="Language / ভাষা">
+        <button type="button" class="langBtn active" data-lang="bn" lang="bn" aria-pressed="true" title="বাংলা">বাং</button>
+        <button type="button" class="langBtn" data-lang="en" lang="en" aria-pressed="false" title="English">EN</button>
+      </div>
+    </div>
     <a href="#" class="siteNavCtaMobile joinCallTrigger"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>রক্তদাতা হিসেবে যোগ দিন</a>
   </div>
 </nav>
@@ -95,7 +107,7 @@
       </a>
     </div>
     <div class="heroSearchBox">
-      <input type="text" id="donationSearchInput" class="heroSearchInput" placeholder="ID দিয়ে খুঁজুন...">
+      <input type="text" id="donationSearchInput" class="heroSearchInput" placeholder="ID, নাম বা হাসপাতাল দিয়ে খুঁজুন...">
       <button type="button" id="donationSearchBtn" class="heroSearchBtn" aria-label="খুঁজুন">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
       </button>
@@ -203,6 +215,7 @@
       <div class="heroDonorPhotoWrap placeholderMode" id="heroDonorPhotoWrap">
         <div class="imgSkeleton" aria-hidden="true"></div>
         <img loading="lazy" decoding="async" class="heroDonorPhoto" id="heroDonorPhoto" alt="সাম্প্রতিক রক্তদাতা">
+        <img class="donorPhotoLogo" alt="" aria-hidden="true" draggable="false">
         <span class="heroDonorPhotoMark"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i></span>
       </div>
       <div class="heroDonorInfo">

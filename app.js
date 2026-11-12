@@ -68,7 +68,7 @@ const SKELETON_TPL = {
   record: () => '<div class="recordCard recordCardSkel" aria-hidden="true"><div class="recordCardPhotoWrap skel"></div><div class="recordCardBody">' + skelLine("82%") + skelLine("56%") + '</div></div>',
   donation: () => '<div class="donationItem skel" aria-hidden="true"></div>',
   galleryAll: () => '<div class="galleryAllItem skel" aria-hidden="true"></div>',
-  team: () => '<div class="tmCard tmCardSkel" aria-hidden="true"><div class="tmPhoto skel"></div></div>',
+  team: () => '<div class="tcCard tcCardSkel" aria-hidden="true"><div class="tcPhoto skel"></div><div class="tcBody">' + skelLine("70%") + skelLine("45%") + '</div></div>',
   partner: () => '<div class="partnerCard partnerCardSkel" aria-hidden="true"><div class="partnerLogoWrap skel"></div>' + skelLine("70%") + '</div>',
   news: () => '<div class="newsCard newsCardSkel" aria-hidden="true"><div class="skel skelNewsImg"></div><div class="skelNewsBody">' + skelLine("34%") + skelLine("92%") + skelLine("74%") + '</div></div>'
 };
@@ -324,6 +324,20 @@ function ordinalShortBn(n) {
    hospital come from the admin; everything else is the same every time. */
 function buildDonationMessage(r) {
   const network = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+  if (window.I18N && I18N.lang === "en") {
+    const n = parseInt(r.visitCount, 10) || 1;
+    const sfx = (n % 100 >= 11 && n % 100 <= 13) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+    return [
+      (r.name || "").trim() + " has donated blood (" + (r.bloodGroup || "") + ") for the " + n + sfx + " time",
+      "at " + (r.hospitalName || "").trim() + ".",
+      "",
+      "With endless love from " + network + ". 🤝🖤",
+      "",
+      "Please keep our brother/sister in your prayers.",
+      "❤️ Donate Blood • Save Lives",
+      "🌍 Together in the service of humanity"
+    ].join("\n");
+  }
   return [
     (r.name || "").trim(),
     ordinalBn(r.visitCount) + "বারের মতো",
@@ -371,6 +385,21 @@ function driveUrlCandidates(url) {
    URL formats. targetEl (defaults to imgEl) gets "loadingImg" /
    "imgLoadFailed" classes toggled so CSS can show/hide the shimmer
    and any placeholder icon. */
+/* ---- website logo shown on the top-left corner of donor photos ---- */
+function donorLogoSrc() {
+  return (appConfigData && appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : "fav.jpeg";
+}
+const DONOR_LOGO_HTML = '<img class="donorPhotoLogo" alt="" aria-hidden="true" draggable="false">';
+function syncDonorLogos(root) {
+  const scope = root || document;
+  const src = donorLogoSrc();
+  scope.querySelectorAll(".donorPhotoLogo").forEach(function (el) {
+    if (el.getAttribute("data-logo-src") === src) return;
+    el.setAttribute("data-logo-src", src);
+    loadImageWithFallback(el, src, el);
+  });
+}
+
 function loadImageWithFallback(imgEl, rawUrl, targetEl) {
   const target = targetEl || imgEl;
   if (!imgEl) return;
@@ -486,7 +515,7 @@ function renderDonationGallery() {
   grid.innerHTML = homePhotos.map(p => (
     '<div class="donationItem" data-donation-id="' + p.id + '">' +
       '<div class="imgSkeleton" aria-hidden="true"></div>' +
-      '<img class="donationImg" alt="সাম্প্রতিক রক্তদান">' +
+      '<img class="donationImg" alt="সাম্প্রতিক রক্তদান">' + DONOR_LOGO_HTML +
       '<span class="donationFailMark" aria-hidden="true"><i class="fa-solid fa-image"></i></span>' +
       '<button type="button" class="imgEditBtn" data-img-key="donation:' + p.id + '"><i class="fa-solid fa-camera" aria-hidden="true"></i></button>' +
       '<button type="button" class="imgRemoveBtn" data-img-key="donation:' + p.id + '" title="ছবি মুছুন"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
@@ -497,6 +526,7 @@ function renderDonationGallery() {
     if (!item) return;
     loadImageWithFallback(item.querySelector(".donationImg"), p.src, item);
   });
+  syncDonorLogos(grid);
 }
 
 /* ============================================================
@@ -530,7 +560,7 @@ function renderGalleryAll() {
   grid.innerHTML = items.map(p => (
     '<div class="galleryAllItem" data-gallery-id="' + p.id + '">' +
       '<div class="imgSkeleton" aria-hidden="true"></div>' +
-      '<img class="donationImg" alt="রক্তদানের ছবি">' +
+      '<img class="donationImg" alt="রক্তদানের ছবি">' + DONOR_LOGO_HTML +
       '<span class="donationFailMark" aria-hidden="true"><i class="fa-solid fa-image"></i></span>' +
     '</div>'
   )).join("");
@@ -538,6 +568,7 @@ function renderGalleryAll() {
     const item = grid.querySelector('.galleryAllItem[data-gallery-id="' + p.id + '"]');
     if (item) loadImageWithFallback(item.querySelector(".donationImg"), p.src, item);
   });
+  syncDonorLogos(grid);
   if (pager) {
     if (totalPages <= 1) { pager.innerHTML = ""; }
     else {
@@ -577,6 +608,7 @@ function recordDateBn(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "";
+  if (window.I18N && I18N.lang === "en") return I18N.fmtDate(d, "short");
   const months = ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্ট", "অক্টো", "নভে", "ডিসে"];
   return toBengaliDigits(d.getDate()) + " " + months[d.getMonth()] + ", " + toBengaliDigits(d.getFullYear());
 }
@@ -589,7 +621,7 @@ function recordCardTemplate(r) {
     '<button type="button" class="recordCard" data-record-id="' + r.id + '">' +
       '<div class="recordCardPhotoWrap' + (showPhoto ? "" : " placeholderMode") + '">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        (showPhoto ? '<img class="recordCardImg" alt="' + escAttr(r.name) + '">' : "") +
+        (showPhoto ? '<img class="recordCardImg" alt="' + escAttr(r.name) + '">' + DONOR_LOGO_HTML : "") +
         '<span class="recordCardPlaceholder"><i class="fa-solid ' + placeholderIcon + '" aria-hidden="true"></i></span>' +
         '<span class="recordCardNo"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>' + escAttr(r.donationNo || "") + '</span>' +
         '<span class="recordCardBg">' + escAttr(r.bloodGroup || "—") + '</span>' +
@@ -725,6 +757,7 @@ function renderRecordsGrid() {
     const img = card.querySelector(".recordCardImg");
     if (img) loadImageWithFallback(img, r.image, card.querySelector(".recordCardPhotoWrap"));
   });
+  syncDonorLogos(grid);
   renderRecordsPager(pager, recordsPageState.page, totalPages, filtered.length);
 }
 
@@ -806,21 +839,20 @@ function teamCardTemplate(m) {
   const bio = (m.bio || "").trim();
   const role = (m.role || "").trim();
   const contact =
-    (phone ? '<a class="tmPhone" href="tel:' + escAttr(phone) + '" aria-label="কল করুন"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>' + escAttr(phoneRaw) + '</span></a>' : "") +
-    (fb ? '<a class="tmFb" href="' + escAttr(fb) + '" target="_blank" rel="noopener noreferrer" aria-label="ফেসবুক"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>' : "");
+    (phone ? '<a class="tcLink" href="tel:' + escAttr(phone) + '" aria-label="কল করুন"><i class="fa-solid fa-phone" aria-hidden="true"></i></a>' : "") +
+    (fb ? '<a class="tcLink tcLinkFb" href="' + escAttr(fb) + '" target="_blank" rel="noopener noreferrer" aria-label="ফেসবুক"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>' : "");
   return (
-    '<article class="tmCard" data-team-id="' + escAttr(m.id) + '">' +
-      '<div class="tmPhoto placeholderMode">' +
+    '<article class="tcCard" data-team-id="' + escAttr(m.id) + '">' +
+      '<div class="tcPhoto placeholderMode">' +
         '<div class="imgSkeleton" aria-hidden="true"></div>' +
-        '<img class="tmImg" alt="' + escAttr(m.name) + '">' +
-        '<span class="tmPlaceholder"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
-        '<div class="tmShade" aria-hidden="true"></div>' +
-        '<div class="tmOverlay">' +
-          (role ? '<span class="tmRole">' + escAttr(role) + '</span>' : "") +
-          '<h3 class="tmName">' + escAttr(m.name || "") + '</h3>' +
-          (bio ? '<p class="tmBio">' + escAttr(bio) + '</p>' : "") +
-          (contact ? '<div class="tmContact">' + contact + '</div>' : "") +
-        '</div>' +
+        '<img class="tcImg" alt="' + escAttr(m.name) + '">' +
+        '<span class="tcPlaceholder"><i class="fa-solid fa-user" aria-hidden="true"></i></span>' +
+      '</div>' +
+      '<div class="tcBody">' +
+        '<h3 class="tcName">' + escAttr(m.name || "") + '</h3>' +
+        (role ? '<span class="tcRole" data-text="' + escAttr(role) + '"><span class="tcRoleText">' + escAttr(role) + '</span></span>' : "") +
+        (bio ? '<p class="tcBio">' + escAttr(bio) + '</p>' : "") +
+        (contact ? '<div class="tcContact">' + contact + '</div>' : "") +
       '</div>' +
     '</article>'
   );
@@ -865,11 +897,43 @@ function openTeamSheet(id) {
   document.body.classList.add("tsLock");
 }
 document.addEventListener("click", e => {
-  const card = e.target.closest ? e.target.closest("#teamRow .tmCard") : null;
+  const card = e.target.closest ? e.target.closest("#teamRow .tcCard") : null;
   if (!card || e.target.closest("a")) return;
   if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
   openTeamSheet(card.getAttribute("data-team-id"));
 });
+
+/* পদবি এক লাইনে থাকে; জায়গায় না ধরলে ডান থেকে বামে ধীরে ধীরে নিজে নিজে ঘুরে পুরোটা দেখায় */
+function fitTeamRoles() {
+  document.querySelectorAll("#teamRow .tcRole").forEach(el => {
+    const txt = el.getAttribute("data-text") || "";
+    el.classList.remove("marquee");
+    el.style.removeProperty("--shift");
+    el.style.removeProperty("--dur");
+    el.innerHTML = '<span class="tcRoleText"></span>';
+    el.firstChild.textContent = txt;
+    if (!el.clientWidth) return; // সেকশন এখনো লুকানো — দৃশ্যমান হলে ResizeObserver আবার চালাবে
+    if (el.scrollWidth <= el.clientWidth + 1) return;
+    el.innerHTML = '<span class="tcRoleTrack"><span></span><span aria-hidden="true"></span></span>';
+    const spans = el.querySelectorAll(".tcRoleTrack > span");
+    spans[0].textContent = txt; spans[1].textContent = txt;
+    const shift = spans[1].offsetLeft - spans[0].offsetLeft; // মোবাইল/ডেস্কটপ দুই জায়গার গ্যাপ নিজে থেকেই ধরা পড়ে
+    el.style.setProperty("--shift", shift + "px");
+    el.style.setProperty("--dur", Math.max(7, Math.round(shift / 22)) + "s");
+    el.classList.add("marquee");
+  });
+}
+(function initTeamRoleFit() {
+  let t = null;
+  const run = () => { clearTimeout(t); t = setTimeout(fitTeamRoles, 120); };
+  window.addEventListener("resize", run);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
+  const row = document.getElementById("teamRow");
+  if (row && "ResizeObserver" in window) {
+    let lastW = -1;
+    new ResizeObserver(() => { const w = row.clientWidth; if (w === lastW) return; lastW = w; run(); }).observe(row);
+  }
+})();
 
 function renderTeamSection() {
   const container = document.getElementById("teamRow");
@@ -880,15 +944,16 @@ function renderTeamSection() {
     container.removeAttribute("data-skel");
     container.setAttribute("data-sig", sig);
     container.innerHTML = landingData.team.map(teamCardTemplate).join("");
-    container.querySelectorAll(".tmCard").forEach((card, i) => {
+    container.querySelectorAll(".tcCard").forEach((card, i) => {
       const m = landingData.team[i];
       if (!m || !m.photo) return;
-      const wrap = card.querySelector(".tmPhoto");
+      const wrap = card.querySelector(".tcPhoto");
       wrap.classList.remove("placeholderMode");
-      loadImageWithFallback(card.querySelector(".tmImg"), m.photo, wrap);
+      loadImageWithFallback(card.querySelector(".tcImg"), m.photo, wrap);
     });
   }
   setSectionVisible(document.getElementById("teamSection"), landingData.team.length > 0);
+  fitTeamRoles();
 }
 
 function faqItemTemplate(f) {
@@ -1068,6 +1133,7 @@ function formatNewsDateBn(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
+  if (window.I18N && I18N.lang === "en") return I18N.fmtDate(d, "long");
   const months = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
   return toBengaliDigits(d.getDate()) + " " + months[d.getMonth()] + ", " + toBengaliDigits(d.getFullYear());
 }
@@ -1183,7 +1249,7 @@ function renderNewsDetail() {
     return;
   }
 
-  const sig = JSON.stringify([n.id, n.title, n.date, n.category, n.content, n.newsImage, newsReportImages(n)]);
+  const sig = JSON.stringify([n.id, n.title, n.date, n.category, n.content, n.newsImage, newsReportImages(n), window.I18N ? I18N.lang : "bn"]);
   if (box.getAttribute("data-sig") !== sig) {
     box.setAttribute("data-sig", sig);
     const reportImgs = newsReportImages(n);
@@ -1492,7 +1558,7 @@ function renderNavOrder() {
   ["siteNavLinks", "siteNavMobile"].forEach(id => {
     const box = document.getElementById(id);
     if (!box) return;
-    const cta = box.querySelector(".siteNavCta, .siteNavCtaMobile");
+    const cta = box.querySelector(".langRowMobile, .siteNavCta, .siteNavCtaMobile"); // links always stay above the language row + CTA
     order.forEach(o => {
       const a = box.querySelector('a[data-nav-route="' + o.key + '"]');
       if (!a) return;
@@ -1708,6 +1774,7 @@ function renderLanding() {
   loadImageWithFallback(document.getElementById("heroBrandLogo"), logoSrc);
   loadImageWithFallback(document.getElementById("footerBrandLogo"), logoSrc);
   loadImageWithFallback(document.getElementById("callingCardBrandLogo"), logoSrc);
+  syncDonorLogos(document);
 
   const joinNames = [1, 2, 3].map(n => landingData["contactName" + n] || "");
   const joinPhones = [1, 2, 3].map(n => landingData["contactPhone" + n] || "");
@@ -1737,7 +1804,7 @@ renderLanding();
     let paused = false;
 
     function tick() {
-      if (paused) return;
+      if (paused || row.classList.contains("isStack")) return; // mobile stack carousel drives itself
       const maxScroll = row.scrollWidth - row.clientWidth;
       if (maxScroll <= 4) return; // nothing to scroll
       if (row.scrollLeft >= maxScroll - 4) {
@@ -2352,7 +2419,7 @@ function computeLast28DaysDonations(dateCounts) {
 let toastTimer = null;
 function showToast(msg) {
   const el = document.getElementById("toast");
-  el.textContent = msg;
+  el.textContent = window.I18N ? I18N.t(msg) : msg;
   el.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
@@ -2436,11 +2503,204 @@ document.addEventListener("click", e => {
     return row;
   }
 
+  /* ---------- হোম সার্চ: ID / নাম / হাসপাতাল দিয়ে খোঁজা + টাইপ করলে সাজেশন ---------- */
+  const SUG_LIMIT = 6;
+  const sugBox = document.createElement("div");
+  sugBox.className = "searchSuggest";
+  sugBox.id = "searchSuggest";
+  sugBox.setAttribute("role", "listbox");
+  sugBox.hidden = true;
+  document.body.appendChild(sugBox);
+  searchInput.setAttribute("autocomplete", "off");
+  searchInput.setAttribute("role", "combobox");
+  searchInput.setAttribute("aria-autocomplete", "list");
+  searchInput.setAttribute("aria-controls", "searchSuggest");
+  searchInput.setAttribute("aria-expanded", "false");
+  let sugList = [], sugActive = -1;
+
+  const lc = s => String(s == null ? "" : s).toLowerCase();
+
+  /* নাম, ID (পুরনো নাম্বারসহ) ও হাসপাতালের নামে মিলিয়ে দেখে; শুরুতে মিললে আগে, তারপর নতুন রক্তদান আগে */
+  function searchRecords(raw) {
+    const q = lc(String(raw || "").trim());
+    if (!q) return [];
+    const out = [];
+    (landingData.donationRecords || []).forEach(r => {
+      if (!r || !(r.name || r.donationNo)) return;
+      const fields = [r.name, r.donationNo, r.hospitalName].concat(r.legacyNos || []).map(lc);
+      let best = 0;
+      fields.forEach(f => {
+        if (!f) return;
+        const i = f.indexOf(q);
+        if (i === -1) return;
+        best = Math.max(best, i === 0 ? 2 : 1);
+      });
+      if (best) out.push({ r: r, sc: best });
+    });
+    out.sort((a, b) => b.sc - a.sc || donationDateCompare(b.r, a.r));
+    return out.map(o => o.r);
+  }
+
+  function appendHighlighted(parent, text, q) {
+    text = String(text || "");
+    const i = q ? lc(text).indexOf(q) : -1;
+    if (i === -1) { parent.appendChild(document.createTextNode(text)); return; }
+    parent.appendChild(document.createTextNode(text.slice(0, i)));
+    const m = document.createElement("mark");
+    m.textContent = text.slice(i, i + q.length);
+    parent.appendChild(m);
+    parent.appendChild(document.createTextNode(text.slice(i + q.length)));
+  }
+
+  function positionSuggest() {
+    if (sugBox.hidden) return;
+    const box = searchInput.closest(".heroSearchBox") || searchInput;
+    const r = box.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    sugBox.style.left = r.left + "px";
+    sugBox.style.width = r.width + "px";
+    sugBox.style.top = (r.bottom + 6) + "px";
+    sugBox.style.maxHeight = Math.max(140, Math.min(360, vh - r.bottom - 16)) + "px";
+  }
+  function hideSuggest() {
+    sugBox.hidden = true;
+    sugActive = -1;
+    searchInput.setAttribute("aria-expanded", "false");
+    searchInput.removeAttribute("aria-activedescendant");
+  }
+  function setSugActive(i) {
+    const items = sugBox.querySelectorAll(".searchSuggestItem");
+    items.forEach((el, idx) => el.classList.toggle("active", idx === i));
+    sugActive = i;
+    if (items[i]) {
+      searchInput.setAttribute("aria-activedescendant", items[i].id);
+      items[i].scrollIntoView({ block: "nearest" });
+    } else searchInput.removeAttribute("aria-activedescendant");
+  }
+
+  function renderSuggest() {
+    const raw = (searchInput.value || "").trim();
+    if (!raw || isSkeletonLoading()) { hideSuggest(); return; }
+    const q = lc(raw);
+    const all = searchRecords(raw);
+    sugList = all.slice(0, SUG_LIMIT);
+    sugBox.innerHTML = "";
+    if (!all.length) {
+      const empty = document.createElement("div");
+      empty.className = "searchSuggestEmpty";
+      empty.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>';
+      const sp = document.createElement("span");
+      sp.textContent = "কোনো রেকর্ড পাওয়া যায়নি";
+      empty.appendChild(sp);
+      sugBox.appendChild(empty);
+    } else {
+      sugList.forEach((r, i) => {
+        const it = document.createElement("button");
+        it.type = "button";
+        it.className = "searchSuggestItem";
+        it.id = "searchSug" + i;
+        it.setAttribute("role", "option");
+        it.setAttribute("data-idx", String(i));
+        const bg = document.createElement("span");
+        bg.className = "searchSuggestBg";
+        bg.textContent = r.bloodGroup || "—";
+        const main = document.createElement("span");
+        main.className = "searchSuggestMain";
+        const nm = document.createElement("span");
+        nm.className = "searchSuggestName";
+        appendHighlighted(nm, r.name || "", q);
+        const meta = document.createElement("span");
+        meta.className = "searchSuggestMeta";
+        const idEl = document.createElement("span");
+        idEl.className = "searchSuggestId";
+        appendHighlighted(idEl, r.donationNo || "", q);
+        meta.appendChild(idEl);
+        if (r.hospitalName) {
+          const dot = document.createElement("span");
+          dot.className = "searchSuggestDot";
+          dot.textContent = "•";
+          const h = document.createElement("span");
+          h.className = "searchSuggestHosp";
+          appendHighlighted(h, r.hospitalName, q);
+          meta.appendChild(dot);
+          meta.appendChild(h);
+        }
+        main.appendChild(nm);
+        main.appendChild(meta);
+        it.appendChild(bg);
+        it.appendChild(main);
+        sugBox.appendChild(it);
+      });
+      if (all.length > SUG_LIMIT) {
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "searchSuggestMore";
+        more.textContent = "মোট " + toBengaliDigits(all.length) + "টি মিলেছে — সবগুলো দেখুন";
+        more.setAttribute("data-more", "1");
+        sugBox.appendChild(more);
+      }
+    }
+    sugBox.hidden = false;
+    searchInput.setAttribute("aria-expanded", "true");
+    sugActive = -1;
+    positionSuggest();
+  }
+
+  /* একাধিক ফলাফল হলে রক্তদান রেকর্ড পেজে ওই খোঁজা অনুযায়ী ফিল্টার করে নিয়ে যায় */
+  function openRecordsFiltered(q) {
+    recordsFilterState.q = q;
+    recordsPageState.page = 1;
+    const ri = document.getElementById("recordsSearchInput");
+    if (ri) ri.value = q;
+    renderRecordsGrid();
+    location.hash = "#donations";
+  }
+
+  function chooseRecord(r) {
+    if (!r) return;
+    hideSuggest();
+    searchInput.value = r.name || r.donationNo || "";
+    searchInput.blur();
+    renderDonationResult(r);
+  }
+
   function performDonationSearch() {
     const q = (searchInput.value || "").trim();
-    if (!q) { showToast("অনুগ্রহ করে ID লিখুন"); return; }
-    renderDonationResult(findRecordByNo(q));
+    if (!q) { showToast("ID, নাম বা হাসপাতালের নাম লিখুন"); return; }
+    hideSuggest();
+    const exact = findRecordByNo(q);
+    if (exact) { renderDonationResult(exact); return; }
+    const list = searchRecords(q);
+    if (!list.length) { renderDonationResult(null); return; }
+    if (list.length === 1) { renderDonationResult(list[0]); return; }
+    openRecordsFiltered(q);
   }
+
+  searchInput.addEventListener("input", renderSuggest);
+  searchInput.addEventListener("focus", renderSuggest);
+  searchInput.addEventListener("keydown", e => {
+    if (sugBox.hidden) return;
+    const n = sugList.length;
+    if (e.key === "ArrowDown" && n) { e.preventDefault(); setSugActive((sugActive + 1) % n); }
+    else if (e.key === "ArrowUp" && n) { e.preventDefault(); setSugActive((sugActive - 1 + n) % n); }
+    else if (e.key === "Escape") { hideSuggest(); }
+    else if (e.key === "Enter" && sugActive >= 0 && sugList[sugActive]) { e.preventDefault(); e.stopImmediatePropagation(); chooseRecord(sugList[sugActive]); }
+  }, true);
+  sugBox.addEventListener("mousedown", e => e.preventDefault()); // ইনপুটের ফোকাস না হারাতে
+  sugBox.addEventListener("click", e => {
+    const more = e.target.closest(".searchSuggestMore");
+    if (more) { const q = (searchInput.value || "").trim(); hideSuggest(); searchInput.blur(); openRecordsFiltered(q); return; }
+    const it = e.target.closest(".searchSuggestItem");
+    if (it) chooseRecord(sugList[parseInt(it.getAttribute("data-idx"), 10)]);
+  });
+  document.addEventListener("pointerdown", e => {
+    if (sugBox.hidden) return;
+    if (sugBox.contains(e.target) || searchInput.contains(e.target) || e.target.closest("#donationSearchBtn")) return;
+    hideSuggest();
+  });
+  window.addEventListener("resize", positionSuggest);
+  window.addEventListener("scroll", positionSuggest, { passive: true });
+  window.addEventListener("hashchange", hideSuggest);
 
   /* Shared renderer — used by manual search AND by auto-opening a card
      when the page is loaded with a ?id=... link (e.g. from a QR scan). */
@@ -2594,7 +2854,7 @@ document.addEventListener("click", e => {
       const hospitalNameStrong = document.createElement("strong");
       hospitalNameStrong.textContent = (found.hospitalName || "").trim();
       hospitalLine.appendChild(hospitalNameStrong);
-      hospitalLine.appendChild(document.createTextNode(" এ।"));
+      hospitalLine.appendChild(document.createTextNode(window.I18N && I18N.lang === "en" ? "." : " এ।"));
       body.appendChild(hospitalLine);
 
       const divider = document.createElement("div");
@@ -2873,10 +3133,11 @@ document.addEventListener("click", e => {
 
     const measure = document.createElement("canvas").getContext("2d");
     const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
-    const hospitalText = "(" + (record.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন " + (record.hospitalName || "").trim() + " এ।";
-    const thanksText = networkName + " এর পক্ষে থেকে অবিরাম ভালোবাসা রইলো।".replace("পক্ষে থেকে", "পক্ষ থেকে");
-    const emojiText = (record.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।";
-    const stampText = "রক্ত দিন • জীবন বাঁচান";
+    const T = (x) => (window.I18N ? I18N.t(x) : x);
+    const hospitalText = T("(" + (record.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন " + (record.hospitalName || "").trim() + " এ।");
+    const thanksText = T(networkName + " এর পক্ষে থেকে অবিরাম ভালোবাসা রইলো।".replace("পক্ষে থেকে", "পক্ষ থেকে"));
+    const emojiText = T((record.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।");
+    const stampText = T("রক্ত দিন • জীবন বাঁচান");
 
     measure.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
     const hospitalLines = wrapCanvasText(measure, hospitalText, contentW);
@@ -2967,7 +3228,7 @@ document.addEventListener("click", e => {
       ctx.fillStyle = "rgba(255,255,255,0.9)";
       ctx.font = "600 15.5px 'Noto Sans Bengali','Inter',sans-serif";
       ctx.textAlign = "center";
-      const msg = record.hidePhoto ? "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়" : "";
+      const msg = record.hidePhoto ? (window.I18N ? I18N.t("ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়") : "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়") : "";
       if (msg) ctx.fillText(msg, CARD_W / 2, HEAD_H / 2 + 30);
       ctx.textAlign = "left";
     }
@@ -2996,8 +3257,6 @@ document.addEventListener("click", e => {
     ctx.save();
     ctx.beginPath();
     ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
-    ctx.fill();
     ctx.clip();
     if (watermarkImg) {
       const ir2 = watermarkImg.width / watermarkImg.height || 1;
@@ -3006,11 +3265,6 @@ document.addEventListener("click", e => {
       ctx.drawImage(watermarkImg, logoCx - ldw / 2, logoCy - ldh / 2, ldw, ldh);
     }
     ctx.restore();
-    ctx.beginPath();
-    ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba(255,255,255,0.9)";
-    ctx.stroke();
 
     // verified droplet badge, bottom-right of head band
     const vbx = CARD_W - 14 - 13, vby = HEAD_H - 10 - 13;
@@ -3034,7 +3288,7 @@ document.addEventListener("click", e => {
     if (serialNoCv > 0) {
       ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
       ctx.fillStyle = "#9E1B32";
-      ctx.fillText(toBengaliDigits(serialNoCv) + " নাম্বার ডোনার", PAD, y);
+      ctx.fillText(window.I18N ? I18N.t(toBengaliDigits(serialNoCv) + " নাম্বার ডোনার") : toBengaliDigits(serialNoCv) + " নাম্বার ডোনার", PAD, y);
       y += 28;
     } else {
       y += 8;
@@ -3065,12 +3319,12 @@ document.addEventListener("click", e => {
     ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
     ctx.fillStyle = "#7A4A18";
     drawTeardrop(ctx, PAD + 5, y - 5, 5, "#B9722E");
-    ctx.fillText(ordinalShortBn(record.visitCount || 1) + " বারের মতো", PAD + 16, y);
+    ctx.fillText(window.I18N ? I18N.t(ordinalShortBn(record.visitCount || 1) + " বারের মতো") : ordinalShortBn(record.visitCount || 1) + " বারের মতো", PAD + 16, y);
     y += 26;
     if (record.date) {
       ctx.font = "600 12px 'Noto Sans Bengali','Inter',sans-serif";
       ctx.fillStyle = "#6B5B53";
-      ctx.fillText("সর্বশেষ রক্তদান: " + (recordDateBn(record.date) || record.date), PAD, y - 4);
+      ctx.fillText(window.I18N ? I18N.t("সর্বশেষ রক্তদান: " + (recordDateBn(record.date) || record.date)) : "সর্বশেষ রক্তদান: " + (recordDateBn(record.date) || record.date), PAD, y - 4);
       y += 22;
     }
 
@@ -3473,3 +3727,191 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
       .catch(err => console.log("Service worker registration failed:", err));
   });
 }
+
+/* ============================================================
+   LANGUAGE CHANGE (বাংলা / English)
+   i18n.js swaps all static + rendered text. Views that format
+   dates / sentences from raw data are simply re-rendered so they
+   pick up the new language straight away.
+   ============================================================ */
+document.addEventListener("bnb:langchange", function () {
+  [
+    typeof renderRecordsGrid === "function" && renderRecordsGrid,
+    typeof renderNewsSection === "function" && renderNewsSection,
+    typeof renderNewsDetail === "function" && renderNewsDetail,
+    window.refreshOpenDonationCard
+  ].forEach(function (fn) {
+    if (!fn) return;
+    try { fn(); } catch (e) { /* a view that isn't mounted yet is fine */ }
+  });
+});
+
+
+/* ============================================================
+   MOBILE ONLY — "সাম্প্রতিক রক্তদান" messy photo-deck carousel (≤640px)
+   প্রতিটি ছবির নিজস্ব স্থির (একটু এলোমেলো) পজিশন/কোণ থাকে। শুধু উপরের
+   ছবিটি পুরো স্ক্রিনের বাইরে উড়ে যায়, তারপর একই অ্যানিমেশনে সবার নিচে
+   ঢুকে যায়। নিচের ছবিগুলো একটুও নড়ে না। ডেস্কটপে কিছুই বদলায় না।
+   ============================================================ */
+(function initDonationStack() {
+  const grid = document.getElementById("donationGrid");
+  if (!grid || !window.matchMedia) return;
+  const mq = window.matchMedia("(max-width: 640px)");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const AUTO_MS = 5000;     // time between automatic slides
+  const OUT_MS = 800;       // top photo flies off screen
+  const BACK_MS = 900;      // …then slides back in underneath the pile
+  // fixed pose per photo: [x%, y%, rotation°] — deliberately a bit messy
+  const POSES = [
+    [0, 0, -1], [-4, -3, -5], [4, -2, 4], [-4, 3, -7], [4, 4, 6],
+    [-2, -4, 3], [3, 4, -4], [-5, 0, 6], [5, 2, -6], [0, -4, -3]
+  ];
+  let order = [];           // photo indexes, top of the deck first
+  let busy = false, nextSide = 1, timer = null, paused = false, dots = null;
+  let onScreen = false, entered = false, io = null;
+
+  const getItems = () => Array.from(grid.querySelectorAll(":scope > .donationItem"));
+
+  function ensureDots() {
+    if (dots) return dots;
+    dots = document.createElement("div");
+    dots.className = "donationDots";
+    grid.insertAdjacentElement("afterend", dots);
+    dots.addEventListener("click", e => {
+      const b = e.target.closest("button[data-i]");
+      if (b) go(nextSide, true, parseInt(b.getAttribute("data-i"), 10));
+    });
+    return dots;
+  }
+
+  function applyPoses(items) {
+    items.forEach((el, i) => {
+      const p = POSES[i % POSES.length];
+      el.style.setProperty("--tx", p[0] + "%");
+      el.style.setProperty("--ty", p[1] + "%");
+      el.style.setProperty("--rot", p[2] + "deg");
+    });
+  }
+
+  function layout() {
+    const items = getItems(), n = items.length;
+    if (!n) return;
+    items.forEach((el, i) => {
+      const rank = order.indexOf(i);
+      el.style.setProperty("--z", String(n - rank));
+      el.classList.toggle("isTop", rank === 0);
+    });
+    if (dots) dots.querySelectorAll("button").forEach((b, i) => b.classList.toggle("act", i === order[0]));
+  }
+
+  /* 1) top photo flies completely off screen (left or right)
+     2) it is moved to the bottom of the deck and slides back in under the
+        pile. Photos below keep their poses — only z-order changes. */
+  function go(side, user, target) {
+    const items = getItems(), n = items.length;
+    if (n < 2 || busy) return;
+    const topIdx = order[0];
+    if (target === topIdx) return;
+    const goal = (target == null) ? order[1] : target;
+    busy = true;
+    const el = items[topIdx];
+    el.setAttribute("data-out", side > 0 ? "r" : "l");
+    nextSide = -side;                          // alternate sides next time
+    setTimeout(() => {
+      // top photo -> bottom; if a dot was tapped, bring that photo to the top
+      order.push(order.shift());
+      while (order[0] !== goal) order.push(order.shift());
+      // keep the old top photo at the very bottom
+      order.splice(order.indexOf(topIdx), 1); order.push(topIdx);
+      el.removeAttribute("data-out");
+      layout();
+      setTimeout(() => { busy = false; }, BACK_MS);
+    }, OUT_MS);
+    if (user) restart();
+  }
+
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function restart() {
+    stop();
+    if (reduceMotion.matches || !mq.matches || getItems().length < 2) return;
+    timer = setInterval(() => { if (!paused && onScreen && !document.hidden) go(nextSide); }, AUTO_MS);
+  }
+
+  function enable() {
+    const items = getItems();
+    if (!items.length) return disable();
+    grid.classList.add("isStack");
+    applyPoses(items);
+    order = items.map((_, i) => i);
+    busy = false;
+    const d = ensureDots();
+    d.innerHTML = items.map((_, i) => '<button type="button" data-i="' + i + '" aria-label="' + (i + 1) + '"></button>').join("");
+    d.classList.toggle("on", items.length > 1);
+    layout();
+    restart();
+    watchScreen();
+  }
+
+  /* Smooth scroll-in: when the section scrolls into view the photos glide from
+     one neat stack into their poses (staggered). Auto-slide only runs on screen. */
+  function reveal() {
+    if (entered) { grid.classList.add("inView"); return; }
+    entered = true;
+    getItems().forEach((el, i) => { el.style.transitionDelay = (order.indexOf(i) * 70) + "ms"; });
+    requestAnimationFrame(() => grid.classList.add("inView"));
+    setTimeout(() => getItems().forEach(el => { el.style.transitionDelay = ""; }), 1800);
+  }
+
+  function watchScreen() {
+    if (io) return;
+    if (!("IntersectionObserver" in window)) { onScreen = true; reveal(); return; }
+    io = new IntersectionObserver(es => {
+      es.forEach(en => {
+        onScreen = en.isIntersecting;
+        if (onScreen) reveal();
+      });
+    }, { threshold: 0.3 });
+    io.observe(grid);
+  }
+
+  function disable() {
+    stop();
+    grid.classList.remove("isStack", "inView");
+    getItems().forEach(el => {
+      el.removeAttribute("data-out"); el.classList.remove("isTop");
+      ["--tx", "--ty", "--rot", "--z"].forEach(v => el.style.removeProperty(v));
+    });
+    if (dots) { dots.classList.remove("on"); dots.innerHTML = ""; }
+  }
+
+  function sync() { mq.matches ? enable() : disable(); }
+
+  // swipe the top photo left/right (it flies off that way); tap a peeking photo = next
+  let sx = 0, sy = 0, tracking = false, moved = false;
+  grid.addEventListener("pointerdown", e => {
+    if (!grid.classList.contains("isStack")) return;
+    tracking = true; moved = false; paused = true; sx = e.clientX; sy = e.clientY;
+  });
+  grid.addEventListener("pointermove", e => {
+    if (tracking && Math.abs(e.clientX - sx) > 8) moved = true;
+  });
+  grid.addEventListener("pointerup", e => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) {
+      go(dx < 0 ? -1 : 1, true);
+    } else if (!moved && !(e.target.closest && e.target.closest("button"))) {
+      go(nextSide, true);
+    }
+    setTimeout(() => { paused = false; }, 2500);
+  });
+  grid.addEventListener("pointercancel", () => { tracking = false; paused = false; });
+
+  // Items are re-rendered by renderDonationGallery() — re-apply when they change.
+  if ("MutationObserver" in window) {
+    new MutationObserver(() => { if (mq.matches) enable(); }).observe(grid, { childList: true });
+  }
+  (mq.addEventListener ? mq.addEventListener("change", sync) : mq.addListener(sync));
+  sync();
+})();

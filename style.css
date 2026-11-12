@@ -147,7 +147,7 @@
     font-weight: 600; font-size: 15.5px; color: var(--ink); flex-shrink: 0; min-width: 0;
   }
   .siteNavBrand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .siteNavLogo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--crimson); flex-shrink: 0; }
+  .siteNavLogo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 0; flex-shrink: 0; }
 
   /* ---- route-page brand: swaps in for the logo+site-name brand while an
      inner page (কীভাবে কাজ করে / সফলতার গল্প / রক্তের গ্রুপ চার্ট / রক্তদান
@@ -212,7 +212,7 @@
     border-top: 1px solid var(--line); max-height: 0; overflow: hidden; opacity: 0;
     transition: max-height .32s var(--ease), opacity .25s var(--ease), padding .32s var(--ease);
   }
-  .siteNav.navOpen .siteNavMobile { max-height: 420px; opacity: 1; padding: 10px 16px 18px; }
+  .siteNav.navOpen .siteNavMobile { max-height: 520px; opacity: 1; padding: 10px 16px 18px; }
   .siteNavMobile a {
     display: flex; align-items: center; gap: 11px; font-family: var(--font-bn); font-size: 14px;
     font-weight: 600; color: var(--ink); padding: 12px 12px; border-radius: 10px;
@@ -334,7 +334,7 @@
     max-width: 1120px; margin: 0 auto; padding: 18px 22px 0;
   }
   .heroBrand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 16px; }
-  .heroBrandLogo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--crimson); }
+  .heroBrandLogo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 0; }
   .heroNavLinks { display: flex; align-items: center; gap: 10px; }
   .adminTinyBtn {
     width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line);
@@ -555,8 +555,8 @@
   }
   .donationResultLogo {
     width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 4px 14px rgba(0,0,0,0.28);
-    background: #fff;
+    border: 0; box-shadow: none;
+    background: transparent;
   }
   /* Fallback mark shown inside the band only when there's no photo (hidden/missing) */
   .donationResultAvatarFallback {
@@ -970,6 +970,61 @@
   @media (max-width: 640px) {
     .donationGrid { --rowH: 123px; }
     .donationEmptyState { grid-column: span 2; }
+  }
+
+  /* ------------------------------------------------------------
+     MOBILE ONLY — messy "deck of photos" carousel for "সাম্প্রতিক রক্তদান"
+     Every photo keeps its own fixed, slightly random pose (set by JS as
+     --tx/--ty/--rot). Only the top photo ever moves: it flies completely
+     off screen, then slides back in underneath the whole pile. The photos
+     below never shift. Desktop keeps the original bento scroller above.
+     ------------------------------------------------------------ */
+  .donationDots { display: none; }
+  @media (max-width: 640px) {
+    .donationGrid.isStack {
+      --cw: min(66vw, 300px);
+      display: block; position: relative; height: calc(var(--cw) + 92px);
+      margin: 4px -10px 0; padding: 0; overflow: hidden;
+      touch-action: pan-y; user-select: none; -webkit-user-select: none; contain: layout paint;
+      overscroll-behavior-y: auto;
+    }
+    .donationGrid.isStack .donationItem,
+    .donationGrid.isStack .donationItem:nth-of-type(n),
+    .donationGrid.isStack .donationItem:hover {
+      position: absolute; top: 46px; left: 50%;
+      width: var(--cw); height: var(--cw); margin-left: calc(var(--cw) / -2);
+      grid-row: auto; grid-column: auto; scroll-snap-align: none;
+      border: 0; border-radius: 20px; cursor: grab;
+      transform: translate(var(--tx, 0%), var(--ty, 0%)) rotate(var(--rot, 0deg));
+      z-index: var(--z, 1); opacity: 1; pointer-events: none; will-change: transform;
+      box-shadow: 0 6px 14px rgba(33,22,19,0.20);
+      transition: transform .9s cubic-bezier(.4,.05,.2,1), box-shadow .5s ease;
+    }
+    /* before the section is scrolled into view the photos wait as one neat stack */
+    .donationGrid.isStack:not(.inView) .donationItem,
+    .donationGrid.isStack:not(.inView) .donationItem:nth-of-type(n) {
+      transform: translate(0, 10%) rotate(0deg) scale(.92); opacity: 0;
+    }
+    .donationGrid.isStack.inView .donationItem { transition-property: transform, box-shadow, opacity; }
+    .donationGrid.isStack .donationItem.isTop { pointer-events: auto; box-shadow: 0 16px 34px rgba(33,22,19,0.32); }
+    /* top photo leaves the screen completely, staying above the pile */
+    .donationGrid.isStack .donationItem[data-out="l"] { transform: translate(-170%, -4%) rotate(-26deg); z-index: 99; }
+    .donationGrid.isStack .donationItem[data-out="r"] { transform: translate(170%, -4%) rotate(26deg); z-index: 99; }
+    .donationGrid.isStack .donationItem[data-out] { transition-duration: .8s; transition-timing-function: cubic-bezier(.5,0,.75,.4); }
+    .donationGrid.isStack .donationImg { pointer-events: none; -webkit-user-drag: none; }
+
+    .donationDots.on {
+      display: flex; justify-content: center; align-items: center; gap: 6px; margin: 4px 0 4px;
+    }
+    .donationDots button {
+      width: 7px; height: 7px; padding: 0; border: 0; border-radius: 999px;
+      background: var(--line); cursor: pointer;
+      transition: width .3s var(--ease), background .3s var(--ease);
+    }
+    .donationDots button.act { width: 22px; background: var(--crimson); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .donationGrid.isStack .donationItem { transition: none; }
   }
 
   /* ============================================================
@@ -1788,7 +1843,7 @@
     display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 34px;
   }
   .footerBrand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 17px; font-weight: 600; margin-bottom: 12px; }
-  .footerBrandLogo { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--crimson); object-fit: cover; }
+  .footerBrandLogo { width: 32px; height: 32px; border-radius: 50%; border: 0; object-fit: cover; }
   .footerTagline { font-size: 13.5px; color: #B6A9A2; line-height: 1.7; max-width: 280px; }
   .footerColTitle { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #B6A9A2; margin-bottom: 14px; }
   .footerRow { font-size: 13.5px; color: #E7DCD4; margin-bottom: 9px; line-height: 1.6; }
@@ -2543,30 +2598,6 @@ a.sponsorCard:hover, .sponsorCard:hover { transform: translateY(-5px); box-shado
 @media (max-width: 640px) { .tmCard { flex: 0 0 78%; max-width: 300px; } }
 
 
-/* ==========================================================================
-   MOBILE TEAM — এক স্ক্রিনে ৩ জন (ছোট কার্ড) + ট্যাপে বটম-শিট
-   ========================================================================== */
-@media (max-width: 640px) {
-  #teamRow {
-    display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
-    overflow: visible !important; scroll-snap-type: none !important; padding: 0 12px !important; margin: 0 !important;
-  }
-  #teamRow .tmCard { flex: none; width: auto; max-width: none; min-width: 0; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(33,22,19,0.12); }
-  #teamRow .tmCard:hover { transform: none; }
-  #teamRow .tmPhoto { aspect-ratio: 3 / 4.2; }
-  #teamRow .tmShade { height: 70%; }
-  #teamRow .tmOverlay { padding: 0 7px 8px; gap: 3px; align-items: stretch; }
-  #teamRow .tmRole { font-size: 8.5px; padding: 2px 6px; align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(158,27,50,0.95); }
-  #teamRow .tmName { font-size: 11.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  #teamRow .tmBio { display: none; }
-  #teamRow .tmContact { gap: 4px; margin-top: 3px; flex-wrap: nowrap; }
-  #teamRow .tmPhone, #teamRow .tmFb { width: 24px; height: 24px; padding: 0; justify-content: center; font-size: 10px; flex: 0 0 auto; }
-  #teamRow .tmPhone span { display: none; }
-  #teamRow .tmPhone i { font-size: 10px; }
-  #teamRow .tmPlaceholder i { font-size: 34px; }
-  #teamRow .tmCardSkel .tmPhoto { aspect-ratio: 3 / 4.2; }
-  .teamSubtitle { margin: -8px auto 18px; padding: 0 16px; font-size: 13px; }
-}
 .tsLock { overflow: hidden; }
 .teamSheet { position: fixed; inset: 0; z-index: 1200; display: none; }
 .teamSheet.open { display: block; }
@@ -2830,3 +2861,226 @@ a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 8px 22px rg
   .spCard .sponsorLogoWrap { width: 64px; height: 64px; flex-basis: 64px; margin-bottom: 12px; }
   .spCard .spName { font-size: 15px; }
 }
+
+
+/* ==========================================================================
+   TEAM v3 — প্রফেশনাল কার্ড: উপরে ছবি, নিচে নাম ও পদবি (বামে সাজানো)
+   মোবাইলে এক স্ক্রিনে ২টি কার্ড, বাকিগুলো ডানে স্ক্রল করে দেখতে হয়
+   ========================================================================== */
+.teamRow {
+  display: flex; flex-wrap: wrap; justify-content: center; justify-content: safe center;
+  gap: 22px; text-align: left; padding: 4px 0 8px;
+}
+.tcCard {
+  position: relative; flex: 0 0 250px; display: flex; flex-direction: column; text-align: left;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease);
+}
+.tcCard:hover { transform: translateY(-5px); box-shadow: 0 18px 34px rgba(33,22,19,0.13); border-color: var(--crimson-tint); }
+.tcPhoto {
+  position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; flex: 0 0 auto;
+  background: linear-gradient(150deg, var(--crimson-tint) 0%, var(--cream) 60%, var(--sage-tint) 100%);
+}
+.tcImg {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;
+  transition: transform .5s var(--ease), opacity .35s var(--ease);
+}
+.tcCard:hover .tcImg { transform: scale(1.05); }
+.tcPhoto.placeholderMode .tcImg { display: none; }
+.loadingImg .tcImg { opacity: 0; }
+.tcPlaceholder { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+.tcPlaceholder i { font-size: 64px; color: var(--crimson); opacity: .3; }
+.tcPhoto.placeholderMode .tcPlaceholder, .imgLoadFailed .tcPlaceholder { display: flex; }
+
+.tcBody { padding: 14px 16px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1; }
+.tcName {
+  margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.tcRole {
+  display: block; width: fit-content; max-width: 100%; overflow: hidden; white-space: nowrap;
+  font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--crimson);
+  background: var(--crimson-tint); border-radius: 999px;
+}
+.tcRoleText { display: inline-block; padding: 3px 11px; }
+.tcRole.marquee {
+  width: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+}
+.tcRoleTrack {
+  display: inline-flex; width: max-content; padding-left: 11px;
+  animation: tcRoleScroll var(--dur, 10s) linear infinite; will-change: transform;
+}
+.tcRoleTrack > span { display: inline-block; padding: 3px 0; margin-right: 28px; white-space: nowrap; }
+.tcCard:hover .tcRoleTrack { animation-play-state: paused; }
+@keyframes tcRoleScroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--shift, 100px))); } }
+@media (prefers-reduced-motion: reduce) {
+  .tcRole.marquee { -webkit-mask-image: none; mask-image: none; text-overflow: ellipsis; }
+  .tcRoleTrack { animation: none; }
+}
+.tcBio {
+  margin: 4px 0 0; font-size: 13px; line-height: 1.65; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tcContact { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
+.tcLink {
+  width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12.5px; color: var(--crimson); background: var(--cream); border: 1.5px solid var(--line);
+  transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+}
+.tcLink:hover { background: var(--crimson); border-color: var(--crimson); color: #fff; transform: translateY(-2px); }
+.tcLinkFb { color: #1877F2; }
+.tcLinkFb:hover { background: #1877F2; border-color: #1877F2; }
+.tcCardSkel { pointer-events: none; }
+
+/* ---- মোবাইল: এক স্ক্রিনে ঠিক ২টি কার্ড (আগের চেয়ে বড়), বাকিগুলো ডানে স্ক্রল ---- */
+@media (max-width: 640px) {
+  .teamRow {
+    --tcGap: 12px; --tcPad: 14px;
+    flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--tcPad);
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+    gap: var(--tcGap); padding: 4px var(--tcPad) 14px; margin: 0;
+    scrollbar-width: none;
+  }
+  .teamRow::-webkit-scrollbar { display: none; }
+  .tcCard {
+    flex: 0 0 calc((100% - var(--tcPad) * 2 - var(--tcGap)) / 2);
+    width: calc((100% - var(--tcPad) * 2 - var(--tcGap)) / 2);
+    max-width: none; min-width: 0; scroll-snap-align: start; border-radius: 16px; cursor: pointer;
+  }
+  .tcCard:hover { transform: none; box-shadow: var(--shadow); }
+  .tcCard:hover .tcImg { transform: none; }
+  .tcPhoto { aspect-ratio: 4 / 5; }
+  .tcBody { padding: 11px 12px 13px; gap: 5px; }
+  .tcName { font-size: 15px; }
+  .tcRole { font-size: 11.5px; }
+  .tcRoleText { padding: 2px 9px; }
+  .tcRoleTrack { padding-left: 9px; }
+  .tcRoleTrack > span { padding: 2px 0; margin-right: 24px; }
+  .tcBio, .tcContact { display: none; }
+  .tcPlaceholder i { font-size: 48px; }
+  .teamSubtitle { margin: -8px auto 18px; padding: 0 16px; font-size: 13px; }
+}
+
+
+/* ==========================================================================
+   হোম সার্চ সাজেশন (ID / নাম / হাসপাতাল) — fixed ড্রপডাউন, হিরো সেকশনের overflow-তে কাটা পড়ে না
+   ========================================================================== */
+.searchSuggest {
+  position: fixed; z-index: 260; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 6px;
+  box-shadow: 0 18px 40px rgba(33,22,19,0.18); text-align: left;
+  animation: searchSugIn .18s var(--ease);
+}
+.searchSuggest[hidden] { display: none; }
+@keyframes searchSugIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.searchSuggestItem {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: 0; border-radius: 11px;
+  background: transparent; cursor: pointer; text-align: left; font-family: var(--font-bn); color: var(--ink);
+  transition: background .15s var(--ease);
+}
+.searchSuggestItem:hover, .searchSuggestItem.active { background: var(--crimson-tint); }
+.searchSuggestBg {
+  flex: 0 0 auto; min-width: 42px; text-align: center; padding: 6px 8px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 800; color: #fff; background: var(--crimson);
+}
+.searchSuggestMain { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.searchSuggestName { font-size: 14.5px; font-weight: 700; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.searchSuggestMeta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
+.searchSuggestId { font-family: var(--font-mono); font-weight: 600; flex: 0 0 auto; }
+.searchSuggestDot { opacity: .6; flex: 0 0 auto; }
+.searchSuggestHosp { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.searchSuggest mark { background: rgba(185,114,46,0.25); color: inherit; border-radius: 3px; padding: 0 1px; }
+.searchSuggestMore {
+  display: block; width: 100%; margin-top: 4px; padding: 10px; border: 0; border-top: 1px dashed var(--line);
+  border-radius: 0 0 10px 10px; background: transparent; cursor: pointer;
+  font-family: var(--font-bn); font-size: 13px; font-weight: 700; color: var(--crimson);
+}
+.searchSuggestMore:hover { background: var(--crimson-tint); }
+.searchSuggestEmpty {
+  display: flex; align-items: center; justify-content: center; gap: 9px; padding: 18px 12px;
+  font-family: var(--font-bn); font-size: 13.5px; color: var(--muted);
+}
+.searchSuggestEmpty i { color: var(--crimson); opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .searchSuggest { animation: none; } }
+
+
+  /* ============================================================
+     LANGUAGE SWITCH (বাংলা / English)
+     ============================================================ */
+  .siteNavLinks { margin-left: auto; }
+  .langSwitch {
+    display: inline-flex; align-items: center; gap: 0; flex-shrink: 0; margin-left: 6px;
+    padding: 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper);
+  }
+  .langBtn {
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    min-width: 30px; height: 24px; padding: 0 8px; border-radius: 999px;
+    font-family: var(--font-bn); font-size: 11.5px; font-weight: 700; line-height: 1;
+    color: var(--muted); -webkit-tap-highlight-color: transparent;
+    transition: background .2s var(--ease), color .2s var(--ease);
+  }
+  .langBtn[data-lang="en"] { font-family: var(--font-body); letter-spacing: .04em; }
+  .langBtn:hover { color: var(--crimson-dark); }
+  .langBtn.active, .langBtn[aria-pressed="true"] { background: var(--crimson); color: #fff; }
+  .langBtn:focus-visible { outline: 2px solid var(--crimson); outline-offset: 1px; }
+  .langRowMobile { display: none; }
+  @media (max-width: 760px) {
+    .siteNavBrand { flex-shrink: 1; }
+    .siteNavInner { gap: 8px; }
+    /* language button lives inside the 3-line menu on mobile */
+    .siteNavInner > .langSwitch { display: none; }
+    .siteNavToggle { margin-left: auto; }
+    .langRowMobile {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px 12px; margin-top: 4px; border-top: 1px solid var(--line);
+    }
+    .langRowMobile .langLabel {
+      display: inline-flex; align-items: center; gap: 11px;
+      font-family: var(--font-bn); font-size: 14px; font-weight: 600; color: var(--ink);
+    }
+    .langRowMobile .langLabel i { color: var(--crimson); width: 16px; text-align: center; font-size: 13px; }
+    .langRowMobile .langSwitch { margin-left: 0; }
+    .langRowMobile .langBtn { min-width: 40px; height: 30px; font-size: 12.5px; }
+  }
+  @media (max-width: 380px) {
+    .siteNavBrand span { max-width: 112px; }
+  }
+
+  /* English mode: Latin typography, tighter nav (English labels are longer) */
+  html[data-lang="en"] {
+    --font-bn: 'Inter', Arial, Helvetica, 'Noto Sans Bengali', sans-serif;
+  }
+  html[data-lang="en"] body { line-height: 1.55; }
+  html[data-lang="en"] .statLabelBn { display: none; }          /* English label already shown below */
+  html[data-lang="en"] .statLabelEn {
+    font-family: var(--font-body); font-size: 12.5px; letter-spacing: .06em; color: var(--ink); font-weight: 600; margin-top: 6px;
+  }
+  @media (min-width: 761px) and (max-width: 1100px) {
+    html[data-lang="en"] .siteNavLinks a { padding: 9px 9px; font-size: 12.5px; gap: 5px; }
+    html[data-lang="en"] .siteNavLinks a i { display: none; }
+    html[data-lang="en"] .siteNavLinks a.siteNavCta { margin-left: 4px; }
+  }
+
+
+/* ---- website logo, top-left corner of every donor photo (no border) ---- */
+.donorPhotoLogo {
+  position: absolute; top: 8px; left: 8px; width: 28px; height: 28px;
+  border-radius: 50%; object-fit: cover; border: 0; z-index: 4;
+  pointer-events: none; -webkit-user-drag: none; user-select: none;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+}
+.donorPhotoLogo:not([src]) { display: none; }
+.imgLoadFailed > .donorPhotoLogo, .placeholderMode > .donorPhotoLogo { display: none; }
+.galleryAllItem .donorPhotoLogo { width: 26px; height: 26px; top: 7px; left: 7px; }
+/* record card: ID pill moves right of the logo so both fit in the top-left */
+.recordCardPhotoWrap .donorPhotoLogo { width: 26px; height: 26px; top: 8px; left: 8px; }
+.recordCardPhotoWrap .donorPhotoLogo ~ .recordCardNo, .recordCardPhotoWrap:has(.donorPhotoLogo) .recordCardNo { left: 40px; top: 11px; }
+/* hero donor: circle photo — logo sits on the top-left of the circle */
+.heroDonorPhotoWrap { overflow: visible; }
+.heroDonorPhotoWrap .imgSkeleton, .heroDonorPhotoWrap .heroDonorPhoto { border-radius: 50%; }
+.heroDonorPhotoWrap .donorPhotoLogo { width: 24px; height: 24px; top: -5px; left: -5px; }
