@@ -1,38 +1,31 @@
 /* ============================================================
-   Blood Network Baraikhali — Service Worker
-   ------------------------------------------------------------
-   Strategy:
-   - "App shell" (this site's own HTML/CSS/JS/icon + the Google
-     Fonts + Font Awesome + Firebase SDK scripts it always loads)
-     is cached so the page can open instantly and work offline.
-   - Firebase Realtime Database traffic itself is NOT cached here
-     (it uses its own websocket/long-poll connection, and the app
-     already keeps a localStorage cache + falls back gracefully
-     when offline — see readCache()/writeCache() in app.js).
-   - Cache-first for the app shell (fast repeat loads), falling
-     back to the network, and refreshing the cache in the
-     background (stale-while-revalidate) so updates still reach
-     returning visitors quickly.
-
-   BUMP THIS VERSION whenever index.html/app.js/style.css change,
-   so old caches are dropped and the new files are fetched. ------ */
-const CACHE_VERSION = "bnb-v2";
+   Blood Network Baraikhali — Service Worker  (v3)
+   - Own files (HTML/JS/CSS/manifest): NETWORK-FIRST, fall back to cache when offline.
+     => after you upload a new version, visitors get it on the very next load
+        (the old cache-first logic kept serving stale app.js).
+   - Fonts / Font Awesome / Firebase SDK (CDN, versioned URLs): cache-first.
+   - Firebase database traffic, non-GET requests, other origins: never touched.
+   BUMP CACHE_VERSION when you change files, so old caches are dropped.
+   ============================================================ */
+const CACHE_VERSION = "bnb-v3";
 const CACHE_NAME = "bnb-shell-" + CACHE_VERSION;
 
 const APP_SHELL = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./app.js",
-  "./manifest.json",
-  "./fav.jpeg"
+  "./", "./index.html", "./style.css", "./app.js", "./i18n.js", "./early.js",
+  "./install-bar.js", "./manifest.json", "./fav.jpeg", "./icon-192.png"
+];
+
+/* Only these CDN hosts are cached (all are pinned/versioned URLs or immutable font files). */
+const CDN_HOSTS = [
+  "fonts.googleapis.com", "fonts.gstatic.com", "cdnjs.cloudflare.com", "www.gstatic.com"
 ];
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_SHELL))
-      .catch(err => console.log("SW install cache failed:", err))
+    caches.open(CACHE_NAME).then(cache =>
+      // one missing file (e.g. an icon) must not abort the whole install
+      Promise.all(APP_SHELL.map(url => cache.add(url).catch(err => console.log("SW skip:", url, err))))
+    )
   );
   self.skipWaiting();
 });
@@ -40,48 +33,42 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key.startsWith("bnb-shell-") && key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    )
+      Promise.all(keys.filter(k => k.startsWith("bnb-shell-") && k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-/* Requests we never want to cache/intercept — Firebase's own
-   read/write traffic, and anything that isn't a simple GET. */
-function shouldBypass(request, url) {
-  if (request.method !== "GET") return true;
-  if (url.hostname.indexOf("firebasedatabase.app") !== -1) return true;
-  if (url.hostname.indexOf("firebaseio.com") !== -1) return true;
-  if (url.hostname === "www.googleapis.com") return true;
-  return false;
+function putInCache(request, response) {
+  if (response && response.ok && response.type !== "opaque") {
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then(cache => cache.put(request, copy)).catch(() => {});
+  }
+  return response;
 }
 
 self.addEventListener("fetch", event => {
   const request = event.request;
+  if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  if (shouldBypass(request, url)) return; // let the browser handle it normally
+  const sameOrigin = url.origin === self.location.origin;
+  const cdn = CDN_HOSTS.indexOf(url.hostname) !== -1;
+  if (!sameOrigin && !cdn) return;   // Firebase DB, Drive images, QR service ... go straight to the network
 
+  if (sameOrigin) {
+    // network-first; offline -> cached copy; offline page navigation (even with ?id=...) -> cached index.html
+    event.respondWith(
+      fetch(request).then(res => putInCache(request, res)).catch(() =>
+        caches.match(request, { ignoreSearch: request.mode === "navigate" }).then(hit =>
+          hit || (request.mode === "navigate" ? caches.match("./index.html") : null) || Response.error()
+        )
+      )
+    );
+    return;
+  }
+
+  // CDN: cache-first
   event.respondWith(
-    caches.match(request).then(cached => {
-      const networkFetch = fetch(request)
-        .then(response => {
-          // Only cache good, basic/opaque responses (skip errors/redirects noise)
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached); // offline: fall back to whatever we cached
-
-      // Cache-first: serve instantly if we have it, refresh in background.
-      // Nothing cached yet: wait on the network.
-      return cached || networkFetch;
-    })
+    caches.match(request).then(hit => hit || fetch(request).then(res => putInCache(request, res)))
   );
 });

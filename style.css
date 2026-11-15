@@ -3084,3 +3084,62 @@ a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 8px 22px rg
 .heroDonorPhotoWrap { overflow: visible; }
 .heroDonorPhotoWrap .imgSkeleton, .heroDonorPhotoWrap .heroDonorPhoto { border-radius: 50%; }
 .heroDonorPhotoWrap .donorPhotoLogo { width: 24px; height: 24px; top: -5px; left: -5px; }
+
+
+/* ==========================================================================
+   TEAM v4 — ১:১ ছবি, ছবির বাম-নিচে নাম + যাচাইকৃত ব্যাজ,
+   ছবির নিচে পদবি ও তার নিচে সাব-পদবি (প্রফেশনাল ফন্ট)
+   ========================================================================== */
+.tcCard { border-radius: 16px; font-family: 'Inter', 'Noto Sans Bengali', Arial, sans-serif; }
+.tcPhoto, .tcCard .tcPhoto { aspect-ratio: 1 / 1; }
+.tcPhoto::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; z-index: 2; pointer-events: none;
+  background: linear-gradient(to top, rgba(18,12,10,.82) 0%, rgba(18,12,10,.45) 45%, rgba(18,12,10,0) 100%);
+}
+.tcNameBar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: flex-end; justify-content: flex-start; gap: 6px;
+  padding: 12px 14px; text-align: left;
+}
+.tcNameBar .tcName {
+  margin: 0; min-width: 0; font-family: 'Inter', 'Noto Sans Bengali', Arial, sans-serif;
+  font-size: 16.5px; font-weight: 700; line-height: 1.3; letter-spacing: 0; color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,.35);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+.tcVerified {
+  flex: 0 0 auto; font-size: 15px; line-height: 1; margin-bottom: 3px; color: #1D9BF0;
+  background: radial-gradient(circle at center, #fff 52%, transparent 54%); border-radius: 50%;
+}
+.tcSrOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tcPhoto.placeholderMode::after, .imgLoadFailed::after { background: linear-gradient(to top, rgba(18,12,10,.55) 0%, rgba(18,12,10,0) 100%); }
+
+.tcBody { padding: 13px 14px 15px; gap: 4px; align-items: flex-start; }
+.tcRole {
+  background: none; border-radius: 0; width: 100%; max-width: 100%;
+  font-family: 'Inter', 'Noto Sans Bengali', Arial, sans-serif; font-size: 13.5px; font-weight: 600;
+  letter-spacing: .01em; line-height: 1.45; color: var(--crimson);
+}
+.tcRoleText { padding: 0; }
+.tcRoleTrack { padding-left: 0; }
+.tcRoleTrack > span { padding: 0; margin-right: 28px; }
+.tcRole.marquee { width: 100%; }
+.tcSub {
+  margin: 0; font-family: 'Inter', 'Noto Sans Bengali', Arial, sans-serif; font-size: 12.5px; font-weight: 400;
+  line-height: 1.55; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tcContact { padding-top: 8px; }
+
+@media (max-width: 640px) {
+  .tcPhoto, .tcCard .tcPhoto { aspect-ratio: 1 / 1; }
+  .tcNameBar { padding: 9px 10px; gap: 5px; }
+  .tcNameBar .tcName { font-size: 13.5px; }
+  .tcVerified { font-size: 13px; margin-bottom: 2px; }
+  .tcBody { padding: 10px 11px 12px; gap: 3px; }
+  .tcRole { font-size: 12px; }
+  .tcRoleText, .tcRoleTrack { padding-left: 0; padding-right: 0; }
+  .tcRoleTrack > span { padding: 0; margin-right: 22px; }
+  .tcSub { font-size: 11.5px; -webkit-line-clamp: 2; }
+  .tcBio, .tcContact { display: none; }
+}

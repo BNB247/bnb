@@ -2,8 +2,32 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com/recaptcha/ https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://firebaseappcheck.googleapis.com https://www.google.com https://*.googleusercontent.com https://drive.google.com https://drive.usercontent.google.com https://images.weserv.nl https://api.qrserver.com; frame-src https://*.firebasedatabase.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="description" content="Blood Network Baraikhali — জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
+<link rel="canonical" href="https://ourbnb.org/">
+
+<!-- Open Graph (Facebook, WhatsApp, Messenger, Telegram, LinkedIn ...) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Blood Network Baraikhali">
+<meta property="og:title" content="Blood Network Baraikhali (B.N.B)">
+<meta property="og:description" content="জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
+<meta property="og:url" content="https://ourbnb.org/">
+<meta property="og:image" content="https://ourbnb.org/icon-512.png">
+<meta property="og:image:secure_url" content="https://ourbnb.org/icon-512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Blood Network Baraikhali লোগো">
+<meta property="og:locale" content="bn_BD">
+<meta property="og:locale:alternate" content="en_US">
+
+<!-- Twitter / X card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Blood Network Baraikhali (B.N.B)">
+<meta name="twitter:description" content="জরুরি মুহূর্তে বিশ্বস্ত রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়।">
+<meta name="twitter:image" content="https://ourbnb.org/icon-512.png">
 <title>B.N.B</title>
 <link rel="stylesheet" href="style.css">
 <script src="i18n.js"></script>
@@ -26,7 +50,7 @@
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
 <link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-<script>try{if(!localStorage.getItem("blood_donor_landing_cache"))document.documentElement.classList.add("skelMode")}catch(e){document.documentElement.classList.add("skelMode")}</script>
+<script src="early.js"></script>
 </head>
 <body>
 <nav class="siteNav" id="siteNav">
@@ -107,7 +131,7 @@
       </a>
     </div>
     <div class="heroSearchBox">
-      <input type="text" id="donationSearchInput" class="heroSearchInput" placeholder="ID, নাম বা হাসপাতাল দিয়ে খুঁজুন...">
+      <input type="text" id="donationSearchInput" class="heroSearchInput" maxlength="100" placeholder="ID, নাম বা হাসপাতাল দিয়ে খুঁজুন...">
       <button type="button" id="donationSearchBtn" class="heroSearchBtn" aria-label="খুঁজুন">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
       </button>
@@ -518,7 +542,7 @@
     <div class="recordsToolbar">
       <div class="recordsSearchBox">
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-        <input type="text" id="recordsSearchInput" class="recordsSearchInput" placeholder="নাম, ID বা হাসপাতাল দিয়ে খুঁজুন...">
+        <input type="text" id="recordsSearchInput" class="recordsSearchInput" maxlength="100" placeholder="নাম, ID বা হাসপাতাল দিয়ে খুঁজুন...">
       </div>
       <select id="recordsBgFilter" class="recordsBgFilter" aria-label="রক্তের গ্রুপ ফিল্টার">
         <option value="">সব গ্রুপ</option>
@@ -598,7 +622,6 @@
     </div>
     <div>
       <div class="footerColTitle">লিংক</div>
-      <div class="footerRow"><a href="index-9.html">রক্তদাতা তালিকা</a></div>
       <div id="footerLinks">
         <div class="footerRow"><a href="#process" data-footer-route="process">কীভাবে কাজ করে</a></div>
         <div class="footerRow"><a href="#blood-group" data-footer-route="blood-group">রক্তের গ্রুপ চার্ট</a></div>
@@ -625,15 +648,16 @@
     <button type="button" class="joinFormCloseBtn" id="emergencyRequestCloseBtn" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     <h3><i class="fa-solid fa-triangle-exclamation" aria-hidden="true" style="color:var(--crimson); margin-right:6px;"></i>জরুরি রক্তের অনুরোধ</h3>
     <p>নিচের তথ্যগুলো পূরণ করে পাঠান। আপনার অনুরোধ সরাসরি এডমিনের কাছে চলে যাবে, তারা দ্রুত যোগাযোগ করবে।</p>
-    <form id="emergencyRequestForm" novalidate>
+    <form id="emergencyRequestForm" novalidate autocomplete="off">
+      <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true"><label>Website<input type="text" id="emrWebsite" name="website" tabindex="-1" autocomplete="off"></label></div>
       <div class="joinFormGrid">
         <label class="joinFormField joinFormFull">
           <span>রোগীর নাম *</span>
-          <input type="text" id="emrPatientName" required placeholder="যেমন: karim miya">
+          <input type="text" id="emrPatientName" required maxlength="60" autocomplete="off" placeholder="যেমন: karim miya">
         </label>
         <label class="joinFormField">
           <span>যোগাযোগের নাম্বার *</span>
-          <input type="tel" id="emrPhone" required placeholder="01XXXXXXXXX" inputmode="numeric" autocomplete="tel">
+          <input type="tel" id="emrPhone" required maxlength="16" placeholder="01XXXXXXXXX" inputmode="numeric" autocomplete="tel">
         </label>
         <label class="joinFormField">
           <span>প্রয়োজনীয় রক্তের গ্রুপ *</span>
@@ -651,23 +675,23 @@
         </label>
         <label class="joinFormField">
           <span>কতব্যাগ প্রয়োজন</span>
-          <input type="number" id="emrUnits" min="1" max="20" placeholder="যেমন: ১">
+          <input type="number" id="emrUnits" min="1" max="20" step="1" inputmode="numeric" placeholder="যেমন: ১">
         </label>
         <label class="joinFormField">
           <span>হাসপাতাল / স্থান *</span>
-          <input type="text" id="emrHospital" required placeholder="যেমন: ঢাকা মেডিকেল কলেজ হাসপাতাল">
+          <input type="text" id="emrHospital" required maxlength="120" placeholder="যেমন: ঢাকা মেডিকেল কলেজ হাসপাতাল">
         </label>
         <label class="joinFormField joinFormFull">
           <span>রোগীর সমস্যা</span>
-          <input type="text" id="emrProblem" placeholder="যেমন: অপারেশনের জন্য রক্তের প্রয়োজন">
+          <input type="text" id="emrProblem" maxlength="150" placeholder="যেমন: অপারেশনের জন্য রক্তের প্রয়োজন">
         </label>
         <label class="joinFormField">
           <span>হিমোগ্লোবিনের পরিমাণ (g/dL)</span>
-          <input type="number" id="emrHemoglobin" min="0" max="25" step="0.1" placeholder="যেমন: ৭.৫">
+          <input type="number" id="emrHemoglobin" min="0.1" max="25" step="0.1" inputmode="decimal" placeholder="যেমন: ৭.৫">
         </label>
         <label class="joinFormField joinFormFull">
           <span>বিস্তারিত (ঐচ্ছিক)</span>
-          <input type="text" id="emrNote" placeholder="যেমন: আজ রাতের মধ্যে প্রয়োজন">
+          <input type="text" id="emrNote" maxlength="300" placeholder="যেমন: আজ রাতের মধ্যে প্রয়োজন">
         </label>
       </div>
       <div class="modalBtns">
@@ -684,18 +708,19 @@
     <h3><i class="fa-solid fa-hand-holding-heart" aria-hidden="true" style="color:var(--crimson); margin-right:6px;"></i>রক্তদাতা হিসেবে যোগ দিন</h3>
     <p>নিচের তথ্যগুলো পূরণ করে পাঠান। আমাদের এডমিন টিম যাচাই করে আপনার রিকোয়েস্ট অনুমোদন করবে।</p>
     <form id="joinDonorForm" novalidate>
+      <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true"><label>Website<input type="text" id="joinWebsite" name="website" tabindex="-1" autocomplete="off"></label></div>
       <div class="joinFormGrid">
         <label class="joinFormField">
           <span>পূর্ণ নাম *</span>
-          <input type="text" id="joinName" required placeholder="যেমন: karim miya" autocomplete="name">
+          <input type="text" id="joinName" required maxlength="60" placeholder="যেমন: karim miya" autocomplete="name">
         </label>
         <label class="joinFormField">
           <span>মোবাইল নাম্বার *</span>
-          <input type="tel" id="joinMobile" required placeholder="01XXXXXXXXX" inputmode="numeric" autocomplete="tel">
+          <input type="tel" id="joinMobile" required maxlength="16" placeholder="01XXXXXXXXX" inputmode="numeric" autocomplete="tel">
         </label>
         <label class="joinFormField joinFormFull">
           <span>ঠিকানা *</span>
-          <input type="text" id="joinAddress" required placeholder="যেমন: Baraikhali, ...">
+          <input type="text" id="joinAddress" required maxlength="150" placeholder="যেমন: Baraikhali, ...">
         </label>
         <label class="joinFormField">
           <span>রক্তের গ্রুপ *</span>
@@ -713,7 +738,7 @@
         </label>
         <label class="joinFormField">
           <span>বয়স *</span>
-          <input type="number" id="joinAge" min="18" max="65" required placeholder="যেমন: 25">
+          <input type="number" id="joinAge" min="18" max="65" step="1" inputmode="numeric" required placeholder="যেমন: 25">
         </label>
         <label class="joinFormField joinFormFull">
           <span>জেন্ডার *</span>
@@ -834,11 +859,11 @@
         <span class="callingCardActionIcon"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
         <span class="callingCardActionLabel">কল করুন</span>
       </a>
-      <a class="callingCardActionBtn waAction" id="callingCardWaBtn" href="#" target="_blank" rel="noopener">
+      <a class="callingCardActionBtn waAction" id="callingCardWaBtn" href="#" target="_blank" rel="noopener noreferrer">
         <span class="callingCardActionIcon"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
         <span class="callingCardActionLabel">হোয়াটসঅ্যাপ</span>
       </a>
-      <a class="callingCardActionBtn msgAction" id="callingCardMsgBtn" href="#" target="_blank" rel="noopener">
+      <a class="callingCardActionBtn msgAction" id="callingCardMsgBtn" href="#" target="_blank" rel="noopener noreferrer">
         <span class="callingCardActionIcon"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i></span>
         <span class="callingCardActionLabel">মেসেঞ্জার</span>
       </a>
@@ -848,21 +873,6 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
-    <script>
-/* একবারের পরিষ্কার-করা: আগে নোটিফিকেশনের জন্য নিবন্ধিত Service Worker ও সাবস্ক্রিপশন ডিভাইস থেকে সরিয়ে দেয়।
-   সবার ডিভাইস পরিষ্কার হয়ে গেলে (কিছুদিন পর) এই ব্লকটি মুছে দিতে পারবেন। */
-(function () {
-  if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.getRegistrations().then(function (regs) {
-    regs.forEach(function (r) {
-      if (r.scope.indexOf("/fcm-push/") === -1) return;
-      var done = function () { r.unregister(); };
-      if (r.pushManager) r.pushManager.getSubscription().then(function (s) { return s ? s.unsubscribe() : null; }).then(done, done);
-      else done();
-    });
-  }).catch(function () {});
-})();
-</script>
     <script src="install-bar.js?v=4"></script>
 </body>
 </html>

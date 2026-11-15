@@ -106,11 +106,13 @@
     bar.setAttribute("role", "region");
     bar.innerHTML =
       '<button class="ibX" type="button" aria-label="বন্ধ করুন">&times;</button>' +
-      '<img class="ibIcon" src="icon-192.png" alt="" onerror="this.style.display=\'none\'">' +
+      '<img class="ibIcon" src="icon-192.png" alt="">' +
       '<span class="ibText"></span>' +
       '<button class="ibBtn" type="button"></button>';
     document.body.insertBefore(bar, document.body.firstChild);
     document.body.classList.add("hasInstallBar");
+    var ibIcon = bar.querySelector(".ibIcon");   // CSP-safe replacement for the old inline onerror=""
+    if (ibIcon) ibIcon.addEventListener("error", function () { ibIcon.style.display = "none"; });
     bar.querySelector(".ibX").onclick = hideBar;
     bar.querySelector(".ibBtn").onclick = onMainClick;
     render();

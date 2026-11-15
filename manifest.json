@@ -6,17 +6,20 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#9E1B32",
   "lang": "bn",
   "dir": "ltr",
-  "categories": ["health", "medical"],
+  "categories": [
+    "health",
+    "medical"
+  ],
   "prefer_related_applications": false,
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://bnb247.github.io/bnb/manifest.json"
+      "url": "https://ourbnb.org/manifest.json"
     }
   ],
   "icons": [
