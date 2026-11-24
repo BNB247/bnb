@@ -1,0 +1,3084 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Admin Panel — Blood Network Baraikhali</title>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<script src="../assets/js/login-guard.js"></script>
+<link rel="apple-touch-icon" href="admin-icon-192.png">
+<link rel="icon" type="image/png" href="admin-icon-192.png">
+<meta name="theme-color" content="#9E1B32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  :root {
+    --ink: #1B1512;
+    --ink-soft: #3A2F2A;
+    --muted: #8A7D75;
+    --crimson: #9E1B32;
+    --crimson-dark: #6E1220;
+    --crimson-tint: #F7E3E6;
+    --cream: #FBF7F2;
+    --paper: #FFFFFF;
+    --line: #EAE0D8;
+    --line-soft: #F1EAE3;
+    --sage: #3F7A5D;
+    --sage-tint: #E1EFE7;
+    --amber: #B9722E;
+    --amber-tint: #F7EAD8;
+    --sidebar-bg: #201613;
+    --sidebar-line: rgba(251,247,242,0.09);
+    --sidebar-text: rgba(251,247,242,0.62);
+    --sidebar-text-active: #FBF7F2;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-sm: 7px;
+    --shadow: 0 6px 24px rgba(27,21,18,0.07);
+    --shadow-lg: 0 18px 48px rgba(27,21,18,0.16);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --font-body: 'Inter', 'Noto Sans Bengali', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+    --sidebarW: 258px;
+    --topbarH: 64px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--cream);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea, select { font-family: inherit; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+
+  /* ============================================================
+     LOGIN SCREEN
+     ============================================================ */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(1100px 620px at 15% -10%, rgba(158,27,50,0.35), transparent 60%),
+      radial-gradient(900px 600px at 105% 110%, rgba(158,27,50,0.22), transparent 55%),
+      var(--sidebar-bg);
+    padding: 20px;
+  }
+  .loginCard {
+    width: 100%; max-width: 380px; background: var(--paper); border-radius: 20px;
+    box-shadow: var(--shadow-lg); padding: 38px 32px 30px; text-align: center;
+  }
+  .loginMark {
+    width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 18px;
+    background: linear-gradient(145deg, var(--crimson), var(--crimson-dark));
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px;
+    box-shadow: 0 10px 24px rgba(158,27,50,0.35);
+  }
+  .loginCard h1 { font-size: 20px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .loginCard p { font-size: 13.5px; color: var(--muted); margin: 0 0 26px; line-height: 1.6; }
+  .fieldGroup { text-align: left; margin-bottom: 14px; }
+  .fieldGroup label {
+    display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .loginInput {
+    width: 100%; font-size: 14.5px; padding: 12px 14px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--line); background: var(--cream); color: var(--ink);
+  }
+  .loginInput:focus { outline: none; border-color: var(--crimson); background: var(--paper); }
+  .loginError {
+    color: var(--crimson); font-size: 12.5px; font-weight: 600; margin: 2px 0 12px; display: none;
+    text-align: left;
+  }
+  .loginError.show { display: block; animation: shake .35s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+  .btnLogin {
+    width: 100%; padding: 13px; border-radius: 999px; border: none; margin-top: 6px;
+    background: var(--crimson); color: #fff; font-weight: 700; font-size: 14.5px; cursor: pointer;
+  }
+  .btnLogin:hover { background: var(--crimson-dark); }
+  .btnLogin:disabled { opacity: 0.6; cursor: default; }
+  .loginFoot { margin-top: 22px; font-size: 11.5px; color: var(--muted); font-family: var(--font-mono); }
+
+  /* ============================================================
+     APP SHELL
+     ============================================================ */
+  #appShell { display: none; min-height: 100%; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebarW); background: var(--sidebar-bg);
+    color: var(--sidebar-text); display: flex; flex-direction: column; z-index: 200;
+    transition: transform .28s var(--ease);
+  }
+  .sidebarBrand {
+    display: flex; align-items: center; gap: 10px; padding: 20px 20px 18px; border-bottom: 1px solid var(--sidebar-line);
+  }
+  .sidebarBrand .mark {
+    width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(145deg, var(--crimson), var(--crimson-dark));
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; flex-shrink: 0;
+  }
+  .sidebarBrand .txt { line-height: 1.25; min-width: 0; }
+  .sidebarBrand .txt strong { display: block; font-size: 13.5px; color: var(--sidebar-text-active); font-weight: 700; }
+  .sidebarBrand .txt span { display: block; font-size: 11px; color: var(--sidebar-text); font-family: var(--font-mono); }
+  .sidebarNav { flex: 1; overflow-y: auto; padding: 14px 12px; }
+  .sidebarGroupLabel {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: rgba(251,247,242,0.32); padding: 14px 10px 6px;
+  }
+  .sidebarGroupLabel:first-child { padding-top: 4px; }
+  .navItem {
+    display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; border: none; background: none;
+    color: var(--sidebar-text); font-size: 13.5px; font-weight: 600; padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; margin-bottom: 2px;
+  }
+  .navItem i { width: 17px; text-align: center; font-size: 14px; flex-shrink: 0; }
+  .navItem:hover { background: rgba(251,247,242,0.06); color: var(--sidebar-text-active); }
+  .navItem.active { background: var(--crimson); color: #fff; }
+  .navItem .navBadge {
+    margin-left: auto; background: rgba(251,247,242,0.14); color: var(--sidebar-text-active);
+    font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; font-family: var(--font-mono);
+  }
+  .navItem.active .navBadge { background: rgba(255,255,255,0.25); }
+  .sidebarFoot { padding: 14px 12px 18px; border-top: 1px solid var(--sidebar-line); }
+  .sidebarFoot a.navItem { text-decoration: none; }
+  #logoutBtn { color: rgba(251,247,242,0.7); }
+  #logoutBtn:hover { background: rgba(158,27,50,0.35); color: #fff; }
+
+  .mainArea { margin-left: var(--sidebarW); min-height: 100%; display: flex; flex-direction: column; }
+  .topbar {
+    height: var(--topbarH); background: var(--paper); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px; padding: 0 26px; position: sticky; top: 0; z-index: 100;
+  }
+  #menuToggle {
+    display: none; border: none; background: none; font-size: 18px; color: var(--ink); cursor: pointer; padding: 6px;
+  }
+  .topbarTitle { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+  .topbarSub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .topbarRight { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topbarLink {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--ink-soft);
+    text-decoration: none; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--cream);
+  }
+  .topbarLink:hover { border-color: var(--crimson); color: var(--crimson); }
+  .adminAvatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--crimson-tint); color: var(--crimson);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0;
+  }
+  .content { padding: 26px; max-width: 1180px; width: 100%; margin: 0 auto; flex: 1; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: panelIn .25s var(--ease); }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .panelHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .panelHead h2 { font-size: 21px; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .panelHead p { font-size: 13px; color: var(--muted); margin: 0; max-width: 560px; line-height: 1.55; }
+
+  /* ---- cards / stats ---- */
+  .statGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 26px; }
+  @media (max-width: 1280px) { .statGrid { grid-template-columns: repeat(3, 1fr); } }
+  .statCard {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .statCard .icon {
+    width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; margin-bottom: 12px;
+  }
+  .statCard .num { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
+  .statCard .lbl { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 22px 24px; margin-bottom: 18px;
+  }
+  .card h3 { font-size: 14.5px; font-weight: 800; margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+  .card h3 i { color: var(--crimson); font-size: 13px; }
+  .quickList { display: flex; flex-direction: column; gap: 10px; }
+  .quickRow { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .quickRow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--crimson); flex-shrink: 0; }
+  .quickRow b { font-weight: 700; }
+
+  /* ---- forms ---- */
+  .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .formGrid.single { grid-template-columns: 1fr; }
+  .field { margin-bottom: 16px; }
+  .field.span2 { grid-column: 1 / -1; }
+  .field label {
+    display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 7px;
+  }
+  .field .hint { font-size: 11.5px; color: var(--muted); font-weight: 500; margin-top: 5px; }
+  .noticeActiveLabel {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    background: var(--crimson-tint); border: 1px solid var(--line);
+    border-radius: var(--radius-md); padding: 12px 14px;
+  }
+  .noticeActiveCheckbox { width: 18px; height: 18px; accent-color: var(--crimson); flex-shrink: 0; cursor: pointer; }
+  .textInput, .textArea, .selectInput {
+    width: 100%; font-size: 14px; padding: 11px 13px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--line); background: var(--cream); color: var(--ink);
+  }
+  .textInput:focus, .textArea:focus, .selectInput:focus { outline: none; border-color: var(--crimson); background: var(--paper); }
+  .textArea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .checkRow { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 600; }
+  .checkRow input { width: 17px; height: 17px; accent-color: var(--crimson); }
+
+  .imgUpload {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .imgUploadPreview {
+    width: 74px; height: 74px; border-radius: var(--radius-md); background: var(--cream); border: 1.5px dashed var(--line);
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 20px; overflow: hidden; flex-shrink: 0;
+  }
+  .imgUploadPreview img { width: 100%; height: 100%; object-fit: cover; }
+  .imgUploadPreview { position: relative; }
+  .imgUploadPreview.isUploading::after {
+    content: ""; position: absolute; inset: 0; background: rgba(255,255,255,0.78);
+  }
+  .imgUploadPreview.isUploading::before {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 1;
+    border-radius: 50%; border: 3px solid var(--crimson-tint); border-top-color: var(--crimson); animation: adminSpin .8s linear infinite;
+  }
+  @keyframes adminSpin { to { transform: rotate(360deg); } }
+  .imgUploadBtns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .contactPhotoGrid {
+    display: flex; flex-wrap: wrap; gap: 18px 26px; margin-bottom: 18px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line);
+  }
+  .contactPhotoGrid > div { flex: 1 1 220px; }
+  .contactPhotoLabel { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .contactPhotoGrid .imgUploadPreview { aspect-ratio: 1 / 1; width: 56px; height: auto; }
+
+  /* ---- calling card panel: one neat, self-contained block per contact ---- */
+  .ccHint { font-size: 12.5px; color: var(--muted); margin: -8px 0 20px; line-height: 1.65; max-width: 640px; }
+  .ccForm { display: flex; flex-direction: column; gap: 18px; }
+  .ccContact {
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    background: var(--cream); padding: 18px 18px 20px;
+  }
+  .ccContactHead {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 16px;
+  }
+  .ccBadge {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--crimson); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; flex-shrink: 0;
+  }
+  .ccContactBody { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+  .ccPhoto { flex: 0 0 auto; width: 104px; display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
+  .ccPhoto .imgUploadPreview { width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: var(--radius-md); }
+  .ccPhoto .imgUploadBtns { flex-direction: column; }
+  .ccPhoto .btn.small { width: 100%; justify-content: center; }
+  .ccFields { flex: 1 1 320px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+  .ccFields .field { margin-bottom: 12px; }
+  @media (max-width: 640px) {
+    .ccContactBody { flex-direction: column; }
+    .ccPhoto { width: 100%; flex-direction: row; align-items: center; }
+    .ccPhoto .imgUploadPreview { width: 60px; flex-shrink: 0; }
+    .ccPhoto .imgUploadBtns { flex-direction: row; flex: 1; }
+    .ccFields { grid-template-columns: 1fr; width: 100%; }
+  }
+
+  .btnRow { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .btn {
+    padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--crimson); border-color: var(--crimson); color: #fff; }
+  .btn.primary:hover { background: var(--crimson-dark); border-color: var(--crimson-dark); }
+  .btn.danger { color: var(--crimson); }
+  .btn.danger:hover { background: var(--crimson-tint); border-color: var(--crimson-tint); }
+  .btn.small { padding: 7px 13px; font-size: 12px; }
+  .btn:disabled { opacity: 0.55; cursor: default; }
+  .saveBar {
+    display: flex; align-items: center; gap: 12px; justify-content: flex-end; margin-top: 4px;
+  }
+  .saveBar .savedNote { font-size: 12px; color: var(--sage); font-weight: 600; opacity: 0; transition: opacity .2s; }
+  .saveBar .savedNote.show { opacity: 1; }
+
+  /* ---- data tables ---- */
+  .tableToolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .searchBox { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+  .searchBox i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+  .searchBox input {
+    width: 100%; padding: 10px 13px 10px 34px; border-radius: 999px; border: 1.5px solid var(--line);
+    background: var(--paper); font-size: 13.5px;
+  }
+  .searchBox input:focus { outline: none; border-color: var(--crimson); }
+  .dataTable { width: 100%; border-collapse: collapse; background: var(--paper); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line); }
+  .dataTable th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+    font-weight: 700; padding: 12px 16px; background: var(--cream); border-bottom: 1px solid var(--line);
+  }
+  .dataTable td { padding: 11px 16px; font-size: 13.5px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  .dataTable tr:last-child td { border-bottom: none; }
+  .dataTable tr:hover td { background: var(--cream); }
+  .rowThumb {
+    width: 36px; height: 36px; border-radius: 8px; background: var(--crimson-tint); color: var(--crimson);
+    display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 13px; flex-shrink: 0;
+  }
+  .rowThumb img { width: 100%; height: 100%; object-fit: cover; }
+  .rowActions { display: flex; gap: 6px; justify-content: flex-end; }
+  .iconBtn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--paper);
+    color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12.5px;
+  }
+  .iconBtn:hover { border-color: var(--crimson); color: var(--crimson); }
+  .iconBtn.del:hover { border-color: var(--crimson); background: var(--crimson-tint); }
+  .badge {
+    display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+    background: var(--crimson-tint); color: var(--crimson);
+  }
+  .emptyState {
+    text-align: center; padding: 46px 20px; color: var(--muted); background: var(--paper); border: 1.5px dashed var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .emptyState i { font-size: 26px; margin-bottom: 10px; display: block; color: var(--line); }
+  .emptyState p { font-size: 13.5px; margin: 0 0 14px; }
+
+  /* ---- donation records: ranked list (highest donation number first) ---- */
+  .donationListHead {
+    display: grid; grid-template-columns: 32px 40px 96px 1fr 74px 76px; gap: 14px; padding: 0 16px 8px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700;
+  }
+  .donationListHead span:nth-child(4) { text-align: left; }
+  .donationList { display: flex; flex-direction: column; gap: 9px; }
+  .donationRow {
+    display: grid; grid-template-columns: 32px 40px 96px 1fr 74px 76px; grid-template-areas: "rank thumb no info blood actions";
+    align-items: center; gap: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md);
+    padding: 10px 16px; transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+  }
+  .donationRow:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--crimson-tint); }
+  .donationRow.topRow {
+    background: linear-gradient(90deg, var(--crimson-tint) 0%, var(--paper) 60%);
+    border-color: var(--crimson); box-shadow: 0 4px 16px rgba(158,27,50,0.12);
+  }
+  .donationRank {
+    grid-area: rank; width: 28px; height: 28px; border-radius: 50%; background: var(--cream); color: var(--muted);
+    display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800;
+    font-family: var(--font-mono); flex-shrink: 0;
+  }
+  .donationRow.topRow .donationRank { background: linear-gradient(145deg, var(--amber), #8a5620); color: #fff; }
+  .donationRow .rowThumb { grid-area: thumb; }
+  .donationRow.topRow .rowThumb { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--amber); }
+  .donationNoBadge {
+    grid-area: no; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 5px 10px;
+    border-radius: 999px; background: var(--crimson-tint); color: var(--crimson); font-weight: 800; font-size: 12px;
+    font-family: var(--font-mono); white-space: nowrap; width: fit-content;
+  }
+  .donationRow.topRow .donationNoBadge { background: linear-gradient(135deg, var(--crimson), var(--crimson-dark)); color: #fff; }
+  .donationNoBadge i { font-size: 10px; }
+  .donationInfo { grid-area: info; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .donationInfo b { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .donationInfo .hosp { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+  .donationInfo .hosp i { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .bloodGroupPill {
+    grid-area: blood; justify-self: start; display: inline-flex; align-items: center; justify-content: center;
+    min-width: 40px; padding: 5px 8px; border-radius: 8px; background: var(--sage-tint); color: var(--sage);
+    font-weight: 800; font-size: 12.5px;
+  }
+  .donationRow .rowActions { grid-area: actions; justify-content: flex-end; }
+  @media (max-width: 640px) {
+    .donationListHead { display: none; }
+    .donationRow {
+      grid-template-columns: 32px 40px 1fr auto;
+      grid-template-areas: "rank thumb no actions" "rank thumb info info" "rank thumb blood blood";
+      row-gap: 6px;
+    }
+  }
+
+  .stepsCols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .stepColHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .stepColHead h4 { font-size: 13.5px; font-weight: 800; margin: 0; }
+  .stepListItem {
+    display: flex; align-items: flex-start; gap: 10px; background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius-md); padding: 12px 13px; margin-bottom: 8px;
+  }
+  .stepListItem .num {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--crimson-tint); color: var(--crimson);
+    font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .stepListItem .body { flex: 1; min-width: 0; }
+  .stepListItem .body b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .stepListItem .body span { display: block; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .stepListItem .acts { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .partnerGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .partnerCard {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px;
+    text-align: center; position: relative;
+  }
+  .partnerCard .logoWrap {
+    width: 100%; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+  }
+  .partnerCard .logoWrap img { max-height: 100%; max-width: 100%; object-fit: contain; }
+  .partnerCard .logoWrap i { font-size: 22px; color: var(--line); }
+  .partnerCard .name { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; }
+  .partnerCard .acts { display: flex; gap: 6px; justify-content: center; }
+
+  /* ---- page / section order panel ---- */
+  .cardNote { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin: -4px 0 14px; }
+  .orderList { display: flex; flex-direction: column; gap: 8px; }
+  .orderItem {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: var(--radius-md); transition: opacity .2s, background .2s;
+  }
+  .orderItem.off { opacity: .55; background: var(--cream); }
+  .orderItem.fixed { background: var(--cream); border-style: dashed; }
+  .orderNum {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--crimson-tint); color: var(--crimson);
+    font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .orderIcon { width: 28px; text-align: center; color: var(--crimson); font-size: 14px; flex-shrink: 0; }
+  .orderLabel { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; }
+  .orderLock { font-size: 11.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .orderLock i { margin-right: 4px; }
+  .orderMoves { display: flex; gap: 6px; flex-shrink: 0; }
+  .orderSwitch { position: relative; width: 38px; height: 22px; flex-shrink: 0; cursor: pointer; }
+  .orderSwitch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .orderSwitch span { position: absolute; inset: 0; background: #D5CBC3; border-radius: 999px; transition: background .2s; }
+  .orderSwitch span::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s;
+  }
+  .orderSwitch input:checked + span { background: var(--sage); }
+  .orderSwitch input:checked + span::after { transform: translateX(16px); }
+  .iconBtn:disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+  .tierTag {
+    display: inline-block; font-size: 10.5px; font-weight: 800; padding: 2px 9px; border-radius: 999px; margin-bottom: 8px;
+    background: var(--cream); border: 1px solid var(--line); color: var(--muted);
+  }
+  .tierTag.t-main { background: #F7EAD8; border-color: #E3C79B; color: #7A4A18; }
+  .tierTag.t-gold { background: #FBF1DE; border-color: #EBD3A5; color: #8F5A20; }
+  .tierTag.t-silver { background: #F1F2F4; border-color: #D9DCE1; color: #4A5260; }
+  .tierTag.t-support { background: var(--sage-tint); border-color: #C3DCCD; color: var(--sage); }
+
+  /* ---- modal ---- */
+  .modalOverlay {
+    position: fixed; inset: 0; background: rgba(27,21,18,0.55); z-index: 500; display: none;
+    align-items: flex-end; justify-content: center; padding: 0; overflow-y: auto;
+  }
+  @media (min-width: 560px) {
+    .modalOverlay { align-items: center; padding: 20px; }
+  }
+  .modalOverlay.show { display: flex; animation: modalOverlayFadeIn .22s ease; }
+  @keyframes modalOverlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modalBox {
+    background: var(--paper); border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; margin: auto;
+    animation: modalRiseUp .34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (min-width: 560px) {
+    .modalBox { border-radius: var(--radius-lg); }
+  }
+  @keyframes modalRiseUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .modalOverlay.show, .modalBox { animation: none; }
+  }
+  .modalBoxHead {
+    display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 14px;
+    border-bottom: 1px solid var(--line-soft); position: sticky; top: 0; background: var(--paper); z-index: 2;
+  }
+  .modalBoxHead h3 { font-size: 15.5px; font-weight: 800; margin: 0; }
+  .modalBoxHead button { border: none; background: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 4px; }
+  .modalBoxBody { padding: 20px 22px 6px; }
+  .modalBoxFoot { padding: 16px 22px 22px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ---- image crop modal ---- */
+  .cropModalBox { max-width: 480px; }
+  .cropHint { font-size: 12px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+  .cropStage {
+    position: relative; width: 100%; height: 360px; background: var(--ink); border-radius: var(--radius-md);
+    overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none;
+    user-select: none;
+  }
+  .cropStage img {
+    max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;
+    user-select: none; -webkit-user-drag: none; pointer-events: none;
+  }
+  .cropSelection {
+    position: absolute; box-shadow: 0 0 0 9999px rgba(10,7,6,0.62); border: 1.5px solid #fff;
+    cursor: move; touch-action: none;
+  }
+  .cropSelection .cropGrid {
+    position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr); pointer-events: none;
+  }
+  .cropSelection .cropGrid span { border: 1px solid rgba(255,255,255,0.4); }
+  .cropHandle {
+    position: absolute; width: 15px; height: 15px; background: #fff; border: 2px solid var(--crimson);
+    border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); touch-action: none; z-index: 2;
+  }
+  .cropHandle.tl { top: -8px; left: -8px; cursor: nwse-resize; }
+  .cropHandle.tr { top: -8px; right: -8px; cursor: nesw-resize; }
+  .cropHandle.bl { bottom: -8px; left: -8px; cursor: nesw-resize; }
+  .cropHandle.br { bottom: -8px; right: -8px; cursor: nwse-resize; }
+  .cropPreviewRow {
+    display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 12px;
+    border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--cream);
+  }
+  #cropPreviewCanvas { display: block; flex-shrink: 0; background: #fff; border: 1px solid var(--line); }
+  #cropPreviewCanvas.shape-circle { border-radius: 50%; }
+  #cropPreviewCanvas.shape-rounded { border-radius: 14px; }
+  .cropInfo { font-size: 12px; color: var(--muted); line-height: 1.65; min-width: 0; }
+  .cropInfo b { color: var(--ink); }
+  .cropInfo .warn { display: block; color: #B26A00; font-weight: 700; margin-top: 4px; }
+  #cropConfirmBtn.isBusy { pointer-events: none; opacity: 0.7; }
+  @media (pointer: coarse) {
+    .cropHandle { width: 26px; height: 26px; border-radius: 6px; }
+    .cropHandle.tl { top: -14px; left: -14px; } .cropHandle.tr { top: -14px; right: -14px; }
+    .cropHandle.bl { bottom: -14px; left: -14px; } .cropHandle.br { bottom: -14px; right: -14px; }
+  }
+  @media (max-width: 480px) { .cropStage { height: 300px; } }
+  /* ---- রিপোর্টের ছবি (সংবাদ) ---- */
+  .reportImgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .reportImgItem { position: relative; aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: var(--cream); }
+  .reportImgItem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .reportImgItem .reportImgDel {
+    position: absolute; top: 5px; right: 5px; width: 26px; height: 26px; border: none; border-radius: 50%; cursor: pointer;
+    background: rgba(0,0,0,0.65); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center;
+  }
+  .reportImgAdd {
+    aspect-ratio: 3 / 4; border: 1.5px dashed var(--line); border-radius: var(--radius-md); background: var(--cream); color: var(--crimson);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .reportImgAdd i { font-size: 20px; }
+  .reportImgAdd.isUploading { pointer-events: none; opacity: 0.7; }
+  .cropRatioTag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--crimson);
+    background: var(--crimson-tint); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
+  }
+
+  .cropRatioPicker { display: flex; gap: 8px; margin: 0 0 12px; }
+  .cropRatioBtn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px;
+    border: 1.5px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--muted);
+    font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .cropRatioBtn .rIcon { display: block; border: 2px solid currentColor; border-radius: 3px; }
+  .cropRatioBtn[data-r="1:1"] .rIcon { width: 18px; height: 18px; }
+  .cropRatioBtn[data-r="9:16"] .rIcon { width: 14px; height: 24px; }
+  .cropRatioBtn[data-r="16:9"] .rIcon { width: 26px; height: 15px; }
+  .cropRatioBtn.active { border-color: var(--crimson); background: var(--crimson-tint); color: var(--crimson); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); z-index: 800;
+    background: var(--ink); color: #fff; font-size: 13px; font-weight: 600; padding: 12px 20px; border-radius: 999px;
+    opacity: 0; pointer-events: none; transition: opacity .25s var(--ease), transform .25s var(--ease);
+    box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .loaderScreen {
+    position: fixed; inset: 0; background: var(--sidebar-bg); z-index: 950; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; color: rgba(251,247,242,0.8); transition: opacity .3s ease;
+  }
+  .loaderScreen .mark {
+    width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(145deg, var(--crimson), var(--crimson-dark));
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px;
+    animation: pulseMark 1.3s ease-in-out infinite;
+  }
+  @keyframes pulseMark { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.1); } }
+  .loaderScreen span { font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.05em; }
+
+  @media (max-width: 980px) {
+    .statGrid { grid-template-columns: repeat(2, 1fr); }
+    .statGrid .statCard:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .formGrid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 860px) {
+    .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+    .sidebar.open { transform: translateX(0); }
+    .mainArea { margin-left: 0; }
+    #menuToggle { display: inline-flex; align-items: center; justify-content: center; }
+    .content { padding: 18px; }
+    .stepsCols { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .statGrid { grid-template-columns: 1fr 1fr; }
+    .topbarSub { display: none; }
+  }
+
+  /* ===== PREMIUM UI LAYER (overrides) ===== */
+  :root{--shadow:0 1px 2px rgba(27,21,18,.04),0 8px 28px rgba(27,21,18,.06);--shadow-lg:0 24px 60px rgba(27,21,18,.22);--gold:#C9A25B;}
+  body{background:linear-gradient(180deg,#FBF7F2 0,#F6F0E9 100%);}
+  .sidebar{background:linear-gradient(180deg,#261A16 0,#171010 100%);box-shadow:4px 0 30px rgba(0,0,0,.12);}
+  .sidebarBrand .mark{box-shadow:0 8px 20px rgba(158,27,50,.45),inset 0 1px 0 rgba(255,255,255,.25);}
+  .navItem{position:relative;transition:background .2s,color .2s,transform .2s;}
+  .navItem:hover{transform:translateX(2px);}
+  .navItem.active{background:linear-gradient(135deg,#B3203A,#8A1228);box-shadow:0 8px 18px rgba(158,27,50,.38);}
+  .navItem.active::before{content:"";position:absolute;left:-12px;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:var(--gold);}
+  .topbar{background:rgba(255,255,255,.82);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid rgba(234,224,216,.8);}
+  .adminAvatar{background:linear-gradient(145deg,#B3203A,#6E1220);color:#fff;box-shadow:0 4px 12px rgba(158,27,50,.35);}
+  .content{max-width:1280px;}
+  .card,.statCard,.dataTable{border-radius:18px;border:1px solid rgba(234,224,216,.9);box-shadow:var(--shadow);}
+  .card h3{font-size:15px;}
+  .btn{transition:transform .15s,box-shadow .2s,background .2s;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn.primary{background:linear-gradient(135deg,#B3203A,#8A1228);box-shadow:0 8px 18px rgba(158,27,50,.3);}
+  .textInput:focus,.textArea:focus,.selectInput:focus,.loginInput:focus{box-shadow:0 0 0 4px rgba(158,27,50,.1);}
+  .modalBox{border-radius:22px;box-shadow:var(--shadow-lg);}
+  .modalOverlay{backdrop-filter:blur(4px);}
+  .panelHead h2{font-size:23px;}
+
+  /* hero welcome */
+  .dashHero{position:relative;overflow:hidden;border-radius:22px;padding:26px 28px;margin-bottom:22px;color:#fff;
+    background:radial-gradient(600px 240px at 90% -20%,rgba(201,162,91,.35),transparent 60%),linear-gradient(120deg,#8A1228 0,#B3203A 55%,#6E1220 100%);
+    box-shadow:0 18px 44px rgba(158,27,50,.28);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+  .dashHero::after{content:"\f043";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;right:-10px;bottom:-34px;font-size:170px;color:rgba(255,255,255,.07);}
+  .dashHero h2{margin:0 0 6px;font-size:23px;font-weight:800;letter-spacing:-.01em;}
+  .dashHero p{margin:0;font-size:13px;color:rgba(255,255,255,.8);max-width:520px;line-height:1.6;}
+  .dashHero .heroBtns{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1;}
+  .heroBtn{border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;backdrop-filter:blur(6px);transition:background .2s,transform .15s;}
+  .heroBtn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
+  .heroBtn.solid{background:#fff;color:var(--crimson);border-color:#fff;}
+  .heroBtn.solid:hover{background:#FBF7F2;}
+
+  /* premium stat cards */
+  .statCard{position:relative;overflow:hidden;padding:20px 22px;transition:transform .2s var(--ease),box-shadow .2s;}
+  .statCard:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(27,21,18,.1);}
+  .statCard::after{content:"";position:absolute;right:-24px;top:-24px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle,rgba(158,27,50,.08),transparent 70%);}
+  .statCard .icon{width:44px;height:44px;border-radius:13px;font-size:17px;}
+  .statCard .num{font-size:30px;font-variant-numeric:tabular-nums;}
+
+  /* charts */
+  .chartGrid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px;margin-bottom:18px;}
+  .chartGrid.three{grid-template-columns:1fr 1fr;}
+  .chartCard{margin-bottom:0;}
+  .chartHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  .chartHead h3{margin:0;}
+  .chartHead small{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:3px;}
+  .chartTag{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--sage-tint);color:var(--sage);white-space:nowrap;font-family:var(--font-mono);}
+  .chartBox{width:100%;}
+  .chartBox svg{width:100%;height:auto;display:block;overflow:visible;}
+  .gridLine{stroke:var(--line);stroke-dasharray:3 4;}
+  .axisTxt{fill:var(--muted);font-size:10.5px;font-family:var(--font-mono);}
+  .areaLine{fill:none;stroke:url(#gLine);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}
+  .areaDot{fill:#fff;stroke:var(--crimson);stroke-width:2.5;transition:r .15s;}
+  .areaDot:hover{r:7;}
+  .barRect{transition:opacity .2s;}
+  .barRect:hover{opacity:.82;}
+  .donutWrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;}
+  .donutWrap svg{width:170px;height:170px;flex-shrink:0;}
+  .donutCenter{font-size:26px;font-weight:800;fill:var(--ink);}
+  .donutSub{font-size:10.5px;fill:var(--muted);font-weight:600;}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:12.5px;font-weight:600;}
+  .legend div{display:flex;align-items:center;gap:8px;}
+  .legend i{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .legend b{margin-left:auto;font-family:var(--font-mono);font-size:12px;}
+  .hBar{display:flex;flex-direction:column;gap:13px;}
+  .hBarRow .top{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:5px;gap:10px;}
+  .hBarRow .top span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hBarRow .top span:last-child{font-family:var(--font-mono);color:var(--crimson);}
+  .hBarTrack{height:9px;background:var(--cream);border-radius:99px;overflow:hidden;}
+  .hBarFill{height:100%;border-radius:99px;background:linear-gradient(90deg,#B3203A,#E0556B);transition:width .8s var(--ease);}
+  .recentList{display:flex;flex-direction:column;}
+  .recentItem{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);}
+  .recentItem:last-child{border-bottom:none;}
+  .recentItem .rowThumb{width:40px;height:40px;border-radius:12px;}
+  .recentItem .meta{flex:1;min-width:0;line-height:1.35;}
+  .recentItem .meta b{display:block;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .recentItem .meta span{font-size:11.5px;color:var(--muted);}
+  .chartEmpty{padding:34px 10px;text-align:center;color:var(--muted);font-size:13px;}
+
+  /* donation panel premium */
+  .donSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .donSum{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;}
+  .donSum .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .donSum b{display:block;font-size:20px;font-weight:800;line-height:1.1;}
+  .donSum span{font-size:11.5px;color:var(--muted);font-weight:600;}
+  .chipRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .chip{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);transition:all .15s;}
+  .chip:hover{border-color:var(--crimson);color:var(--crimson);}
+  .chip.on{background:var(--crimson);border-color:var(--crimson);color:#fff;box-shadow:0 6px 14px rgba(158,27,50,.28);}
+  .donationRow{border-radius:14px;padding:12px 16px;}
+  .donationRow:hover{border-color:rgba(158,27,50,.25);}
+  .bloodGroupPill{background:linear-gradient(135deg,#FBE9EC,#F7E3E6);color:var(--crimson);border:1px solid rgba(158,27,50,.15);}
+  .searchBox input{padding:11px 14px 11px 36px;box-shadow:var(--shadow);}
+  @media(max-width:1000px){.chartGrid,.chartGrid.three{grid-template-columns:1fr;}.donSummary{grid-template-columns:1fr 1fr;}}
+  @media(max-width:700px){.dashHero{padding:20px;}.legend{grid-template-columns:1fr 1fr;}.donSummary{grid-template-columns:1fr 1fr;gap:10px;}}
+  /* live + views */
+  .liveDot{width:10px;height:10px;border-radius:50%;background:#22A06B;flex-shrink:0;position:relative;display:inline-block;}
+  .liveDot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #22A06B;opacity:.6;animation:livePing 1.6s ease-out infinite;}
+  @keyframes livePing{0%{transform:scale(.6);opacity:.8;}100%{transform:scale(1.7);opacity:0;}}
+  .livePill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--sage);background:var(--sage-tint);border:1px solid #C3DCCD;padding:7px 13px;border-radius:999px;white-space:nowrap;}
+  .livePill b{font-family:var(--font-mono);font-size:13px;color:var(--ink);}
+  .viewsStats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+  .vStat{background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;min-width:0;}
+  .vStat b{display:block;font-size:22px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .vStat span.l{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+  .vStat.live{background:var(--sage-tint);border-color:#C3DCCD;}
+  .viewsRange{display:flex;gap:8px;flex-wrap:wrap;}
+  @media(max-width:700px){.viewsStats{grid-template-columns:1fr 1fr;}.livePill span.t{display:none;}}
+  .sidebarBrand .mark, .loginMark { background:#fff !important; padding:0; overflow:hidden; }
+  .sidebarBrand .mark img, .loginMark img { width:100%; height:100%; object-fit:contain; display:block; }
+  .loginMark { width:84px; height:84px; }
+</style>
+</head>
+<body>
+
+<div class="loaderScreen" id="loaderScreen">
+  <div class="mark"><img src="admin-logo.png" alt="Admin"></div>
+  <span>ADMIN PANEL LOADING…</span>
+</div>
+
+<div id="loginScreen" style="display:none;">
+  <div class="loginCard">
+    <div class="loginMark"><img src="admin-logo.png" alt="Admin"></div>
+    <h1>অ্যাডমিন প্যানেল</h1>
+    <p>Blood Network Baraikhali ওয়েবসাইট পরিচালনার জন্য আপনার অ্যাডমিন ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।</p>
+    <div class="fieldGroup">
+      <label for="loginEmail">ইমেইল</label>
+      <input type="email" id="loginEmail" class="loginInput" placeholder="you@example.com" autocomplete="username">
+    </div>
+    <div class="fieldGroup">
+      <label for="loginPass">পাসওয়ার্ড</label>
+      <input type="password" id="loginPass" class="loginInput" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="loginError" id="loginError">ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।</div>
+    <button type="button" class="btnLogin" id="loginBtn">লগইন করুন</button>
+    <div class="loginFoot">BLOOD DONOR NETWORK · ADMIN · 11 Nov 2026</div>
+  </div>
+</div>
+
+<div id="appShell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebarBrand">
+      <div class="mark"><img src="admin-logo.png"></div>
+      <div class="txt">
+        <strong>Blood Network Baraikhali</strong>
+        <span>ADMIN PANEL</span>
+      </div>
+    </div>
+    <nav class="sidebarNav" id="sidebarNav">
+      <div class="sidebarGroupLabel">ওভারভিউ</div>
+      <button type="button" class="navItem active" data-panel="dashboard"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> ড্যাশবোর্ড</button>
+      <button type="button" class="navItem" data-panel="notice"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> জরুরি নোটিশ</button>
+
+      <div class="sidebarGroupLabel">পেজ কনটেন্ট</div>
+      <button type="button" class="navItem" data-panel="hero"><i class="fa-solid fa-house" aria-hidden="true"></i> হিরো সেকশন</button>
+      <button type="button" class="navItem" data-panel="about"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> আমরা কারা</button>
+      <button type="button" class="navItem" data-panel="impact"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i> ইমপ্যাক্ট / CTA</button>
+      <button type="button" class="navItem" data-panel="steps"><i class="fa-solid fa-list-ol" aria-hidden="true"></i> ধাপসমূহ</button>
+      <button type="button" class="navItem" data-panel="layout"><i class="fa-solid fa-sort" aria-hidden="true"></i> পেজ ও সেকশন ক্রম</button>
+
+      <div class="sidebarGroupLabel">তথ্য ব্যবস্থাপনা</div>
+      <button type="button" class="navItem" data-panel="news"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> সংবাদ <span class="navBadge" id="navBadgeNews">0</span></button>
+      <button type="button" class="navItem" data-panel="hospitals"><i class="fa-solid fa-hospital" aria-hidden="true"></i> হাসপাতাল <span class="navBadge" id="navBadgeHospitals">0</span></button>
+      <button type="button" class="navItem" data-panel="team"><i class="fa-solid fa-users" aria-hidden="true"></i> টিম <span class="navBadge" id="navBadgeTeam">0</span></button>
+      <button type="button" class="navItem" data-panel="faq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> FAQ <span class="navBadge" id="navBadgeFaq">0</span></button>
+      <button type="button" class="navItem" data-panel="partners"><i class="fa-solid fa-handshake" aria-hidden="true"></i> সহযোগী <span class="navBadge" id="navBadgePartners">0</span></button>
+      <button type="button" class="navItem" data-panel="sponsors"><i class="fa-solid fa-award" aria-hidden="true"></i> স্পনসর <span class="navBadge" id="navBadgeSponsors">0</span></button>
+      <button type="button" class="navItem" data-panel="donations"><i class="fa-solid fa-hand-holding-droplet" aria-hidden="true"></i> ডোনেশন রেকর্ড <span class="navBadge" id="navBadgeDonations">0</span></button>
+      <button type="button" class="navItem" data-panel="gallery"><i class="fa-solid fa-image" aria-hidden="true"></i> গ্যালারি <span class="navBadge" id="navBadgeGallery">0</span></button>
+      <button type="button" class="navItem" data-panel="calling-card"><i class="fa-solid fa-id-card" aria-hidden="true"></i> কলিং কার্ড</button>
+
+      <div class="sidebarGroupLabel">সেটিংস</div>
+      <button type="button" class="navItem" data-panel="settings"><i class="fa-solid fa-gear" aria-hidden="true"></i> সাইট সেটিংস</button>
+    </nav>
+    <div class="sidebarFoot">
+      <a class="navItem" href="https://ourbnb.org/" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> পাবলিক সাইট দেখুন</a>
+      <button type="button" class="navItem" id="logoutBtn"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> লগআউট</button>
+    </div>
+  </aside>
+
+  <div class="mainArea">
+    <header class="topbar">
+      <button type="button" id="menuToggle"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+      <div>
+        <div class="topbarTitle" id="topbarTitle">ড্যাশবোর্ড</div>
+        <div class="topbarSub" id="topbarSub">সাইটের সার্বিক অবস্থা এক নজরে</div>
+      </div>
+      <div class="topbarRight">
+        <span class="livePill" title="এই মুহূর্তে সাইটে যারা আছে"><span class="liveDot"></span><b id="liveNowTop">0</b> <span class="t">লাইভ</span></span>
+        <a class="topbarLink" href="https://ourbnb.org/" target="_blank" rel="noopener"><i class="fa-solid fa-globe" aria-hidden="true"></i> Live Site</a>
+        <div class="adminAvatar" id="adminAvatar">A</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="panel active" data-panel="dashboard">
+        <div class="dashHero">
+          <div style="position:relative;z-index:1">
+            <h2>স্বাগতম, অ্যাডমিন 👋</h2>
+            <p>ওয়েবসাইটের কনটেন্ট, ডোনেশন রেকর্ড, টিম ও সব তথ্য এক জায়গা থেকে পরিচালনা করুন।</p>
+          </div>
+          <div class="heroBtns">
+            <button type="button" class="heroBtn solid" id="heroAddDonor"><i class="fa-solid fa-user-plus"></i> নতুন ডোনার যোগ করুন</button>
+            <button type="button" class="heroBtn" id="heroViewDonations"><i class="fa-solid fa-list-ul"></i> ডোনেশন দেখুন</button>
+          </div>
+        </div>
+        <div class="statGrid">
+          <div class="statCard">
+            <div class="icon" style="background:var(--crimson-tint); color:var(--crimson);"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+            <div class="num" id="statTotalDonors">—</div>
+            <div class="lbl">মোট নিবন্ধিত রক্তদাতা</div>
+          </div>
+          <div class="statCard">
+            <div class="icon" style="background:var(--sage-tint); color:var(--sage);"><i class="fa-solid fa-hand-holding-droplet" aria-hidden="true"></i></div>
+            <div class="num" id="statTotalDonations">—</div>
+            <div class="lbl">ডোনেশন রেকর্ড</div>
+          </div>
+          <div class="statCard">
+            <div class="icon" style="background:var(--amber-tint); color:var(--amber);"><i class="fa-solid fa-eye" aria-hidden="true"></i></div>
+            <div class="num" id="statVisitors">—</div>
+            <div class="lbl">মোট ভিজিটর</div>
+          </div>
+          <div class="statCard">
+            <div class="icon" style="background:var(--crimson-tint); color:var(--crimson);"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
+            <div class="num" id="statTeamCount">—</div>
+            <div class="lbl">টিম সদস্য</div>
+          </div>
+          <div class="statCard">
+            <div class="icon" style="background:var(--sage-tint); color:var(--sage);"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
+            <div class="num" id="statAppInstalls">—</div>
+            <div class="lbl">অ্যাপ ইনস্টল (ডিভাইস)</div>
+          </div>
+        </div>
+        <div class="card chartCard" style="margin-bottom:18px;">
+          <div class="chartHead">
+            <div><h3><i class="fa-solid fa-eye"></i> ওয়েবসাইট ভিউ</h3><small>প্রতিদিনের মোট ভিউ (বাংলাদেশ সময় অনুযায়ী) — লাইভ আপডেট হয়</small></div>
+            <div class="viewsRange"><button type="button" class="chip" data-views-range="7">৭ দিন</button><button type="button" class="chip on" data-views-range="30">৩০ দিন</button><button type="button" class="chip" data-views-range="365">১ বছর</button><button type="button" class="chip" data-views-range="1825">৫ বছর</button></div>
+          </div>
+          <div class="viewsStats">
+            <div class="vStat live"><span class="liveDot"></span><div><b id="liveNowNum">0</b><span class="l">এখন লাইভ দেখছে</span></div></div>
+            <div class="vStat"><div><b id="viewsTotalNum">—</b><span class="l">মোট ভিউ</span></div></div>
+            <div class="vStat"><div><b id="viewsTodayNum">—</b><span class="l">আজকের ভিউ</span></div></div>
+            <div class="vStat"><div><b id="viewsRangeNum">—</b><span class="l" id="viewsRangeLbl">শেষ ৩০ দিনে</span></div></div>
+          </div>
+          <div class="chartBox" id="chViews"></div>
+        </div>
+        <div class="chartGrid">
+          <div class="card chartCard">
+            <div class="chartHead"><div><h3><i class="fa-solid fa-chart-line"></i> মাসিক রক্তদান ট্রেন্ড</h3><small>শেষ ১২ মাসের রক্তদান রেকর্ড</small></div><span class="chartTag" id="chTrendTag">—</span></div>
+            <div class="chartBox" id="chTrend"></div>
+          </div>
+          <div class="card chartCard">
+            <div class="chartHead"><div><h3><i class="fa-solid fa-droplet"></i> রক্তের গ্রুপ বিন্যাস</h3><small>রেকর্ড অনুযায়ী বণ্টন</small></div></div>
+            <div class="donutWrap" id="chGroups"></div>
+          </div>
+        </div>
+        <div class="chartGrid three">
+          <div class="card chartCard">
+            <div class="chartHead"><div><h3><i class="fa-solid fa-hospital"></i> শীর্ষ হাসপাতাল / স্থান</h3><small>সবচেয়ে বেশি রক্তদান হয়েছে যেখানে</small></div></div>
+            <div class="hBar" id="chHospitals"></div>
+          </div>
+          <div class="card chartCard">
+            <div class="chartHead"><div><h3><i class="fa-solid fa-clock-rotate-left"></i> সাম্প্রতিক রক্তদান</h3><small>সর্বশেষ ৬টি রেকর্ড</small></div><button type="button" class="btn small" id="recentViewAll">সব দেখুন</button></div>
+            <div class="recentList" id="chRecent"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-list-check" aria-hidden="true"></i> কনটেন্ট সারাংশ</h3>
+          <div class="quickList">
+            <div class="quickRow"><span class="dot"></span> <b id="qlNews">0টি</b> সংবাদ প্রকাশিত আছে</div>
+            <div class="quickRow"><span class="dot"></span> <b id="qlFaq">0টি</b> FAQ প্রশ্ন প্রকাশিত আছে</div>
+            <div class="quickRow"><span class="dot"></span> <b id="qlPartners">0টি</b> সহযোগী প্রতিষ্ঠান তালিকাভুক্ত</div>
+            <div class="quickRow"><span class="dot"></span> <b id="qlSponsors">0টি</b> স্পনসর তালিকাভুক্ত</div>
+            <div class="quickRow"><span class="dot"></span> <b id="qlLikes">0</b> মোট লাইক (সব সংবাদ মিলিয়ে, লাইভ)</div>
+            <div class="quickRow"><span class="dot"></span> <b id="qlGallery">0টি</b> ছবি গ্যালারিতে আছে</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ NOTICE ============ -->
+      <section class="panel" data-panel="notice">
+        <div class="panelHead">
+          <div><h2>জরুরি নোটিশ</h2><p>এখানে লেখা টেক্সটটি সক্রিয় থাকলে ওয়েবসাইটের হেডার সেকশনের একদম উপরে একটি লাইনে ডান থেকে বামে স্ক্রল হয়ে দেখাবে।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> নোটিশ টেক্সট</h3>
+          <form class="formGrid single" data-scalar-form>
+            <div class="field span2">
+              <label class="noticeActiveLabel">
+                <input type="checkbox" class="noticeActiveCheckbox" data-key="importantNoticeActive">
+                <span>নোটিশ সক্রিয় (Active) — চেক করা থাকলেই এটি ওয়েবসাইটে দেখাবে</span>
+              </label>
+            </div>
+            <div class="field span2"><label>নোটিশের লেখা</label><textarea class="textArea" data-key="importantNotice" rows="2" placeholder="যেমন: আগামী ১৫ তারিখ বিশেষ রক্তদান ক্যাম্প অনুষ্ঠিত হবে — সবাইকে অংশগ্রহণের অনুরোধ করা হচ্ছে।"></textarea></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ HERO ============ -->
+      <section class="panel" data-panel="hero">
+        <div class="panelHead">
+          <div><h2>হিরো সেকশন</h2><p>ওয়েবসাইটের একদম শুরুর অংশ — বড় শিরোনাম, সাব-টেক্সট ও ব্যাকগ্রাউন্ড ছবি।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-image" aria-hidden="true"></i> ব্যাকগ্রাউন্ড ছবি</h3>
+          <div class="imgUpload">
+            <div class="imgUploadPreview" id="prev_heroBackgroundImage"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+            <div class="imgUploadBtns">
+              <button type="button" class="btn small" data-imgpick="heroBackgroundImage"><i class="fa-solid fa-upload" aria-hidden="true"></i> ছবি আপলোড</button>
+              <button type="button" class="btn small danger" data-imgclear="heroBackgroundImage"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-font" aria-hidden="true"></i> টেক্সট</h3>
+          <form class="formGrid single" data-scalar-form>
+            <div class="field span2"><label>প্রধান শিরোনাম</label><textarea class="textArea" data-key="heroTitle" rows="2"></textarea></div>
+            <div class="field span2"><label>সাব-টেক্সট</label><textarea class="textArea" data-key="heroSubtitle" rows="3"></textarea></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ ABOUT ============ -->
+      <section class="panel" data-panel="about">
+        <div class="panelHead">
+          <div><h2>আমরা কারা</h2><p>প্ল্যাটফর্ম সম্পর্কে সংক্ষিপ্ত পরিচিতি ও তিনটি ফিচার হাইলাইট।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-image" aria-hidden="true"></i> ছবি</h3>
+          <div class="imgUpload">
+            <div class="imgUploadPreview" id="prev_aboutImage"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+            <div class="imgUploadBtns">
+              <button type="button" class="btn small" data-imgpick="aboutImage"><i class="fa-solid fa-upload" aria-hidden="true"></i> ছবি আপলোড</button>
+              <button type="button" class="btn small danger" data-imgclear="aboutImage"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-font" aria-hidden="true"></i> মূল টেক্সট</h3>
+          <form class="formGrid single" data-scalar-form>
+            <div class="field span2"><label>শিরোনাম</label><input type="text" class="textInput" data-key="aboutTitle"></div>
+            <div class="field span2"><label>বিবরণ</label><textarea class="textArea" data-key="aboutText" rows="4"></textarea></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-star" aria-hidden="true"></i> তিনটি ফিচার হাইলাইট</h3>
+          <form class="formGrid" data-scalar-form>
+            <div class="field"><label>ফিচার ১ — শিরোনাম</label><input type="text" class="textInput" data-key="feature1Title"></div>
+            <div class="field"><label>ফিচার ১ — বিবরণ</label><input type="text" class="textInput" data-key="feature1Text"></div>
+            <div class="field"><label>ফিচার ২ — শিরোনাম</label><input type="text" class="textInput" data-key="feature2Title"></div>
+            <div class="field"><label>ফিচার ২ — বিবরণ</label><input type="text" class="textInput" data-key="feature2Text"></div>
+            <div class="field"><label>ফিচার ৩ — শিরোনাম</label><input type="text" class="textInput" data-key="feature3Title"></div>
+            <div class="field"><label>ফিচার ৩ — বিবরণ</label><input type="text" class="textInput" data-key="feature3Text"></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ IMPACT / CTA ============ -->
+      <section class="panel" data-panel="impact">
+        <div class="panelHead">
+          <div><h2>ইমপ্যাক্ট / CTA ব্যান্ড</h2><p>রক্তদাতা হওয়ার আহ্বান জানানো ব্যান্ড সেকশন।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-image" aria-hidden="true"></i> ব্যাকগ্রাউন্ড ছবি</h3>
+          <div class="imgUpload">
+            <div class="imgUploadPreview" id="prev_impactImage"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+            <div class="imgUploadBtns">
+              <button type="button" class="btn small" data-imgpick="impactImage"><i class="fa-solid fa-upload" aria-hidden="true"></i> ছবি আপলোড</button>
+              <button type="button" class="btn small danger" data-imgclear="impactImage"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-font" aria-hidden="true"></i> শিরোনাম</h3>
+          <form class="formGrid single" data-scalar-form>
+            <div class="field span2"><label>CTA শিরোনাম</label><textarea class="textArea" data-key="ctaHeading" rows="2"></textarea></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ STEPS ============ -->
+      <section class="panel" data-panel="steps">
+        <div class="panelHead">
+          <div><h2>ধাপসমূহ</h2><p>রক্তদাতা খোঁজার ও রক্তদান করার ধাপ-ভিত্তিক নির্দেশনা।</p></div>
+        </div>
+        <div class="stepsCols">
+          <div class="card">
+            <div class="stepColHead">
+              <h4><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> রক্তদাতা খুঁজছেন যারা</h4>
+              <button type="button" class="btn small primary" data-add-item="stepRecipient"><i class="fa-solid fa-plus" aria-hidden="true"></i> যোগ করুন</button>
+            </div>
+            <div id="listStepRecipient"></div>
+          </div>
+          <div class="card">
+            <div class="stepColHead">
+              <h4><i class="fa-solid fa-hand-fist" aria-hidden="true"></i> রক্তদাতা হতে চান যারা</h4>
+              <button type="button" class="btn small primary" data-add-item="stepDonor"><i class="fa-solid fa-plus" aria-hidden="true"></i> যোগ করুন</button>
+            </div>
+            <div id="listStepDonor"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ NEWS / BLOG ============ -->
+      <section class="panel" data-panel="news">
+        <div class="panelHead">
+          <div><h2>সংবাদ</h2><p>গত মাসের কার্যক্রম, ডোনেশন হিস্ট্রি (রিপোর্টের ছবি সহ), স্বাস্থ্য টিপস ও ঘোষণা — নতুনটি সবার আগে দেখা যাবে।</p></div>
+          <button type="button" class="btn primary" data-add-item="news"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন সংবাদ যোগ করুন</button>
+        </div>
+        <div id="listNews" class="partnerGrid"></div>
+      </section>
+
+      <!-- ============ HOSPITALS / BLOOD BANKS ============ -->
+      <section class="panel" data-panel="hospitals">
+        <div class="panelHead">
+          <div><h2>হাসপাতাল ও ব্লাড ব্যাংক</h2><p>নিকটস্থ হাসপাতাল ও ব্লাড ব্যাংকের তালিকা, ফোন নম্বরসহ — হোমপেজে দেখানো হবে।</p></div>
+          <button type="button" class="btn primary" data-add-item="hospital"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন যোগ করুন</button>
+        </div>
+        <div id="listHospitals"></div>
+      </section>
+
+      <!-- ============ TEAM ============ -->
+      <section class="panel" data-panel="team">
+        <div class="panelHead">
+          <div><h2>টিম সদস্য</h2><p>ওয়েবসাইটে প্রদর্শিত টিম সদস্যদের তালিকা।</p></div>
+          <button type="button" class="btn primary" data-add-item="team"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন সদস্য যোগ করুন</button>
+        </div>
+        <div id="listTeam"></div>
+      </section>
+
+      <!-- ============ FAQ ============ -->
+      <section class="panel" data-panel="faq">
+        <div class="panelHead">
+          <div><h2>প্রায়শই জিজ্ঞাসিত প্রশ্ন</h2><p>ভিজিটরদের সাধারণ প্রশ্ন ও উত্তর।</p></div>
+          <button type="button" class="btn primary" data-add-item="faq"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন প্রশ্ন যোগ করুন</button>
+        </div>
+        <div id="listFaq"></div>
+      </section>
+
+      <!-- ============ PARTNERS ============ -->
+      <section class="panel" data-panel="partners">
+        <div class="panelHead">
+          <div><h2>সহযোগী প্রতিষ্ঠান</h2><p>পার্টনার প্রতিষ্ঠানের লোগো ও নাম।</p></div>
+          <button type="button" class="btn primary" data-add-item="partner"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন সহযোগী যোগ করুন</button>
+        </div>
+        <div id="listPartners" class="partnerGrid"></div>
+      </section>
+
+      <!-- ============ LAYOUT / ORDER ============ -->
+      <section class="panel" data-panel="layout">
+        <div class="panelHead">
+          <div><h2>পেজ ও সেকশন ক্রম</h2><p>কোনটির পর কোনটি থাকবে — উপরে/নিচে তীর দিয়ে সরান, সুইচ দিয়ে দেখান বা লুকান। প্রতিটি পরিবর্তন সঙ্গে সঙ্গে সেভ হয়ে পাবলিক সাইটে চলে যায়।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-bars" aria-hidden="true"></i> মেনু / পেজের ক্রম</h3>
+          <p class="cardNote">ওয়েবসাইটের উপরের মেনু, মোবাইল মেনু ও ফুটারের লিংক — সবখানে এই ক্রম কাজ করবে। লুকানো পেজ মেনুতে দেখাবে না (সরাসরি লিংকে খোলা যাবে)।</p>
+          <div class="orderList" id="listNavOrder"></div>
+          <div class="saveBar"><button type="button" class="btn" data-order-reset="navOrder"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> ডিফল্ট ক্রমে ফিরুন</button></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-house" aria-hidden="true"></i> হোম পেজের সেকশন ক্রম</h3>
+          <p class="cardNote">হোম পেজে সেকশনগুলো যে ক্রমে দেখাবে। স্পনসর সেকশনও এখানে সরানো যায়। সবার শেষে রাখলে ফুটারের ঠিক উপরে সব পেজেই দেখাবে; মাঝে সরালে শুধু হোম পেজের সেই জায়গায় দেখাবে।</p>
+          <div class="orderList" id="listHomeOrder"></div>
+          <div class="saveBar"><button type="button" class="btn" data-order-reset="homeOrder"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> ডিফল্ট ক্রমে ফিরুন</button></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-heading" aria-hidden="true"></i> সেকশনের শিরোনাম ও ছোট বর্ণনা</h3>
+          <p class="cardNote">হোম পেজের প্রতিটি সেকশনের শিরোনাম ও নিচের ছোট বর্ণনা এখান থেকে বদলান। বর্ণনা ফাঁকা রাখলে সেটি দেখাবে না।</p>
+          <form class="formGrid" data-scalar-form>
+            <div class="field"><label>সাম্প্রতিক রক্তদান — শিরোনাম</label><input type="text" class="textInput" data-key="secTitle_gallery"></div>
+            <div class="field"><label>সাম্প্রতিক রক্তদান — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="secSub_gallery"></div>
+            <div class="field"><label>আমরা কারা — শিরোনাম</label><input type="text" class="textInput" data-key="aboutTitle"></div>
+            <div class="field"><label>আমরা কারা — ছোট বর্ণনা</label><textarea class="textArea" data-key="aboutText" rows="2"></textarea></div>
+            <div class="field"><label>আমরা যা নিশ্চিত করি — শিরোনাম</label><input type="text" class="textInput" data-key="secTitle_features"></div>
+            <div class="field"><label>আমরা যা নিশ্চিত করি — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="secSub_features"></div>
+            <div class="field"><label>আমাদের টিম — শিরোনাম</label><input type="text" class="textInput" data-key="secTitle_team"></div>
+            <div class="field"><label>আমাদের টিম — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="secSub_team"></div>
+            <div class="field"><label>প্রশ্ন ও উত্তর — শিরোনাম</label><input type="text" class="textInput" data-key="secTitle_faq"></div>
+            <div class="field"><label>প্রশ্ন ও উত্তর — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="secSub_faq"></div>
+            <div class="field"><label>সহযোগী প্রতিষ্ঠান — শিরোনাম</label><input type="text" class="textInput" data-key="secTitle_partners"></div>
+            <div class="field"><label>সহযোগী প্রতিষ্ঠান — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="secSub_partners"></div>
+            <div class="field"><label>স্পনসর — শিরোনাম</label><input type="text" class="textInput" data-key="sponsorHeading"></div>
+            <div class="field"><label>স্পনসর — ছোট বর্ণনা</label><input type="text" class="textInput" data-key="sponsorSubtitle"></div>
+            <div class="field"><label>CTA (আহ্বান) — শিরোনাম</label><input type="text" class="textInput" data-key="ctaHeading"></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ SPONSORS ============ -->
+      <section class="panel" data-panel="sponsors">
+        <div class="panelHead">
+          <div><h2>স্পনসর</h2><p>স্পনসরদের লোগো, নাম, ক্যাটাগরি ও ওয়েবসাইট লিংক। পাবলিক সাইটে সবার নিচে ক্যাটাগরি অনুযায়ী (প্রধান → গোল্ড → সিলভার → সহায়ক) দেখানো হবে।</p></div>
+          <button type="button" class="btn primary" data-add-item="sponsor"><i class="fa-solid fa-plus" aria-hidden="true"></i> নতুন স্পনসর যোগ করুন</button>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-heading" aria-hidden="true"></i> সেকশনের শিরোনাম</h3>
+          <form class="formGrid" data-scalar-form>
+            <div class="field"><label>শিরোনাম</label><input type="text" class="textInput" data-key="sponsorHeading"></div>
+            <div class="field"><label>ছোট বর্ণনা</label><input type="text" class="textInput" data-key="sponsorSubtitle"></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+        <div id="listSponsors" class="partnerGrid"></div>
+      </section>
+
+      <!-- ============ DONATION RECORDS ============ -->
+      <section class="panel" data-panel="donations">
+        <div class="panelHead">
+          <div><h2>ডোনেশন রেকর্ড</h2><p>ডোনেশন নাম্বার দিয়ে সার্চযোগ্য রেকর্ড — নাম, রক্তের গ্রুপ, হাসপাতাল ইত্যাদি।</p></div>
+          <button type="button" class="btn primary" data-add-item="donationRecord"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> নতুন ডোনার / রেকর্ড যোগ করুন</button>
+        </div>
+        <div class="donSummary" id="donSummary"></div>
+        <div class="chipRow" id="donChips"></div>
+        <div class="tableToolbar">
+          <div class="searchBox"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="text" id="donationSearchBox" placeholder="নাম, নাম্বার বা হাসপাতাল দিয়ে খুঁজুন…"></div>
+        </div>
+        <div id="listDonations"></div>
+      </section>
+
+      <!-- ============ GALLERY ============ -->
+      <section class="panel" data-panel="gallery">
+        <div class="panelHead">
+          <div><h2>গ্যালারি</h2><p>হোমপেজের ডোনেশন ছবির গ্যালারি (সাম্প্রতিকতম ছবি সবার আগে দেখা যায়) — একসাথে যত খুশি তত ছবি আপলোড করা যাবে, কোনো লিমিট নেই।</p></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn" id="galleryBulkUploadBtn"><i class="fa-solid fa-images" aria-hidden="true"></i> একসাথে একাধিক ছবি আপলোড</button>
+            <button type="button" class="btn primary" data-add-item="galleryPhoto"><i class="fa-solid fa-plus" aria-hidden="true"></i> একটি ছবি যোগ করুন</button>
+          </div>
+        </div>
+        <div id="galleryUploadProgress" style="display:none; margin-bottom:14px; font-size:12.5px; color:var(--muted); font-weight:600;"></div>
+        <div id="listGallery" class="partnerGrid"></div>
+      </section>
+
+      <!-- ============ CALLING CARD ============ -->
+      <section class="panel" data-panel="calling-card">
+        <div class="panelHead">
+          <div><h2>কলিং কার্ড</h2><p>হেডার ও ফ্লোটিং কল বাটনে দেখানো জরুরি যোগাযোগ নাম্বার — প্রতিটির জন্য একটি ছবি আপলোড করুন, সাইটে কেউ এই নাম্বারে ক্লিক করলে ছবিটি ফুল-স্ক্রিন কলিং কার্ডের ব্যাকগ্রাউন্ড হিসেবে দেখানো হবে (ফোনের ইনকামিং কল স্ক্রিনের মতো)।</p></div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-id-card" aria-hidden="true"></i> যোগাযোগ নাম্বারসমূহ</h3>
+          <form class="ccForm" data-scalar-form>
+
+            <div class="ccContact">
+              <div class="ccContactHead"><span class="ccBadge">১</span> যোগাযোগ নাম্বার ১</div>
+              <div class="ccContactBody">
+                <div class="ccPhoto">
+                  <div class="imgUploadPreview" id="prev_contactPhoto1"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+                  <div class="imgUploadBtns">
+                    <button type="button" class="btn small" data-imgpick="contactPhoto1"><i class="fa-solid fa-upload" aria-hidden="true"></i> আপলোড</button>
+                    <button type="button" class="btn small danger" data-imgclear="contactPhoto1"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+                  </div>
+                </div>
+                <div class="ccFields">
+                  <div class="field"><label>নাম</label><input type="text" class="textInput" data-key="contactName1"></div>
+                  <div class="field"><label>ফোন নাম্বার</label><input type="text" class="textInput" data-key="contactPhone1"></div>
+                  <div class="field"><label>WhatsApp নাম্বার</label><input type="text" class="textInput" data-key="contactWhatsapp1"></div>
+                  <div class="field"><label>Messenger লিংক</label><input type="text" class="textInput" data-key="contactMessenger1"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ccContact">
+              <div class="ccContactHead"><span class="ccBadge">২</span> যোগাযোগ নাম্বার ২</div>
+              <div class="ccContactBody">
+                <div class="ccPhoto">
+                  <div class="imgUploadPreview" id="prev_contactPhoto2"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+                  <div class="imgUploadBtns">
+                    <button type="button" class="btn small" data-imgpick="contactPhoto2"><i class="fa-solid fa-upload" aria-hidden="true"></i> আপলোড</button>
+                    <button type="button" class="btn small danger" data-imgclear="contactPhoto2"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+                  </div>
+                </div>
+                <div class="ccFields">
+                  <div class="field"><label>নাম</label><input type="text" class="textInput" data-key="contactName2"></div>
+                  <div class="field"><label>ফোন নাম্বার</label><input type="text" class="textInput" data-key="contactPhone2"></div>
+                  <div class="field"><label>WhatsApp নাম্বার</label><input type="text" class="textInput" data-key="contactWhatsapp2"></div>
+                  <div class="field"><label>Messenger লিংক</label><input type="text" class="textInput" data-key="contactMessenger2"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ccContact">
+              <div class="ccContactHead"><span class="ccBadge">৩</span> যোগাযোগ নাম্বার ৩</div>
+              <div class="ccContactBody">
+                <div class="ccPhoto">
+                  <div class="imgUploadPreview" id="prev_contactPhoto3"><i class="fa-solid fa-image" aria-hidden="true"></i></div>
+                  <div class="imgUploadBtns">
+                    <button type="button" class="btn small" data-imgpick="contactPhoto3"><i class="fa-solid fa-upload" aria-hidden="true"></i> আপলোড</button>
+                    <button type="button" class="btn small danger" data-imgclear="contactPhoto3"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+                  </div>
+                </div>
+                <div class="ccFields">
+                  <div class="field"><label>নাম</label><input type="text" class="textInput" data-key="contactName3"></div>
+                  <div class="field"><label>ফোন নাম্বার</label><input type="text" class="textInput" data-key="contactPhone3"></div>
+                  <div class="field"><label>WhatsApp নাম্বার</label><input type="text" class="textInput" data-key="contactWhatsapp3"></div>
+                  <div class="field"><label>Messenger লিংক</label><input type="text" class="textInput" data-key="contactMessenger3"></div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="panel" data-panel="settings">
+        <div class="panelHead">
+          <div><h2>সাইট সেটিংস</h2><p>সাইটের নাম, ভার্সন ও ফুটার তথ্য।</p></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-signature" aria-hidden="true"></i> সাইট পরিচিতি</h3>
+          <form class="formGrid" data-scalar-form>
+            <div class="field"><label>সাইটের নাম</label><input type="text" class="textInput" data-key="siteName"></div>
+            <div class="field"><label>ভার্সন</label><input type="text" class="textInput" data-key="siteVersion"></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ফুটার তথ্য</h3>
+          <form class="formGrid" data-scalar-form>
+            <div class="field"><label>ইমেইল</label><input type="text" class="textInput" data-key="contactEmail"></div>
+            <div class="field"><label>ঠিকানা</label><input type="text" class="textInput" data-key="contactAddress"></div>
+            <div class="field"><label>ফেসবুক</label><input type="text" class="textInput" data-key="footerFacebook"></div>
+            <div class="field"></div>
+            <div class="field"><label>ডেভেলপার নাম ১</label><input type="text" class="textInput" data-key="footerDevName1"></div>
+            <div class="field"><label>ডেভেলপার নাম ২</label><input type="text" class="textInput" data-key="footerDevName2"></div>
+          </form>
+          <div class="saveBar"><span class="savedNote">সংরক্ষণ হয়েছে ✓</span><button type="button" class="btn primary" data-save-scalar><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- generic item add/edit modal -->
+<div class="modalOverlay" id="itemModalOverlay">
+  <div class="modalBox">
+    <div class="modalBoxHead">
+      <h3 id="itemModalTitle">যোগ করুন</h3>
+      <button type="button" id="itemModalCloseBtn"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modalBoxBody" id="itemModalBody"></div>
+    <div class="modalBoxFoot">
+      <button type="button" class="btn danger" id="itemModalDeleteBtn" style="display:none; margin-right:auto;"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>
+      <button type="button" class="btn" id="itemModalCancelBtn">বাতিল</button>
+      <button type="button" class="btn primary" id="itemModalSaveBtn"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> সংরক্ষণ করুন</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="hiddenFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+<input type="file" id="galleryBulkFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none;">
+
+<div class="modalOverlay" id="cropModalOverlay">
+  <div class="modalBox cropModalBox">
+    <div class="modalBoxHead">
+      <h3 id="cropModalTitle">ছবি ক্রপ করুন</h3>
+      <button type="button" id="cropModalCloseBtn"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modalBoxBody">
+      <span class="cropRatioTag" id="cropRatioTag"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i> <span></span></span>
+      <div class="cropRatioPicker" id="cropRatioPicker">
+        <button type="button" class="cropRatioBtn" data-r="1:1"><span class="rIcon"></span>১:১</button>
+        <button type="button" class="cropRatioBtn" data-r="9:16"><span class="rIcon"></span>৯:১৬</button>
+        <button type="button" class="cropRatioBtn" data-r="16:9"><span class="rIcon"></span>১৬:৯</button>
+      </div>
+      <p class="cropHint">ছবির উপর বক্সটি টেনে (ড্র্যাগ করে) সরান, কোণা ধরে টেনে ছোট-বড় করুন — নির্বাচিত অংশটুকুই নির্বাচিত অনুপাতে (১:১, ৯:১৬ বা ১৬:৯) ক্রপ হবে।</p>
+      <div class="cropStage" id="cropStage">
+        <img id="cropImage" alt="">
+        <div class="cropSelection" id="cropSelection">
+          <div class="cropGrid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="cropHandle tl" data-h="tl"></div>
+          <div class="cropHandle tr" data-h="tr"></div>
+          <div class="cropHandle bl" data-h="bl"></div>
+          <div class="cropHandle br" data-h="br"></div>
+        </div>
+      </div>
+      <div class="cropPreviewRow">
+        <canvas id="cropPreviewCanvas" aria-label="ক্রপের লাইভ প্রিভিউ"></canvas>
+        <div class="cropInfo" id="cropInfo"></div>
+      </div>
+    </div>
+    <div class="modalBoxFoot">
+      <button type="button" class="btn" id="cropCancelBtn">বাতিল</button>
+      <button type="button" class="btn primary" id="cropConfirmBtn"><i class="fa-solid fa-check" aria-hidden="true"></i> <span>ক্রপ করে আপলোড করুন</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   FIREBASE INIT (same project/database as the public site)
+   ============================================================ */
+const _cfgB64 = "eyJhcGlLZXkiOiJBSXphU3lDSDVvSEZ6dUM2cWJBalY3Y2dIV1FvcEh0R0ExODBqaVUiLCJhdXRoRG9tYWluIjoiYmxvb2QtbmV0d29yay1hODUxYi5maXJlYmFzZWFwcC5jb20iLCJkYXRhYmFzZVVSTCI6Imh0dHBzOi8vYmxvb2QtbmV0d29yay1hODUxYi1kZWZhdWx0LXJ0ZGIuYXNpYS1zb3V0aGVhc3QxLmZpcmViYXNlZGF0YWJhc2UuYXBwIiwicHJvamVjdElkIjoiYmxvb2QtbmV0d29yay1hODUxYiIsInN0b3JhZ2VCdWNrZXQiOiJibG9vZC1uZXR3b3JrLWE4NTFiLmZpcmViYXNlc3RvcmFnZS5hcHAiLCJtZXNzYWdpbmdTZW5kZXJJZCI6IjcxMzA1ODg2ODQyNCIsImFwcElkIjoiMTo3MTMwNTg4Njg0MjQ6d2ViOjU5OTQ0MWM5NTQ0OTBjYTVjYjE5ZmQiLCJtZWFzdXJlbWVudElkIjoiRy1TTDE2VEJKMkZRIn0=";
+const firebaseConfig = JSON.parse(atob(_cfgB64));
+let firebaseAvailable = false;
+let db, auth, donorsRef, appConfigRef, landingPageRef, visitorRef;
+
+/* Every image (hero, about, impact, team photos, donation photos) is
+   uploaded to Google Drive through a small Apps Script Web App —
+   Firebase only ever stores the returned Drive URL as plain text. */
+const DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbwY4KBfermnTNqa_4Z_HNFp0SK2Jf81a2pXwRNINLP-tfVpkxi0wxo04XIBoVKdtkA-dw/exec";
+/* The Apps Script verifies this Firebase ID token, so only a logged-in
+   admin can upload (see apps-script/Code.gs). */
+function getAdminIdToken() {
+  if (!auth || !auth.currentUser) return Promise.resolve("");
+  return auth.currentUser.getIdToken().catch(() => "");
+}
+function postToDriveUploader(payload) {
+  if (!DRIVE_UPLOAD_URL || DRIVE_UPLOAD_URL.indexOf("PASTE_YOUR") === 0) {
+    return Promise.reject(new Error("Drive upload URL not configured"));
+  }
+  return getAdminIdToken().then(idToken => fetch(DRIVE_UPLOAD_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ idToken: idToken }, payload))
+  }))
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.ok || !data.url) throw new Error((data && data.error) || "Invalid response from Drive uploader");
+      return data;
+    });
+}
+function uploadImageToDrive(base64DataUrl, fileName) {
+  return postToDriveUploader({ kind: "image", image: base64DataUrl, name: fileName }).then(data => data.url);
+}
+function readAndResizeImageFile(file, maxDim) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Could not decode image"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { reject(new Error("Canvas not supported")); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ============================================================
+   IMAGE CROPPER — every image field has its own target
+   width:height ratio; the file picked by the user is always
+   cropped to that exact ratio (and output size) before upload.
+   ============================================================ */
+/* ------------------------------------------------------------------
+   CENTRAL IMAGE / PDF CONFIG — the only place to change a field's crop
+   ratio, output size, or the upload limits.
+   displayW x displayH = the size (CSS px) the image is actually shown at
+   on the public site (its largest use). The crop ratio is displayW:displayH
+   and the exported file is displayW*scale x displayH*scale px (scale 2-3 =
+   sharp on retina screens). shape only changes the live-preview mask.
+   Field keys: scalar fields use their own key; fields inside the item
+   modal use "<schema>.<field>" (e.g. "team.photo").
+   ------------------------------------------------------------------ */
+const IMAGE_UPLOAD_RULES = {
+  allowedTypes: ["image/jpeg", "image/png", "image/webp"],
+  allowedExt: ["jpg", "jpeg", "png", "webp"],
+  maxBytes: 10 * 1024 * 1024,   // 10 MB (the original file, before cropping)
+  jpegQuality: 0.9
+};
+const MAX_REPORT_IMAGES = 6;   // সংবাদ প্রতি রিপোর্টের ছবির সর্বোচ্চ সংখ্যা
+const IMAGE_CROP_CONFIG = {
+  heroBackgroundImage:  { displayW: 960,  displayH: 540, scale: 2, shape: "rect",    label: "হিরো ব্যাকগ্রাউন্ড", note: "ফুল-উইডথ ব্যাকগ্রাউন্ড — ছোট স্ক্রিনে দুই পাশ কাটা পড়তে পারে" },
+  aboutImage:           { displayW: 320,  displayH: 320, scale: 2, shape: "rect",    label: "আমরা কারা ছবি" },
+  impactImage:          { displayW: 1120, displayH: 250, scale: 2, shape: "rect",    label: "ইমপ্যাক্ট / CTA ব্যান্ড", note: "চওড়া ব্যান্ড — মোবাইলে দুই পাশ কাটা পড়ে, গুরুত্বপূর্ণ অংশ মাঝখানে রাখুন" },
+  contactPhoto1:        { displayW: 76,   displayH: 76,  scale: 3, shape: "rounded", label: "কলিং কার্ড ছবি ১" },
+  contactPhoto2:        { displayW: 76,   displayH: 76,  scale: 3, shape: "rounded", label: "কলিং কার্ড ছবি ২" },
+  contactPhoto3:        { displayW: 76,   displayH: 76,  scale: 3, shape: "rounded", label: "কলিং কার্ড ছবি ৩" },
+  "team.photo":         { displayW: 114,  displayH: 114, scale: 3, shape: "circle",  label: "টিম সদস্যের ছবি" },
+  "partner.logo":       { displayW: 78,   displayH: 78,  scale: 3, shape: "circle",  label: "সহযোগীর লোগো" },
+  /* স্পনসরের লোগো ক্রপ ছাড়াই পুরো থাকে (চওড়া/লম্বা যেকোনো লোগো) */
+  "sponsor.logo":       { free: true, maxSide: 900, label: "স্পনসরের লোগো" },
+  "donationRecord.image": { displayW: 300, displayH: 300, scale: 2, shape: "rect",   label: "ডোনেশন রেকর্ড ছবি" },
+  "galleryPhoto.src":   { displayW: 356,  displayH: 356, scale: 2, shape: "rect",    label: "গ্যালারি ছবি", note: "প্রতি ৪টির ১টি ঘর লম্বা — সেখানে মাঝের অংশ দেখা যায়" },
+  "news.newsImage":     { displayW: 240,  displayH: 240, scale: 2, shape: "rect",    label: "সংবাদের থাম্বনেইল" },
+  /* free:true = ক্রপ ছাড়াই পুরো ছবি (রিপোর্ট/ডকুমেন্টের ছবি কাটা যাবে না); বড় দিক maxSide px-এ ছোট করা হয় */
+  "news.reportImages":  { free: true, maxSide: 1600, label: "রিপোর্টের ছবি" },
+  _default:             { displayW: 400,  displayH: 400, scale: 2, shape: "rect",    label: "ছবি" }
+};
+function gcdInt(a, b) { return b ? gcdInt(b, a % b) : a; }
+/* Adds the derived values: ratio, exact output width/height and a readable label. */
+/* তিনটি ক্রপ অনুপাত — ব্যবহারকারী আপলোডের সময় বেছে নেয় */
+const CROP_RATIOS = {
+  "1:1":  { w: 1,  h: 1  },
+  "9:16": { w: 9,  h: 16 },
+  "16:9": { w: 16, h: 9  }
+};
+/* ফিল্ডের নিজস্ব আকারের সবচেয়ে কাছের অনুপাতটি ডিফল্ট হিসেবে ধরা হয় */
+function defaultRatioKey(c) {
+  const r = c.displayW / c.displayH;
+  let best = "1:1", bd = Infinity;
+  Object.keys(CROP_RATIOS).forEach(k => {
+    const d = Math.abs(Math.log(r / (CROP_RATIOS[k].w / CROP_RATIOS[k].h)));
+    if (d < bd) { bd = d; best = k; }
+  });
+  return best;
+}
+/* নির্বাচিত অনুপাত অনুযায়ী আউটপুট মাপ ও লেবেল বসায় */
+function applyRatioToConfig(cfg, ratioKey) {
+  const rr = CROP_RATIOS[ratioKey] || CROP_RATIOS["1:1"];
+  const long = Math.min(1600, Math.max(600, Math.round(Math.max(cfg.baseW, cfg.baseH))));
+  let width, height;
+  if (rr.w === rr.h) { width = height = Math.min(long, 1200); }
+  else if (rr.w > rr.h) { width = long; height = Math.round(long * rr.h / rr.w); }
+  else { height = long; width = Math.round(long * rr.w / rr.h); }
+  cfg.ratioKey = ratioKey; cfg.ratio = rr.w / rr.h; cfg.width = width; cfg.height = height; cfg.ratioText = ratioKey;
+  cfg.tag = cfg.label + " — " + ratioKey + " · " + width + "×" + height + "px";
+  return cfg;
+}
+function resolveCropConfig(key) {
+  const c = IMAGE_CROP_CONFIG[key] || IMAGE_CROP_CONFIG._default;
+  if (c.free) return Object.assign({}, c, { key: key });
+  const cfg = Object.assign({}, c, { key: key, baseW: c.displayW * c.scale, baseH: c.displayH * c.scale });
+  return applyRatioToConfig(cfg, defaultRatioKey(c));
+}
+
+function formatBytes(n) {
+  return n >= 1024 * 1024 ? (n / (1024 * 1024)).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+}
+/* Returns an error message (Bengali) or null when the image file is acceptable. */
+function validateImageFile(file) {
+  if (!file) return "ফাইল পাওয়া যায়নি";
+  const ext = ((file.name || "").split(".").pop() || "").toLowerCase();
+  const typeOk = IMAGE_UPLOAD_RULES.allowedTypes.indexOf(file.type) !== -1 ||
+    (!file.type && IMAGE_UPLOAD_RULES.allowedExt.indexOf(ext) !== -1);
+  if (!typeOk) return "শুধু JPG, PNG বা WebP ছবি দেওয়া যাবে";
+  if (file.size === 0) return "ফাইলটি খালি";
+  if (file.size > IMAGE_UPLOAD_RULES.maxBytes) return "ছবির সাইজ সর্বোচ্চ " + formatBytes(IMAGE_UPLOAD_RULES.maxBytes) + " — আপনার ফাইল " + formatBytes(file.size);
+  return null;
+}
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error("Could not read file"));
+    r.onload = () => resolve(r.result);
+    r.readAsDataURL(file);
+  });
+}
+
+const cropModalOverlay = document.getElementById("cropModalOverlay");
+const cropStageBox = document.getElementById("cropStage");
+const cropImageEl = document.getElementById("cropImage");
+const cropSelectionEl = document.getElementById("cropSelection");
+const cropRatioLabelEl = document.getElementById("cropRatioTag").querySelector("span");
+const cropCancelBtnEl = document.getElementById("cropCancelBtn");
+const cropConfirmBtnEl = document.getElementById("cropConfirmBtn");
+const cropModalCloseBtnEl = document.getElementById("cropModalCloseBtn");
+
+let cropResolveFn = null, cropConfig = null;
+let cropNaturalW = 0, cropNaturalH = 0;
+/* image's displayed (letterboxed) box within the stage, in stage-relative px */
+let imgOffX = 0, imgOffY = 0, imgDispW = 0, imgDispH = 0;
+/* current selection box, in stage-relative px */
+let selX = 0, selY = 0, selW = 0, selH = 0;
+const CROP_MIN_SIZE = 32;
+
+let cropAction = null;   // "move" | "tl" | "tr" | "bl" | "br"
+let cropStageRect = null, cropStartPX = 0, cropStartPY = 0;
+let cropStartSelX = 0, cropStartSelY = 0, cropStartSelW = 0, cropStartSelH = 0;
+let cropAnchorX = 0, cropAnchorY = 0;
+
+const cropPreviewCanvas = document.getElementById("cropPreviewCanvas");
+const cropInfoEl = document.getElementById("cropInfo");
+let cropPreviewQueued = false;
+
+/* Source-image rectangle (natural px) that the current selection box covers. */
+function currentCropSourceRect() {
+  const scale = cropNaturalW / imgDispW;
+  return { x: (selX - imgOffX) * scale, y: (selY - imgOffY) * scale, w: selW * scale, h: selH * scale };
+}
+
+/* Live preview: redraws the exact crop (in the field's display ratio and
+   mask shape) on every drag / resize, plus output size + quality hint. */
+function updateCropPreview() {
+  cropPreviewQueued = false;
+  if (!cropConfig || !imgDispW) return;
+  const maxSide = 132, r = cropConfig.ratio;
+  const cssW = r >= 1 ? maxSide : Math.round(maxSide * r);
+  const cssH = r >= 1 ? Math.round(maxSide / r) : maxSide;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cropPreviewCanvas.style.width = cssW + "px";
+  cropPreviewCanvas.style.height = cssH + "px";
+  cropPreviewCanvas.width = Math.round(cssW * dpr);
+  cropPreviewCanvas.height = Math.round(cssH * dpr);
+  cropPreviewCanvas.className = "shape-" + (cropConfig.shape || "rect");
+  const ctx = cropPreviewCanvas.getContext("2d");
+  if (!ctx) return;
+  const src = currentCropSourceRect();
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, cropPreviewCanvas.width, cropPreviewCanvas.height);
+  ctx.drawImage(cropImageEl, src.x, src.y, src.w, src.h, 0, 0, cropPreviewCanvas.width, cropPreviewCanvas.height);
+  const low = src.w < cropConfig.width * 0.75 || src.h < cropConfig.height * 0.75;
+  cropInfoEl.innerHTML = "<b>প্রিভিউ</b> — সাইটে এভাবেই দেখাবে<br>আউটপুট: " + cropConfig.width + "×" + cropConfig.height + "px" +
+    "<br>নির্বাচিত অংশ: " + Math.round(src.w) + "×" + Math.round(src.h) + "px" +
+    (cropConfig.note ? "<br>" + escHtml(cropConfig.note) : "") +
+    (low ? '<span class="warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> ছবির রেজোলিউশন কম — ঝাপসা দেখাতে পারে</span>' : "");
+}
+
+function applyCropSelectionStyle() {
+  cropSelectionEl.style.left = selX + "px";
+  cropSelectionEl.style.top = selY + "px";
+  cropSelectionEl.style.width = selW + "px";
+  cropSelectionEl.style.height = selH + "px";
+  if (!cropPreviewQueued) { cropPreviewQueued = true; requestAnimationFrame(updateCropPreview); }
+}
+
+function measureImageBox() {
+  const stageR = cropStageBox.getBoundingClientRect();
+  const imgR = cropImageEl.getBoundingClientRect();
+  imgOffX = imgR.left - stageR.left;
+  imgOffY = imgR.top - stageR.top;
+  imgDispW = imgR.width;
+  imgDispH = imgR.height;
+}
+
+function initCropSelection(ratio) {
+  measureImageBox();
+  let w = Math.min(imgDispW, imgDispH * ratio);
+  let h = w / ratio;
+  selW = w; selH = h;
+  selX = imgOffX + (imgDispW - w) / 2;
+  selY = imgOffY + (imgDispH - h) / 2;
+  applyCropSelectionStyle();
+}
+
+function closeCropModal() {
+  cropModalOverlay.classList.remove("show");
+  cropImageEl.onload = null;
+  cropImageEl.onerror = null;
+  cropImageEl.removeAttribute("src");
+  cropConfig = null;
+}
+function settleCrop(result) {
+  const r = cropResolveFn;
+  cropResolveFn = null;
+  closeCropModal();
+  if (r) r(result);
+}
+
+/** Validates `file`, opens the crop modal locked to the ratio of `cropKey`
+ *  (see IMAGE_CROP_CONFIG) and resolves with a cropped JPEG data URL of the
+ *  exact output size, or null if the file is invalid / unreadable / cancelled. */
+function cropImageFile(file, cropKey) {
+  return new Promise(resolve => {
+    const problem = validateImageFile(file);
+    if (problem) { showToast(problem); resolve(null); return; }
+    const cfg = resolveCropConfig(cropKey);
+    if (cfg.free) {                       // পুরো ছবি রাখা হয়, শুধু বড় হলে ছোট করা হয়
+      readFileAsDataUrl(file).then(dataUrl => {
+        const im = new Image();
+        im.onerror = () => { showToast("ছবিটি পড়া যায়নি — ফাইলটি নষ্ট বা অসমর্থিত হতে পারে"); resolve(null); };
+        im.onload = () => {
+          const k = Math.min(1, cfg.maxSide / Math.max(im.naturalWidth, im.naturalHeight));
+          const cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(im.naturalWidth * k));
+          cv.height = Math.max(1, Math.round(im.naturalHeight * k));
+          const cx = cv.getContext("2d");
+          if (!cx) { showToast("এই ব্রাউজারে ছবি প্রসেস করা যাচ্ছে না"); resolve(null); return; }
+          cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+          cx.imageSmoothingQuality = "high";
+          cx.drawImage(im, 0, 0, cv.width, cv.height);
+          resolve(cv.toDataURL("image/jpeg", IMAGE_UPLOAD_RULES.jpegQuality));
+        };
+        im.src = dataUrl;
+      }).catch(() => { showToast("ফাইলটি পড়া যায়নি"); resolve(null); });
+      return;
+    }
+    cropResolveFn = resolve;
+    readFileAsDataUrl(file).then(dataUrl => {
+      cropImageEl.onerror = () => { showToast("ছবিটি পড়া যায়নি — ফাইলটি নষ্ট বা অসমর্থিত হতে পারে"); settleCrop(null); };
+      cropImageEl.onload = () => {
+        cropConfig = cfg;
+        cropNaturalW = cropImageEl.naturalWidth;
+        cropNaturalH = cropImageEl.naturalHeight;
+        cropRatioLabelEl.textContent = cfg.tag;
+        syncCropRatioPicker();
+        cropModalOverlay.classList.add("show");
+        // measure after the modal is visible so layout/dimensions are correct
+        requestAnimationFrame(() => initCropSelection(cfg.ratio));
+      };
+      cropImageEl.src = dataUrl;
+    }).catch(() => { showToast("ফাইলটি পড়া যায়নি"); settleCrop(null); });
+  });
+}
+
+function syncCropRatioPicker() {
+  document.querySelectorAll("#cropRatioPicker .cropRatioBtn").forEach(btn => {
+    btn.classList.toggle("active", !!cropConfig && btn.getAttribute("data-r") === cropConfig.ratioKey);
+  });
+}
+document.querySelectorAll("#cropRatioPicker .cropRatioBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (!cropConfig) return;
+    applyRatioToConfig(cropConfig, btn.getAttribute("data-r"));
+    cropRatioLabelEl.textContent = cropConfig.tag;
+    syncCropRatioPicker();
+    initCropSelection(cropConfig.ratio);
+  });
+});
+
+window.addEventListener("resize", () => {
+  if (cropModalOverlay.classList.contains("show") && cropConfig) {
+    requestAnimationFrame(() => initCropSelection(cropConfig.ratio));
+  }
+});
+
+function cropPointerDown(e, action) {
+  cropAction = action;
+  cropStageRect = cropStageBox.getBoundingClientRect();
+  cropStartPX = e.clientX; cropStartPY = e.clientY;
+  cropStartSelX = selX; cropStartSelY = selY; cropStartSelW = selW; cropStartSelH = selH;
+  if (action === "tl") { cropAnchorX = selX + selW; cropAnchorY = selY + selH; }
+  else if (action === "tr") { cropAnchorX = selX; cropAnchorY = selY + selH; }
+  else if (action === "bl") { cropAnchorX = selX + selW; cropAnchorY = selY; }
+  else if (action === "br") { cropAnchorX = selX; cropAnchorY = selY; }
+  try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+  e.preventDefault();
+}
+
+function cropResizeTo(pointerXStage, ratio, handle) {
+  const minW = CROP_MIN_SIZE, minH = CROP_MIN_SIZE / ratio;
+  let w, h, nx, ny;
+  if (handle === "br") {
+    w = clampNum(pointerXStage - cropAnchorX, minW, imgOffX + imgDispW - cropAnchorX);
+    h = w / ratio;
+    if (h > imgOffY + imgDispH - cropAnchorY) { h = imgOffY + imgDispH - cropAnchorY; w = h * ratio; }
+    nx = cropAnchorX; ny = cropAnchorY;
+  } else if (handle === "tl") {
+    w = clampNum(cropAnchorX - pointerXStage, minW, cropAnchorX - imgOffX);
+    h = w / ratio;
+    if (h > cropAnchorY - imgOffY) { h = cropAnchorY - imgOffY; w = h * ratio; }
+    nx = cropAnchorX - w; ny = cropAnchorY - h;
+  } else if (handle === "tr") {
+    w = clampNum(pointerXStage - cropAnchorX, minW, imgOffX + imgDispW - cropAnchorX);
+    h = w / ratio;
+    if (h > cropAnchorY - imgOffY) { h = cropAnchorY - imgOffY; w = h * ratio; }
+    nx = cropAnchorX; ny = cropAnchorY - h;
+  } else { // "bl"
+    w = clampNum(cropAnchorX - pointerXStage, minW, cropAnchorX - imgOffX);
+    h = w / ratio;
+    if (h > imgOffY + imgDispH - cropAnchorY) { h = imgOffY + imgDispH - cropAnchorY; w = h * ratio; }
+    nx = cropAnchorX - w; ny = cropAnchorY;
+  }
+  if (w < minW) { w = minW; h = w / ratio; }
+  selX = nx; selY = ny; selW = w; selH = h;
+}
+function clampNum(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+document.querySelectorAll(".cropHandle").forEach(h => {
+  h.addEventListener("pointerdown", e => cropPointerDown(e, h.getAttribute("data-h")));
+});
+cropSelectionEl.addEventListener("pointerdown", e => {
+  if (e.target.classList.contains("cropHandle")) return;
+  cropPointerDown(e, "move");
+});
+cropSelectionEl.addEventListener("pointermove", e => {
+  if (!cropAction) return;
+  if (cropAction === "move") {
+    const dx = e.clientX - cropStartPX, dy = e.clientY - cropStartPY;
+    selX = clampNum(cropStartSelX + dx, imgOffX, imgOffX + imgDispW - selW);
+    selY = clampNum(cropStartSelY + dy, imgOffY, imgOffY + imgDispH - selH);
+  } else {
+    const px = e.clientX - cropStageRect.left;
+    cropResizeTo(px, cropConfig.ratio, cropAction);
+  }
+  applyCropSelectionStyle();
+});
+function endCropAction() { cropAction = null; }
+cropSelectionEl.addEventListener("pointerup", endCropAction);
+cropSelectionEl.addEventListener("pointercancel", endCropAction);
+
+cropConfirmBtnEl.addEventListener("click", () => {
+  if (!cropConfig) return;
+  const src = currentCropSourceRect();
+  const canvas = document.createElement("canvas");
+  canvas.width = cropConfig.width; canvas.height = cropConfig.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) { showToast("এই ব্রাউজারে ক্রপ করা যাচ্ছে না"); settleCrop(null); return; }
+  // white backdrop so transparent PNG/WebP areas don't turn black in the JPEG
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(cropImageEl, src.x, src.y, src.w, src.h, 0, 0, cropConfig.width, cropConfig.height);
+  settleCrop(canvas.toDataURL("image/jpeg", IMAGE_UPLOAD_RULES.jpegQuality));
+});
+cropCancelBtnEl.addEventListener("click", () => settleCrop(null));
+cropModalCloseBtnEl.addEventListener("click", () => settleCrop(null));
+cropModalOverlay.addEventListener("click", e => { if (e.target === cropModalOverlay) settleCrop(null); });
+
+/* ============================================================
+   DATA MODEL — same shape as the public site's landingPage node
+   ============================================================ */
+const DEFAULT_LANDING = {
+  siteName: "Blood Network Baraikhali", siteVersion: "11-Nov-2026",
+  importantNotice: "", importantNoticeActive: false,
+  heroTitle: "প্রতিটি ফোঁটা রক্ত, একটি নতুন জীবনের গল্প",
+  heroSubtitle: "জরুরি মুহূর্তে নির্ভরযোগ্য রক্তদাতা খুঁজে পাওয়ার সবচেয়ে সহজ উপায়। বিনামূল্যে ও স্বেচ্ছাসেবী রক্তদাতাদের নেটওয়ার্কে আজই যুক্ত হোন, জীবন বাঁচাতে হাত বাড়ান।",
+  aboutTitle: "আমরা কারা",
+  aboutText: "Blood Network Baraikhali একটি স্বেচ্ছাসেবী রক্তদাতা প্ল্যাটফর্ম, যেখানে যাচাইকৃত রক্তদাতাদের তথ্য একত্রে রাখা হয় যাতে জরুরি প্রয়োজনে দ্রুত সঠিক রক্তদাতার সাথে যোগাযোগ করা যায়। আমাদের লক্ষ্য — প্রতিটি এলাকায় যেন রক্তের অভাবে কোনো জীবন ঝুঁকিতে না পড়ে।",
+  aboutImage: "", impactImage: "", donationPhotos: [], donationRecords: [], heroBackgroundImage: "",
+  ctaHeading: "আজই একজন রক্তদাতা হয়ে অন্য কারো জীবনে আশার আলো হয়ে উঠুন",
+  feature1Title: "যাচাইকৃত রক্তদাতা", feature1Text: "প্রতিটি রক্তদাতার তথ্য যাচাই করে তালিকাভুক্ত করা হয়, যাতে জরুরি সময়ে নির্ভরযোগ্য যোগাযোগ নিশ্চিত হয়।",
+  feature2Title: "জরুরি সাড়া", feature2Text: "ব্লাড গ্রুপ ও এলাকা অনুযায়ী মুহূর্তেই কাছাকাছি রক্তদাতা খুঁজে বের করা যায়, একদম ফ্রি-তে।",
+  feature3Title: "সহজ ও বিনামূল্যে", feature3Text: "কোনো সাইনআপ ফি বা লুকানো খরচ নেই — যে কেউ রক্তদাতা হতে বা খুঁজতে পারেন সম্পূর্ণ বিনামূল্যে।",
+  team: [], faqs: [], partners: [], news: [], hospitals: [],
+  sponsors: [], navOrder: [], homeOrder: [],
+  secTitle_gallery: "সাম্প্রতিক রক্তদান", secSub_gallery: "",
+  secTitle_features: "আমরা যা নিশ্চিত করি", secSub_features: "",
+  secTitle_team: "যাদের নিয়ে আমরা", secSub_team: "স্বেচ্ছাসেবার মানসিকতা নিয়ে যারা প্রতিদিন জীবন বাঁচাতে কাজ করছেন",
+  secTitle_faq: "প্রশ্ন ও উত্তর", secSub_faq: "",
+  secTitle_partners: "আমাদের সহযোগী প্রতিষ্ঠান", secSub_partners: "",
+  sponsorHeading: "আমাদের স্পনসর", sponsorSubtitle: "যাদের সহযোগিতায় আমরা মানুষের পাশে দাঁড়াতে পারছি",
+  processStepsRecipient: [], processStepsDonor: [],
+  contactName1: "নাম ১", contactPhone1: "01XXXXXXXXX",
+  contactPhoto1: "", contactWhatsapp1: "", contactMessenger1: "",
+  contactPhoto2: "", contactWhatsapp2: "", contactMessenger2: "",
+  contactPhoto3: "", contactWhatsapp3: "", contactMessenger3: "",
+  contactName2: "নাম ২", contactPhone2: "01XXXXXXXXX",
+  contactName3: "নাম ৩", contactPhone3: "01XXXXXXXXX",
+  contactEmail: "contact@bloodnetworkbaraikhali.org", contactAddress: "ঢাকা, বাংলাদেশ",
+  footerFacebook: "facebook.com/bloodnetworkbaraikhali", footerDevName1: "IBRAHIM KHALIL", footerDevName2: "SAMIN KHAN"
+};
+let landingData = Object.assign({}, DEFAULT_LANDING);
+let donorsCount = 0;
+let visitorCount = 0;
+let appInstallCount = 0;   // siteStats/appInstalls — মোট কতগুলো ডিভাইসে অ্যাপ ইনস্টল হয়েছে
+let newsLikes = {};   // newsLikes/{newsId} = মোট লাইক (লাইভ)
+
+const EMPTY_LIST_MARKER = { _empty: true };
+function toArrayField(v) {
+  if (Array.isArray(v)) return v.filter(Boolean);
+  if (v && typeof v === "object") { if (v._empty === true) return []; return Object.values(v).filter(Boolean); }
+  return [];
+}
+function normalizeLandingData() {
+  landingData.donationPhotos = toArrayField(landingData.donationPhotos);
+  landingData.donationRecords = toArrayField(landingData.donationRecords);
+  landingData.team = toArrayField(landingData.team);
+  landingData.faqs = toArrayField(landingData.faqs);
+  landingData.partners = toArrayField(landingData.partners);
+  landingData.news = toArrayField(landingData.news);
+  landingData.hospitals = toArrayField(landingData.hospitals);
+  landingData.sponsors = toArrayField(landingData.sponsors);
+  landingData.navOrder = toArrayField(landingData.navOrder);
+  landingData.homeOrder = toArrayField(landingData.homeOrder);
+  landingData.processStepsRecipient = toArrayField(landingData.processStepsRecipient);
+  landingData.processStepsDonor = toArrayField(landingData.processStepsDonor);
+}
+function syncListToFirebase(fieldName, arr) {
+  if (!firebaseAvailable || !landingPageRef) return;
+  const toWrite = (Array.isArray(arr) && arr.length === 0) ? EMPTY_LIST_MARKER : arr;
+  landingPageRef.child(fieldName).set(toWrite).catch(err => console.log(fieldName + " sync failed:", err));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function donationNoNum(no) { const m = String(no || "").match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : 0; }
+function genDonationNo() {
+  let maxNo = 0;
+  landingData.donationRecords.forEach(r => { const n = donationNoNum(r.donationNo); if (n > maxNo) maxNo = n; });
+  return String(maxNo + 1).padStart(4, "0");
+}
+function escAttr(str) {
+  return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+function escHtml(str) {
+  return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error("Failed to load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+/* ============================================================
+   SIDEBAR NAVIGATION
+   ============================================================ */
+const PANEL_TITLES = {
+  dashboard: ["ড্যাশবোর্ড", "সাইটের সার্বিক অবস্থা এক নজরে"],
+  hero: ["হিরো সেকশন", "প্রধান শিরোনাম ও ব্যাকগ্রাউন্ড ছবি"],
+  about: ["আমরা কারা", "প্ল্যাটফর্মের পরিচিতি ও ফিচার"],
+  impact: ["ইমপ্যাক্ট / CTA", "রক্তদাতা হওয়ার আহ্বান ব্যান্ড"],
+  steps: ["ধাপসমূহ", "রক্তদাতা খোঁজা ও রক্তদানের ধাপ"],
+  news: ["সংবাদ", "গত মাসের কার্যক্রম, ডোনেশন হিস্ট্রি রিপোর্ট ছবি, ঘোষণা ও স্বাস্থ্য টিপস ব্যবস্থাপনা"],
+  hospitals: ["হাসপাতাল ও ব্লাড ব্যাংক", "নিকটস্থ হাসপাতাল ও ব্লাড ব্যাংকের তালিকা ব্যবস্থাপনা"],
+  team: ["টিম সদস্য", "টিম মেম্বার ব্যবস্থাপনা"],
+  faq: ["প্রায়শই জিজ্ঞাসিত প্রশ্ন", "FAQ ব্যবস্থাপনা"],
+  partners: ["সহযোগী প্রতিষ্ঠান", "পার্টনার লোগো ব্যবস্থাপনা"],
+  sponsors: ["স্পনসর", "স্পনসর যোগ, ক্যাটাগরি ও ক্রম ব্যবস্থাপনা"],
+  layout: ["পেজ ও সেকশন ক্রম", "মেনুর পেজ ও হোমের সেকশন কোনটির পর কোনটি থাকবে"],
+  donations: ["ডোনেশন রেকর্ড", "সার্চযোগ্য ডোনেশন রেকর্ড ব্যবস্থাপনা"],
+  gallery: ["গ্যালারি", "হোমপেজ গ্যালারি ছবি ব্যবস্থাপনা"],
+  "calling-card": ["কলিং কার্ড", "জরুরি যোগাযোগ নাম্বার ও কলিং কার্ড ছবি ব্যবস্থাপনা"],
+  settings: ["সাইট সেটিংস", "সাইটের নাম ও ফুটার তথ্য"]
+};
+function goToPanel(name) {
+  document.querySelectorAll(".navItem[data-panel]").forEach(b => b.classList.toggle("active", b.getAttribute("data-panel") === name));
+  document.querySelectorAll(".panel[data-panel]").forEach(p => p.classList.toggle("active", p.getAttribute("data-panel") === name));
+  const t = PANEL_TITLES[name] || [name, ""];
+  document.getElementById("topbarTitle").textContent = t[0];
+  document.getElementById("topbarSub").textContent = t[1];
+  document.getElementById("sidebar").classList.remove("open");
+  document.querySelector(".content").scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll(".navItem[data-panel]").forEach(btn => {
+  btn.addEventListener("click", () => goToPanel(btn.getAttribute("data-panel")));
+});
+document.getElementById("menuToggle").addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+
+/* ============================================================
+   RENDER — populate every panel from landingData
+   ============================================================ */
+function fillScalarForms() {
+  document.querySelectorAll("[data-key]").forEach(el => {
+    const key = el.getAttribute("data-key");
+    if (!(key in landingData)) return;
+    if (el.type === "checkbox") { el.checked = !!landingData[key]; }
+    else { el.value = landingData[key] == null ? "" : landingData[key]; }
+  });
+}
+function renderImagePreview(key) {
+  const box = document.getElementById("prev_" + key);
+  if (!box) return;
+  const url = landingData[key];
+  box.innerHTML = url ? '<img src="' + escAttr(url) + '" alt="">' : '<i class="fa-solid fa-image" aria-hidden="true"></i>';
+}
+function renderImagePreviews() {
+  ["heroBackgroundImage", "aboutImage", "impactImage", "contactPhoto1", "contactPhoto2", "contactPhoto3"].forEach(renderImagePreview);
+}
+
+function newsDateLabel(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("bn-BD", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function renderNewsList() {
+  const el = document.getElementById("listNews");
+  const sorted = landingData.news.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  if (!sorted.length) {
+    el.innerHTML = emptyStateHtml("fa-newspaper", "এখনও কোনো সংবাদ যোগ করা হয়নি");
+  } else {
+    el.innerHTML = sorted.map(n =>
+      '<div class="partnerCard"><div class="logoWrap" style="height:90px; border-radius:10px;">' +
+        (n.newsImage ? '<img src="' + escAttr(n.newsImage) + '" alt="" style="max-height:90px;">' : '<i class="fa-solid fa-newspaper" aria-hidden="true"></i>') +
+      '</div>' +
+      '<div class="name" style="margin-bottom:2px;">' + escHtml(n.title || "শিরোনামহীন") + '</div>' +
+      '<div style="font-size:11px; color:var(--muted); margin-bottom:10px;">' + escHtml(n.category || "সাধারণ") + ' · ' + newsDateLabel(n.date) + ' · <span style="color:var(--crimson);font-weight:700;"><i class="fa-solid fa-heart" aria-hidden="true"></i> ' + (parseInt(newsLikes[n.id], 10) || 0) + '</span>' + ((n.reportImages && Object.keys(n.reportImages).length) ? ' · <span style="color:var(--crimson);font-weight:700;"><i class="fa-solid fa-images" aria-hidden="true"></i> রিপোর্ট</span>' : '') + '</div>' +
+      '<div class="acts"><button class="iconBtn" data-edit-item="news" data-id="' + n.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div></div>'
+    ).join("");
+  }
+  document.getElementById("navBadgeNews").textContent = landingData.news.length;
+  document.getElementById("qlNews").textContent = landingData.news.length + "টি";
+  const qlLikes = document.getElementById("qlLikes");
+  if (qlLikes) qlLikes.textContent = landingData.news.reduce((s, n) => s + (parseInt(newsLikes[n.id], 10) || 0), 0);
+}
+
+function renderHospitalsList() {
+  const el = document.getElementById("listHospitals");
+  if (!landingData.hospitals.length) {
+    el.innerHTML = emptyStateHtml("fa-hospital", "এখনও কোনো হাসপাতাল/ব্লাড ব্যাংক যোগ করা হয়নি");
+  } else {
+    el.innerHTML = '<table class="dataTable"><thead><tr><th>ধরন</th><th>নাম</th><th>ফোন</th><th></th></tr></thead><tbody>' +
+      landingData.hospitals.map(h =>
+        '<tr><td>' + escHtml(h.type || "হাসপাতাল") + '</td>' +
+        '<td><b>' + escHtml(h.name) + '</b></td><td>' + escHtml(h.phone || "—") + '</td>' +
+        '<td class="rowActions"><button class="iconBtn" data-edit-item="hospital" data-id="' + h.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></td></tr>'
+      ).join("") + '</tbody></table>';
+  }
+  const badge = document.getElementById("navBadgeHospitals");
+  if (badge) badge.textContent = landingData.hospitals.length;
+}
+
+function renderTeamList() {
+  const el = document.getElementById("listTeam");
+  if (!landingData.team.length) {
+    el.innerHTML = emptyStateHtml("fa-users", "এখনও কোনো টিম সদস্য যোগ করা হয়নি");
+  } else {
+    el.innerHTML = '<table class="dataTable"><thead><tr><th></th><th>নাম</th><th>পদবি</th><th></th></tr></thead><tbody>' +
+      landingData.team.map((m, i, arr) =>
+        '<tr><td><div class="rowThumb">' + (m.photo ? '<img src="' + escAttr(m.photo) + '" alt="">' : '<i class="fa-solid fa-user" aria-hidden="true"></i>') + '</div></td>' +
+        '<td><b>' + escHtml(m.name) + '</b></td><td>' + escHtml(m.role) + '</td>' +
+        '<td class="rowActions">' + moveBtnsHtml("team", m.id, i, arr.length, false) + '<button class="iconBtn" data-edit-item="team" data-id="' + m.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></td></tr>'
+      ).join("") + '</tbody></table>';
+  }
+  document.getElementById("navBadgeTeam").textContent = landingData.team.length;
+}
+
+function renderFaqList() {
+  const el = document.getElementById("listFaq");
+  if (!landingData.faqs.length) {
+    el.innerHTML = emptyStateHtml("fa-circle-question", "এখনও কোনো প্রশ্ন যোগ করা হয়নি");
+  } else {
+    el.innerHTML = '<table class="dataTable"><thead><tr><th>প্রশ্ন</th><th>উত্তর</th><th></th></tr></thead><tbody>' +
+      landingData.faqs.map(f =>
+        '<tr><td style="max-width:260px;"><b>' + escHtml(f.q) + '</b></td>' +
+        '<td style="max-width:340px; color:var(--muted);">' + escHtml((f.a || "").slice(0, 90)) + ((f.a || "").length > 90 ? "…" : "") + '</td>' +
+        '<td class="rowActions"><button class="iconBtn" data-edit-item="faq" data-id="' + f.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></td></tr>'
+      ).join("") + '</tbody></table>';
+  }
+  document.getElementById("navBadgeFaq").textContent = landingData.faqs.length;
+  document.getElementById("qlFaq").textContent = landingData.faqs.length + "টি";
+}
+
+function renderPartnersList() {
+  const el = document.getElementById("listPartners");
+  if (!landingData.partners.length) {
+    el.innerHTML = emptyStateHtml("fa-handshake", "এখনও কোনো সহযোগী যোগ করা হয়নি");
+  } else {
+    el.innerHTML = landingData.partners.map((p, i, arr) =>
+      '<div class="partnerCard"><div class="logoWrap">' + (p.logo ? '<img src="' + escAttr(p.logo) + '" alt="">' : '<i class="fa-solid fa-building" aria-hidden="true"></i>') + '</div>' +
+      '<div class="name">' + escHtml(p.name) + '</div>' +
+      '<div class="acts">' + moveBtnsHtml("partners", p.id, i, arr.length, true) + '<button class="iconBtn" data-edit-item="partner" data-id="' + p.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div></div>'
+    ).join("");
+  }
+  document.getElementById("navBadgePartners").textContent = landingData.partners.length;
+  document.getElementById("qlPartners").textContent = landingData.partners.length + "টি";
+}
+
+/* ============================================================
+   ক্রম পরিবর্তনের বাটন (উপরে/নিচে বা বামে/ডানে) — টিম, সহযোগী, স্পনসর
+   ============================================================ */
+function moveBtnsHtml(listKey, id, i, len, horiz) {
+  const prevIcon = horiz ? "fa-arrow-left" : "fa-arrow-up";
+  const nextIcon = horiz ? "fa-arrow-right" : "fa-arrow-down";
+  return '<button type="button" class="iconBtn" data-move-item data-list="' + listKey + '" data-id="' + escAttr(id) + '" data-dir="-1" title="আগে সরান"' + (i === 0 ? " disabled" : "") + '><i class="fa-solid ' + prevIcon + '" aria-hidden="true"></i></button>' +
+         '<button type="button" class="iconBtn" data-move-item data-list="' + listKey + '" data-id="' + escAttr(id) + '" data-dir="1" title="পরে সরান"' + (i === len - 1 ? " disabled" : "") + '><i class="fa-solid ' + nextIcon + '" aria-hidden="true"></i></button>';
+}
+
+const SPONSOR_TIER_CLASS = { "প্রধান স্পনসর": "t-main", "গোল্ড স্পনসর": "t-gold", "সিলভার স্পনসর": "t-silver", "সহায়ক স্পনসর": "t-support" };
+function renderSponsorsList() {
+  const el = document.getElementById("listSponsors");
+  if (!landingData.sponsors.length) {
+    el.innerHTML = emptyStateHtml("fa-award", "এখনও কোনো স্পনসর যোগ করা হয়নি");
+  } else {
+    el.innerHTML = landingData.sponsors.map((s, i, arr) =>
+      '<div class="partnerCard"><span class="tierTag ' + (SPONSOR_TIER_CLASS[s.tier] || "t-support") + '">' + escHtml(s.tier || "সহায়ক স্পনসর") + '</span>' +
+      '<div class="logoWrap">' + (s.logo ? '<img src="' + escAttr(s.logo) + '" alt="">' : '<i class="fa-solid fa-building" aria-hidden="true"></i>') + '</div>' +
+      '<div class="name">' + escHtml(s.name || "নামহীন") + '</div>' +
+      '<div class="acts">' + moveBtnsHtml("sponsors", s.id, i, arr.length, true) +
+      '<button class="iconBtn" data-edit-item="sponsor" data-id="' + s.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div></div>'
+    ).join("");
+  }
+  const badge = document.getElementById("navBadgeSponsors");
+  if (badge) badge.textContent = landingData.sponsors.length;
+  const ql = document.getElementById("qlSponsors");
+  if (ql) ql.textContent = landingData.sponsors.length + "টি";
+}
+
+/* ---- পেজ ও সেকশন ক্রম ---- */
+const NAV_ITEMS = {
+  "process":     { label: "কীভাবে কাজ করে",        icon: "fa-route" },
+  "blood-group": { label: "রক্তের গ্রুপ চার্ট",     icon: "fa-droplet" },
+  "donations":   { label: "সকল রক্তদান রেকর্ড",     icon: "fa-clipboard-list" },
+  "news":        { label: "সংবাদ",                  icon: "fa-newspaper" },
+  "hospitals":   { label: "হাসপাতাল",               icon: "fa-hospital" }
+};
+const HOME_ITEMS = {
+  stats:      { label: "পরিসংখ্যান ও ব্লাড গ্রুপ কাউন্ট",     icon: "fa-chart-simple" },
+  heroDonor:  { label: "আজকের হিরো (২৪ ঘণ্টা)",              icon: "fa-medal" },
+  gallery:    { label: "সাম্প্রতিক রক্তদান (ছবির গ্যালারি)",  icon: "fa-images" },
+  about:      { label: "আমরা কারা",                           icon: "fa-circle-info" },
+  features:   { label: "আমরা যা নিশ্চিত করি",                  icon: "fa-shield-heart" },
+  team:       { label: "আমাদের টিম",                          icon: "fa-users" },
+  faq:        { label: "প্রশ্ন ও উত্তর (FAQ)",                 icon: "fa-circle-question" },
+  partners:   { label: "সহযোগী প্রতিষ্ঠান",                    icon: "fa-handshake" },
+  cta:        { label: "রক্তদাতা হওয়ার আহ্বান (CTA)",         icon: "fa-heart-pulse" },
+  sponsors:   { label: "স্পনসর",                               icon: "fa-award" }
+};
+const ORDER_META = {
+  navOrder:  { items: NAV_ITEMS,  defaults: Object.keys(NAV_ITEMS),  boxId: "listNavOrder" },
+  homeOrder: { items: HOME_ITEMS, defaults: Object.keys(HOME_ITEMS), boxId: "listHomeOrder" }
+};
+function mergeOrder(saved, defaults) {
+  const out = [], seen = {};
+  toArrayField(saved).forEach(it => {
+    const key = it && (typeof it === "string" ? it : it.key);
+    if (!key || seen[key] || defaults.indexOf(key) === -1) return;
+    seen[key] = true;
+    out.push({ key: key, visible: !(it && typeof it === "object" && it.visible === false) });
+  });
+  defaults.forEach(k => { if (!seen[k]) out.push({ key: k, visible: true }); });
+  return out;
+}
+function currentOrder(which) { return mergeOrder(landingData[which], ORDER_META[which].defaults); }
+
+function fixedOrderRow(num, icon, label, note) {
+  return '<div class="orderItem fixed"><span class="orderNum">' + num + '</span><span class="orderIcon"><i class="fa-solid ' + icon + '" aria-hidden="true"></i></span>' +
+         '<span class="orderLabel">' + label + '</span><span class="orderLock"><i class="fa-solid fa-lock" aria-hidden="true"></i>' + note + '</span></div>';
+}
+function orderRowsHtml(which, offset) {
+  const meta = ORDER_META[which];
+  const order = currentOrder(which);
+  return order.map((o, i) => {
+    const it = meta.items[o.key];
+    return '<div class="orderItem' + (o.visible ? "" : " off") + '">' +
+      '<span class="orderNum">' + (i + 1 + offset) + '</span>' +
+      '<span class="orderIcon"><i class="fa-solid ' + it.icon + '" aria-hidden="true"></i></span>' +
+      '<span class="orderLabel">' + escHtml(it.label) + '</span>' +
+      '<label class="orderSwitch" title="মেনু/পেজে দেখান বা লুকান"><input type="checkbox" data-order-toggle="' + which + '" data-key="' + o.key + '"' + (o.visible ? " checked" : "") + '><span></span></label>' +
+      '<div class="orderMoves">' +
+        '<button type="button" class="iconBtn" data-order-move="' + which + '" data-key="' + o.key + '" data-dir="-1" title="উপরে সরান"' + (i === 0 ? " disabled" : "") + '><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>' +
+        '<button type="button" class="iconBtn" data-order-move="' + which + '" data-key="' + o.key + '" data-dir="1" title="নিচে সরান"' + (i === order.length - 1 ? " disabled" : "") + '><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>' +
+      '</div></div>';
+  }).join("");
+}
+function renderLayoutPanel() {
+  const navBox = document.getElementById("listNavOrder");
+  const homeBox = document.getElementById("listHomeOrder");
+  if (navBox) navBox.innerHTML = fixedOrderRow(1, "fa-house", "হোম", "সবসময় প্রথমে") + orderRowsHtml("navOrder", 1);
+  if (homeBox) homeBox.innerHTML = orderRowsHtml("homeOrder", 0);
+}
+function saveOrder(which, order) {
+  landingData[which] = order;
+  if (firebaseAvailable && landingPageRef) {
+    landingPageRef.child(which).set(order).catch(err => { console.log(which + " save failed:", err); showToast("সংরক্ষণ করা যায়নি, আবার চেষ্টা করুন"); });
+  }
+  renderLayoutPanel();
+  showToast("ক্রম সংরক্ষণ করা হয়েছে");
+}
+document.addEventListener("click", e => {
+  const mv = e.target.closest("[data-order-move]");
+  if (mv && !mv.disabled) {
+    const which = mv.getAttribute("data-order-move"), key = mv.getAttribute("data-key"), dir = parseInt(mv.getAttribute("data-dir"), 10);
+    const order = currentOrder(which);
+    const i = order.findIndex(o => o.key === key), j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+    saveOrder(which, order);
+    return;
+  }
+  const rs = e.target.closest("[data-order-reset]");
+  if (rs) {
+    const which = rs.getAttribute("data-order-reset");
+    if (!window.confirm("ডিফল্ট ক্রমে ফিরে যেতে চান? (সব সেকশন আবার দৃশ্যমান হবে)")) return;
+    saveOrder(which, ORDER_META[which].defaults.map(k => ({ key: k, visible: true })));
+    return;
+  }
+  const mi = e.target.closest("[data-move-item]");
+  if (mi && !mi.disabled) {
+    const key = mi.getAttribute("data-list"), id = mi.getAttribute("data-id"), dir = parseInt(mi.getAttribute("data-dir"), 10);
+    const list = landingData[key];
+    if (!Array.isArray(list)) return;
+    const i = list.findIndex(x => x.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    syncListToFirebase(key, list);
+    renderListByKey(key);
+    showToast("ক্রম সংরক্ষণ করা হয়েছে");
+  }
+});
+document.addEventListener("change", e => {
+  const t = e.target.closest ? e.target.closest("[data-order-toggle]") : null;
+  if (!t) return;
+  const which = t.getAttribute("data-order-toggle"), key = t.getAttribute("data-key");
+  const order = currentOrder(which);
+  const it = order.find(o => o.key === key);
+  if (!it) return;
+  it.visible = t.checked;
+  saveOrder(which, order);
+});
+
+function renderGalleryList() {
+  const el = document.getElementById("listGallery");
+  if (!landingData.donationPhotos.length) {
+    el.innerHTML = emptyStateHtml("fa-image", "এখনও কোনো ছবি যোগ করা হয়নি");
+  } else {
+    el.innerHTML = landingData.donationPhotos.map(p =>
+      '<div class="partnerCard"><div class="logoWrap" style="height:90px;">' + (p.src ? '<img src="' + escAttr(p.src) + '" alt="" style="max-height:90px;">' : '<i class="fa-solid fa-image" aria-hidden="true"></i>') + '</div>' +
+      '<div class="acts"><button class="iconBtn" data-edit-item="galleryPhoto" data-id="' + p.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div></div>'
+    ).join("");
+  }
+  document.getElementById("navBadgeGallery").textContent = landingData.donationPhotos.length;
+  document.getElementById("qlGallery").textContent = landingData.donationPhotos.length + "টি";
+}
+
+function stepListHtml(colKey, containerId) {
+  const el = document.getElementById(containerId);
+  const arr = landingData[colKey];
+  if (!arr.length) { el.innerHTML = emptyStateHtml("fa-list-ol", "এখনও কোনো ধাপ যোগ করা হয়নি"); return; }
+  el.innerHTML = arr.map((s, i) =>
+    '<div class="stepListItem"><div class="num">' + (i + 1) + '</div>' +
+    '<div class="body"><b>' + escHtml(s.title) + '</b><span>' + escHtml(s.text) + '</span></div>' +
+    '<div class="acts"><button class="iconBtn" data-edit-item="' + (colKey === "processStepsRecipient" ? "stepRecipient" : "stepDonor") + '" data-id="' + s.id + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div></div>'
+  ).join("");
+}
+function renderStepsLists() {
+  stepListHtml("processStepsRecipient", "listStepRecipient");
+  stepListHtml("processStepsDonor", "listStepDonor");
+}
+
+/* সর্বশেষ রক্তদানের তারিখ অনুযায়ী পুরনো → নতুন ক্রম (তারিখ সমান হলে ID ক্রমে) */
+function donationDateCompare(a, b) {
+  const ta = new Date(a && a.date).getTime(), tb = new Date(b && b.date).getTime();
+  const va = isNaN(ta) ? -Infinity : ta, vb = isNaN(tb) ? -Infinity : tb;
+  if (va !== vb) return va < vb ? -1 : 1;
+  return donationNoNum(a && a.donationNo) - donationNoNum(b && b.donationNo);
+}
+function donationSerialMap() {
+  const m = new Map();
+  landingData.donationRecords.slice().sort(donationDateCompare).forEach((r, i) => m.set(r, i + 1));
+  return m;
+}
+let donationSearchTerm = "";
+let donationGroupFilter = "";
+function renderDonationsList() {
+  const el = document.getElementById("listDonations");
+  let records = landingData.donationRecords;
+  if (donationSearchTerm) {
+    const q = donationSearchTerm.toLowerCase();
+    records = records.filter(r =>
+      (r.name || "").toLowerCase().includes(q) ||
+      (r.donationNo || "").toLowerCase().includes(q) ||
+      (r.hospitalName || "").toLowerCase().includes(q)
+    );
+  }
+  if (donationGroupFilter) records = records.filter(r => r.bloodGroup === donationGroupFilter);
+  renderDonationSummary();
+  // সর্বশেষ রক্তদানের তারিখ অনুযায়ী: সবচেয়ে নতুন উপরে, সবচেয়ে পুরনো সবার নিচে
+  const serialMap = donationSerialMap();
+  records = records.slice().sort((a, b) => donationDateCompare(b, a));
+  if (!records.length) {
+    el.innerHTML = emptyStateHtml("fa-hand-holding-droplet", donationSearchTerm ? "কোনো রেকর্ড খুঁজে পাওয়া যায়নি" : "এখনও কোনো রেকর্ড যোগ করা হয়নি");
+  } else {
+    el.innerHTML =
+      '<div class="donationListHead"><span></span><span></span><span>নাম্বার</span><span>নাম / হাসপাতাল</span><span>গ্রুপ</span><span></span></div>' +
+      '<div class="donationList">' +
+      records.map((r, idx) =>
+        '<div class="donationRow' + (idx === 0 ? ' topRow' : '') + '">' +
+          '<div class="donationRank">' + (idx === 0 ? '<i class="fa-solid fa-crown" aria-hidden="true"></i>' : (serialMap.get(r) || idx + 1)) + '</div>' +
+          '<div class="rowThumb">' + (r.image && !r.hidePhoto ? '<img src="' + escAttr(r.image) + '" alt="">' : '<i class="fa-solid fa-user" aria-hidden="true"></i>') + '</div>' +
+          '<div class="donationNoBadge">#' + escHtml(r.donationNo) + '</div>' +
+          '<div class="donationInfo"><b>' + escHtml(r.name) + '</b><span class="hosp"><i class="fa-solid fa-hospital" aria-hidden="true"></i>' + escHtml(r.hospitalName || "—") + '</span></div>' +
+          '<div class="bloodGroupPill">' + escHtml(r.bloodGroup) + '</div>' +
+          '<div class="rowActions"><a class="iconBtn" href="https://ourbnb.org/?id=' + encodeURIComponent(r.donationNo || "") + '" target="_blank" rel="noopener" title="দেখুন"><i class="fa-solid fa-eye" aria-hidden="true"></i></a><button class="iconBtn" data-edit-item="donationRecord" data-id="' + r.id + '" title="এডিট করুন"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></div>' +
+        '</div>'
+      ).join("") + '</div>';
+  }
+  document.getElementById("navBadgeDonations").textContent = landingData.donationRecords.length;
+}
+document.getElementById("donationSearchBox").addEventListener("input", e => {
+  donationSearchTerm = e.target.value.trim();
+  renderDonationsList();
+});
+
+function emptyStateHtml(icon, msg) {
+  return '<div class="emptyState"><i class="fa-solid ' + icon + '" aria-hidden="true"></i><p>' + msg + '</p></div>';
+}
+
+function renderDashboardStats() {
+  document.getElementById("statTotalDonors").textContent = donorsCount || 0;
+  document.getElementById("statTotalDonations").textContent = landingData.donationRecords.reduce((sum, r) => sum + (parseInt(r.visitCount, 10) || 1), 0);
+  document.getElementById("statVisitors").textContent = Number(totalViews || 0).toLocaleString("en-US");
+  document.getElementById("statTeamCount").textContent = landingData.team.length;
+  const _ai = document.getElementById("statAppInstalls");
+  if (_ai) _ai.textContent = Number(appInstallCount || 0).toLocaleString("en-US");
+  renderDashCharts();
+}
+
+
+/* ============================================================
+   PREMIUM DASHBOARD CHARTS (inline SVG, no external library)
+   ============================================================ */
+const BG_COLORS = {"A+":"#9E1B32","A-":"#D2556B","B+":"#C9A25B","B-":"#E3C88F","AB+":"#3F7A5D","AB-":"#7FB89A","O+":"#2F4B7C","O-":"#7C93C3"};
+const BN_MONTHS = ["জানু","ফেব্রু","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টে","অক্টো","নভে","ডিসে"];
+function drRecords() { return (landingData && landingData.donationRecords) || []; }
+function drDate(r) { const d = new Date(r.date || r.donationDate || ""); return isNaN(d) ? null : d; }
+
+function renderTrendChart() {
+  const el = document.getElementById("chTrend"); if (!el) return;
+  const now = new Date(), months = [];
+  for (let i = 11; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), n: 0 }); }
+  drRecords().forEach(r => { const d = drDate(r); if (!d) return; const x = months.find(o => o.y === d.getFullYear() && o.m === d.getMonth()); if (x) x.n++; });
+  const total = months.reduce((a, b) => a + b.n, 0);
+  document.getElementById("chTrendTag").textContent = total + " টি";
+  const W = 640, H = 260, pl = 34, pr = 14, pt = 16, pb = 30;
+  const max = Math.max(4, ...months.map(o => o.n)), top = Math.ceil(max / 4) * 4;
+  const x = i => pl + i * ((W - pl - pr) / 11), y = v => pt + (H - pt - pb) * (1 - v / top);
+  let grid = "", i2;
+  for (i2 = 0; i2 <= 4; i2++) { const v = top / 4 * i2; grid += '<line class="gridLine" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="axisTxt" x="' + (pl - 8) + '" y="' + (y(v) + 3) + '" text-anchor="end">' + v + '</text>'; }
+  const pts = months.map((o, i) => [x(i), y(o.n)]);
+  let path = "M" + pts[0][0] + "," + pts[0][1];
+  for (let i = 1; i < pts.length; i++) { const cx = (pts[i - 1][0] + pts[i][0]) / 2; path += " C" + cx + "," + pts[i - 1][1] + " " + cx + "," + pts[i][1] + " " + pts[i][0] + "," + pts[i][1]; }
+  const area = path + " L" + pts[pts.length - 1][0] + "," + (H - pb) + " L" + pts[0][0] + "," + (H - pb) + " Z";
+  const labels = months.map((o, i) => '<text class="axisTxt" x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + BN_MONTHS[o.m] + '</text>').join("");
+  const dots = months.map((o, i) => '<circle class="areaDot" cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="4.5"><title>' + BN_MONTHS[o.m] + " " + o.y + ": " + o.n + 'টি</title></circle>').join("");
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="মাসিক রক্তদান ট্রেন্ড"><defs>' +
+    '<linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9E1B32" stop-opacity=".28"/><stop offset="1" stop-color="#9E1B32" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="gLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9A25B"/><stop offset="1" stop-color="#9E1B32"/></linearGradient></defs>' +
+    grid + '<path d="' + area + '" fill="url(#gArea)"/><path class="areaLine" d="' + path + '"/>' + dots + labels + '</svg>';
+}
+
+function renderGroupChart() {
+  const el = document.getElementById("chGroups"); if (!el) return;
+  const rec = drRecords(), counts = {};
+  rec.forEach(r => { if (r.bloodGroup) counts[r.bloodGroup] = (counts[r.bloodGroup] || 0) + 1; });
+  const keys = Object.keys(BG_COLORS).filter(k => counts[k]), total = keys.reduce((a, k) => a + counts[k], 0);
+  if (!total) { el.innerHTML = '<div class="chartEmpty">এখনও কোনো ডাটা নেই</div>'; return; }
+  const R = 62, C = 2 * Math.PI * R; let off = 0, segs = "";
+  keys.forEach(k => { const len = counts[k] / total * C; segs += '<circle cx="85" cy="85" r="' + R + '" fill="none" stroke="' + BG_COLORS[k] + '" stroke-width="22" stroke-dasharray="' + Math.max(len - 2, 0) + " " + (C - Math.max(len - 2, 0)) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 85 85)"><title>' + k + ": " + counts[k] + '</title></circle>'; off += len; });
+  el.innerHTML = '<svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="' + R + '" fill="none" stroke="#F1EAE3" stroke-width="22"/>' + segs +
+    '<text class="donutCenter" x="85" y="88" text-anchor="middle">' + total + '</text><text class="donutSub" x="85" y="104" text-anchor="middle">মোট রেকর্ড</text></svg>' +
+    '<div class="legend">' + keys.map(k => '<div><i style="background:' + BG_COLORS[k] + '"></i>' + k + '<b>' + counts[k] + '</b></div>').join("") + '</div>';
+}
+
+function renderHospitalChart() {
+  const el = document.getElementById("chHospitals"); if (!el) return;
+  const c = {}; drRecords().forEach(r => { const h = (r.hospitalName || "").trim(); if (h) c[h] = (c[h] || 0) + 1; });
+  const list = Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!list.length) { el.innerHTML = '<div class="chartEmpty">এখনও কোনো ডাটা নেই</div>'; return; }
+  const m = list[0][1];
+  el.innerHTML = list.map(([n, v]) => '<div class="hBarRow"><div class="top"><span>' + escHtml(n) + '</span><span>' + v + '</span></div><div class="hBarTrack"><div class="hBarFill" style="width:' + (v / m * 100) + '%"></div></div></div>').join("");
+}
+
+function renderRecentList() {
+  const el = document.getElementById("chRecent"); if (!el) return;
+  const list = drRecords().slice().sort((a, b) => donationDateCompare(b, a)).slice(0, 6);
+  if (!list.length) { el.innerHTML = '<div class="chartEmpty">এখনও কোনো রেকর্ড নেই</div>'; return; }
+  el.innerHTML = list.map(r => '<div class="recentItem"><div class="rowThumb">' + (r.image && !r.hidePhoto ? '<img src="' + escAttr(r.image) + '" alt="">' : '<i class="fa-solid fa-user"></i>') + '</div>' +
+    '<div class="meta"><b>' + escHtml(r.name) + '</b><span>#' + escHtml(r.donationNo) + ' · ' + escHtml(r.hospitalName || "—") + (r.date ? ' · ' + escHtml(r.date) : '') + '</span></div>' +
+    '<div class="bloodGroupPill" style="min-width:40px">' + escHtml(r.bloodGroup) + '</div></div>').join("");
+}
+
+/* ============================================================
+   LIVE VIEWERS + VIEWS GRAPH
+   siteStats/live (এখন যারা আছে), siteStats/totalViews, siteStats/daily/{date}
+   ============================================================ */
+let liveEntries = {}, totalViews = 0, dailyViews = {}, viewsRange = 30, serverOffset = 0;
+function bdDateKey(ts) { return new Date((ts || Date.now()) + 6 * 3600 * 1000).toISOString().slice(0, 10); }
+
+function renderLiveCount() {
+  const cutoff = Date.now() + serverOffset - 5 * 60 * 1000;
+  let n = 0;
+  Object.keys(liveEntries || {}).forEach(k => { if ((parseInt(liveEntries[k], 10) || 0) >= cutoff) n++; });
+  ["liveNowNum", "liveNowTop"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = n; });
+}
+setInterval(renderLiveCount, 30000);
+
+const BN_DIGITS = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+function bnNum(n) { return String(n).replace(/[0-9]/g, d => BN_DIGITS[d]); }
+function viewsRangeLabel(N) { return N === 365 ? "শেষ ১ বছরে" : N === 1825 ? "শেষ ৫ বছরে" : "শেষ " + N + " দিনে"; }
+
+/* রেঞ্জ অনুযায়ী পয়েন্ট বানায়: ৭/৩০ দিন = প্রতিদিন, ১ বছর = ১২ মাস, ৫ বছর = ৬০ মাস */
+function buildViewsPoints(N) {
+  const now = Date.now(), pts = [];
+  if (N <= 30) {
+    for (let i = N - 1; i >= 0; i--) {
+      const key = bdDateKey(now - i * 86400000), p = key.split("-"), m = parseInt(p[1], 10) - 1, d = parseInt(p[2], 10);
+      pts.push({ n: parseInt(dailyViews[key], 10) || 0, label: d + " " + BN_MONTHS[m], tip: d + " " + BN_MONTHS[m] + " " + p[0], show: ((N - 1 - i) % (N <= 7 ? 1 : 5)) === 0 });
+    }
+    return pts;
+  }
+  const M = N === 365 ? 12 : 60, cur = bdDateKey(now).split("-");
+  const cy = parseInt(cur[0], 10), cm = parseInt(cur[1], 10) - 1;
+  const sums = {};
+  Object.keys(dailyViews).forEach(k => { const mk = k.slice(0, 7); sums[mk] = (sums[mk] || 0) + (parseInt(dailyViews[k], 10) || 0); });
+  for (let i = M - 1; i >= 0; i--) {
+    const idx = cy * 12 + cm - i, y = Math.floor(idx / 12), m = idx % 12;
+    const mk = y + "-" + String(m + 1).padStart(2, "0");
+    pts.push({ n: sums[mk] || 0, label: M === 12 ? BN_MONTHS[m] : BN_MONTHS[m] + " " + String(y).slice(2), tip: BN_MONTHS[m] + " " + y, show: M === 12 ? true : (i % 6 === 0) });
+  }
+  return pts;
+}
+
+function renderViewsChart() {
+  const el = document.getElementById("chViews"); if (!el) return;
+  const N = viewsRange, pts0 = buildViewsPoints(N), L = pts0.length;
+  const sum = pts0.reduce((a, b) => a + b.n, 0);
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  const fmt = v => Number(v || 0).toLocaleString("en-US");
+  set("viewsTotalNum", fmt(totalViews));
+  set("statVisitors", fmt(totalViews));
+  set("viewsTodayNum", fmt(parseInt(dailyViews[bdDateKey()], 10) || 0));
+  set("viewsRangeNum", fmt(sum));
+  set("viewsRangeLbl", viewsRangeLabel(N));
+  document.querySelectorAll("[data-views-range]").forEach(b => b.classList.toggle("on", parseInt(b.getAttribute("data-views-range"), 10) === N));
+
+  const W = 900, H = 260, pl = 42, pr = 14, pt = 16, pb = 30;
+  const max = Math.max(4, ...pts0.map(o => o.n)), top = Math.ceil(max / 4) * 4;
+  const x = i => pl + i * ((W - pl - pr) / (L - 1)), y = v => pt + (H - pt - pb) * (1 - v / top);
+  let grid = "";
+  for (let i = 0; i <= 4; i++) { const v = top / 4 * i; grid += '<line class="gridLine" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="axisTxt" x="' + (pl - 8) + '" y="' + (y(v) + 3) + '" text-anchor="end">' + v + '</text>'; }
+  const pts = pts0.map((o, i) => [x(i), y(o.n)]);
+  let path = "M" + pts[0][0] + "," + pts[0][1];
+  for (let i = 1; i < pts.length; i++) { const cx = (pts[i - 1][0] + pts[i][0]) / 2; path += " C" + cx + "," + pts[i - 1][1] + " " + cx + "," + pts[i][1] + " " + pts[i][0] + "," + pts[i][1]; }
+  const area = path + " L" + pts[pts.length - 1][0] + "," + (H - pb) + " L" + pts[0][0] + "," + (H - pb) + " Z";
+  const labels = pts0.map((o, i) => o.show ? '<text class="axisTxt" x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + o.label + '</text>' : "").join("");
+  const r = L <= 12 ? 4.5 : L <= 31 ? 3.2 : 2.4;
+  const dots = pts0.map((o, i) => '<circle class="areaDot" cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="' + r + '"><title>' + o.tip + ": " + o.n + ' ভিউ</title></circle>').join("");
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="ওয়েবসাইট ভিউ গ্রাফ"><defs>' +
+    '<linearGradient id="gvArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9E1B32" stop-opacity=".28"/><stop offset="1" stop-color="#9E1B32" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="gvLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C9A25B"/><stop offset="1" stop-color="#9E1B32"/></linearGradient></defs>' +
+    grid + '<path d="' + area + '" fill="url(#gvArea)"/><path d="' + path + '" fill="none" stroke="url(#gvLine)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' + dots + labels + '</svg>';
+}
+
+/* ৭/৩০ দিনের জন্য শেষ ৩১টি দিন; ১ বছর/৫ বছরের জন্য শেষ ১৮৩০টি দিন (শুধু তখনই নামানো হয়) */
+let dailyRef = null;
+function attachDailyListener() {
+  if (!firebaseAvailable || !db) return;
+  if (dailyRef) { dailyRef.off(); dailyRef = null; }
+  const limit = viewsRange > 30 ? 1830 : 31;
+  dailyRef = db.ref("siteStats/daily").orderByKey().limitToLast(limit);
+  dailyRef.on("value", snap => { dailyViews = snap.val() || {}; renderViewsChart(); },
+    err => console.log("daily views read failed:", err));
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest ? e.target.closest("[data-views-range]") : null;
+  if (!b) return;
+  const prev = viewsRange;
+  viewsRange = parseInt(b.getAttribute("data-views-range"), 10) || 30;
+  if ((prev > 30) !== (viewsRange > 30)) attachDailyListener(); // ডাটার পরিমাণ বদলাতে হলে আবার নামাও
+  renderViewsChart();
+});
+
+/* একবারের মাইগ্রেশন: আগের মোট ভিজিটর (visitorCount) নতুন মোট ভিউ-এর সাথে যোগ হয়ে যায়।
+   siteStats/viewsMigrated ফ্ল্যাগ থাকায় এটি আর কখনো দ্বিতীয়বার চলবে না। */
+function migrateOldViewsOnce() {
+  if (!firebaseAvailable || !db) return;
+  const flagRef = db.ref("siteStats/viewsMigrated");
+  flagRef.transaction(cur => (cur ? undefined : true), (err, committed) => {
+    if (err || !committed) return;
+    db.ref("siteStats/visitorCount").once("value")
+      .then(snap => {
+        const old = parseInt(snap.val(), 10) || 0;
+        return db.ref("siteStats/totalViews").transaction(c => (c || 0) + old);
+      })
+      .then(() => showToast("আগের ভিউ নতুন মোট ভিউ-এর সাথে যোগ হয়েছে"))
+      .catch(e => { console.log("views migration failed:", e); flagRef.set(null); });
+  }, false);
+}
+
+function renderDashCharts() { try { renderTrendChart(); renderGroupChart(); renderHospitalChart(); renderRecentList(); } catch (e) { console.log("chart render failed", e); } try { renderViewsChart(); } catch (e) { console.log("views chart failed", e); } }
+
+function renderDonationSummary() {
+  const box = document.getElementById("donSummary"), chips = document.getElementById("donChips"); if (!box) return;
+  const rec = drRecords(), now = new Date();
+  const thisMonth = rec.filter(r => { const d = drDate(r); return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
+  const times = rec.reduce((s, r) => s + (parseInt(r.visitCount, 10) || 1), 0);
+  const hosp = new Set(rec.map(r => (r.hospitalName || "").trim()).filter(Boolean)).size;
+  const sums = [
+    ["fa-clipboard-list", "var(--crimson-tint)", "var(--crimson)", rec.length, "মোট ডোনার রেকর্ড"],
+    ["fa-droplet", "var(--sage-tint)", "var(--sage)", times, "মোট রক্তদান"],
+    ["fa-calendar-check", "var(--amber-tint)", "var(--amber)", thisMonth, "এই মাসে"],
+    ["fa-hospital", "var(--crimson-tint)", "var(--crimson)", hosp, "হাসপাতাল / স্থান"]
+  ];
+  box.innerHTML = sums.map(a => '<div class="donSum"><div class="ic" style="background:' + a[1] + ';color:' + a[2] + '"><i class="fa-solid ' + a[0] + '"></i></div><div><b>' + a[3] + '</b><span>' + a[4] + '</span></div></div>').join("");
+  chips.innerHTML = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(g => '<button type="button" class="chip' + (donationGroupFilter === g ? ' on' : '') + '" data-grp="' + g + '">' + (g || "সব গ্রুপ") + '</button>').join("");
+}
+document.addEventListener("click", e => {
+  const c = e.target.closest && e.target.closest(".chip[data-grp]");
+  if (c) { donationGroupFilter = c.getAttribute("data-grp"); renderDonationsList(); }
+});
+document.getElementById("heroViewDonations").addEventListener("click", () => goToPanel("donations"));
+document.getElementById("recentViewAll").addEventListener("click", () => goToPanel("donations"));
+document.getElementById("heroAddDonor").addEventListener("click", () => {
+  goToPanel("donations");
+  const b = document.querySelector('.panel[data-panel="donations"] [data-add-item="donationRecord"]'); if (b) b.click();
+});
+
+function renderAll() {
+  normalizeLandingData();
+  fillScalarForms();
+  renderImagePreviews();
+  renderNewsList();
+  renderHospitalsList();
+  renderTeamList();
+  renderFaqList();
+  renderPartnersList();
+  renderSponsorsList();
+  renderLayoutPanel();
+  renderGalleryList();
+  renderStepsLists();
+  renderDonationsList();
+  renderDashboardStats();
+}
+
+/* ============================================================
+   SCALAR FIELD SAVING (hero / about / impact / settings forms)
+   ============================================================ */
+document.querySelectorAll("[data-save-scalar]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const card = btn.closest(".card");
+    const form = card.querySelector("[data-scalar-form]");
+    const updates = {};
+    form.querySelectorAll("[data-key]").forEach(el => {
+      const key = el.getAttribute("data-key");
+      const val = el.type === "checkbox" ? el.checked : el.value;
+      landingData[key] = val;
+      updates[key] = val;
+    });
+    if (firebaseAvailable && landingPageRef) {
+      landingPageRef.update(updates).catch(err => console.log("Save failed:", err));
+    }
+    showToast("সংরক্ষণ করা হয়েছে");
+    const note = card.querySelector(".savedNote");
+    if (note) { note.classList.add("show"); setTimeout(() => note.classList.remove("show"), 1800); }
+    renderDashboardStats();
+  });
+});
+
+/* ============================================================
+   HERO / ABOUT / IMPACT IMAGE UPLOAD
+   ============================================================ */
+let pendingScalarImgKey = null;
+let pendingCropKey = null;      // key into IMAGE_CROP_CONFIG for the file being picked
+let uploadsInFlight = 0;        // blocks "Save" while an image is still uploading
+const hiddenFileInput = document.getElementById("hiddenFileInput");
+document.querySelectorAll("[data-imgpick]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    pendingScalarImgKey = btn.getAttribute("data-imgpick");
+    pendingCropKey = pendingScalarImgKey;
+    pendingModalImgKey = null;
+    hiddenFileInput.click();
+  });
+});
+document.querySelectorAll("[data-imgclear]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.getAttribute("data-imgclear");
+    landingData[key] = "";
+    renderImagePreview(key);
+    if (firebaseAvailable && landingPageRef) landingPageRef.child(key).set("").catch(() => {});
+    showToast("ছবি মুছে ফেলা হয়েছে");
+  });
+});
+
+/* ============================================================
+   GENERIC ITEM MODAL — add/edit/delete for news, hospitals, team, faq,
+   partner, process steps, donation records, and gallery photos
+   ============================================================ */
+const SCHEMAS = {
+  news: {
+    title: "সংবাদ", listKey: "news",
+    fields: [
+      { key: "newsImage", label: "থাম্বনেইল ছবি (ঐচ্ছিক) — ১:১ ক্রপ হবে", type: "image" },
+      { key: "category", label: "ক্যাটাগরি", type: "select", options: ["মাসিক কার্যক্রম", "ঘোষণা", "স্বাস্থ্য টিপস", "মিথ ভাঙা", "সাধারণ"] },
+      { key: "title", label: "শিরোনাম *", type: "text" },
+      { key: "content", label: "বিবরণ *", type: "textarea", rows: 6 },
+      { key: "date", label: "তারিখ *", type: "date" },
+      { key: "reportImages", label: "রিপোর্টের ছবি (ঐচ্ছিক) — গত মাসের ডোনেশন হিস্ট্রি", type: "images" }
+    ],
+    blank: () => ({ id: genId(), title: "", content: "", newsImage: "", category: "মাসিক কার্যক্রম", date: new Date().toISOString().slice(0, 10), reportImages: [] })
+  },
+  hospital: {
+    title: "হাসপাতাল / ব্লাড ব্যাংক", listKey: "hospitals",
+    fields: [
+      { key: "type", label: "ধরন", type: "select", options: ["হাসপাতাল", "ব্লাড ব্যাংক"] },
+      { key: "name", label: "নাম", type: "text" },
+      { key: "phone", label: "ফোন নম্বর", type: "text" },
+      { key: "address", label: "ঠিকানা", type: "textarea" }
+    ],
+    blank: () => ({ id: genId(), type: "হাসপাতাল", name: "", phone: "", address: "" })
+  },
+  team: {
+    title: "টিম সদস্য", listKey: "team",
+    fields: [
+      { key: "photo", label: "ছবি", type: "image" },
+      { key: "name", label: "নাম", type: "text" },
+      { key: "role", label: "পদবি", type: "text" },
+      { key: "bio", label: "সংক্ষিপ্ত পরিচিতি (কার্ডে ৩ লাইন পর্যন্ত দেখাবে)", type: "textarea" },
+      { key: "phone", label: "ফোন নম্বর (ঐচ্ছিক) — কার্ডে কল বাটন আসবে", type: "text" },
+      { key: "facebook", label: "ফেসবুক লিংক (ঐচ্ছিক)", type: "text" }
+    ],
+    blank: () => ({ id: genId(), name: "", role: "", bio: "", photo: "", phone: "", facebook: "" })
+  },
+  faq: {
+    title: "প্রশ্ন", listKey: "faqs",
+    fields: [
+      { key: "q", label: "প্রশ্ন", type: "text" },
+      { key: "a", label: "উত্তর", type: "textarea" }
+    ],
+    blank: () => ({ id: genId(), q: "", a: "" })
+  },
+  partner: {
+    title: "সহযোগী প্রতিষ্ঠান", listKey: "partners",
+    fields: [
+      { key: "logo", label: "লোগো", type: "image" },
+      { key: "name", label: "প্রতিষ্ঠানের নাম", type: "text" }
+    ],
+    blank: () => ({ id: genId(), name: "", logo: "" })
+  },
+  sponsor: {
+    title: "স্পনসর", listKey: "sponsors",
+    fields: [
+      { key: "logo", label: "লোগো (পুরো ছবি থাকবে, ক্রপ হবে না)", type: "image" },
+      { key: "name", label: "স্পনসরের নাম *", type: "text" },
+      { key: "tier", label: "ক্যাটাগরি", type: "select", options: ["প্রধান স্পনসর", "গোল্ড স্পনসর", "সিলভার স্পনসর", "সহায়ক স্পনসর"] },
+      { key: "kind", label: "কী স্পনসর করছেন (যেমন: রক্ত পরীক্ষার সামগ্রী, আর্থিক সহায়তা)", type: "text" },
+      { key: "tagline", label: "পরিচিতি (সংক্ষিপ্ত — কার্ডে দেখাবে)", type: "textarea" },
+      { key: "link", label: "ওয়েবসাইট / ফেসবুক লিংক (ঐচ্ছিক)", type: "text" }
+    ],
+    blank: () => ({ id: genId(), name: "", logo: "", tier: "সহায়ক স্পনসর", kind: "", tagline: "", link: "" })
+  },
+  stepRecipient: {
+    title: "ধাপ", listKey: "processStepsRecipient",
+    fields: [
+      { key: "title", label: "শিরোনাম", type: "text" },
+      { key: "text", label: "বিবরণ", type: "textarea" }
+    ],
+    blank: () => ({ id: genId(), title: "", text: "" })
+  },
+  stepDonor: {
+    title: "ধাপ", listKey: "processStepsDonor",
+    fields: [
+      { key: "title", label: "শিরোনাম", type: "text" },
+      { key: "text", label: "বিবরণ", type: "textarea" }
+    ],
+    blank: () => ({ id: genId(), title: "", text: "" })
+  },
+  donationRecord: {
+    title: "ডোনেশন রেকর্ড", listKey: "donationRecords",
+    fields: [
+      { key: "image", label: "ছবি", type: "image" },
+      { key: "name", label: "নাম", type: "text" },
+      { key: "gender", label: "ভাই / বোন", type: "select", options: ["ভাই","বোন"] },
+      { key: "bloodGroup", label: "রক্তের গ্রুপ", type: "select", options: ["A+","A-","B+","B-","AB+","AB-","O+","O-"] },
+      { key: "visitCount", label: "কতবার রক্ত দিয়েছেন", type: "number" },
+      { key: "hospitalName", label: "হাসপাতাল / স্থান", type: "text" },
+      { key: "date", label: "তারিখ", type: "date" },
+      { key: "hidePhoto", label: "ছবি লুকিয়ে রাখুন", type: "checkbox" }
+    ],
+    blank: () => ({ id: genId(), donationNo: genDonationNo(), name: "ভাই", gender: "ভাই", bloodGroup: "A+", visitCount: 1, hospitalName: "", image: "", hidePhoto: false, date: new Date().toISOString().slice(0, 10) })
+  },
+  galleryPhoto: {
+    title: "গ্যালারি ছবি", listKey: "donationPhotos",
+    fields: [ { key: "src", label: "ছবি", type: "image" } ],
+    blank: () => ({ id: genId(), src: "" })
+  }
+};
+
+let currentModalType = null;
+let currentModalItem = null;
+let pendingModalImgKey = null;
+
+const itemModalOverlay = document.getElementById("itemModalOverlay");
+const itemModalTitle = document.getElementById("itemModalTitle");
+const itemModalBody = document.getElementById("itemModalBody");
+const itemModalDeleteBtn = document.getElementById("itemModalDeleteBtn");
+
+function fieldRowHtml(f, value) {
+  const id = "mf_" + f.key;
+  if (f.type === "textarea") {
+    return '<div class="field span2"><label>' + f.label + '</label><textarea class="textArea" id="' + id + '" rows="' + (f.rows || 3) + '">' + escHtml(value || "") + '</textarea></div>';
+  }
+  if (f.type === "select") {
+    return '<div class="field"><label>' + f.label + '</label><select class="selectInput" id="' + id + '">' +
+      f.options.map(o => '<option value="' + escAttr(o) + '"' + (o === value ? " selected" : "") + '>' + o + '</option>').join("") +
+      '</select></div>';
+  }
+  if (f.type === "number") {
+    return '<div class="field"><label>' + f.label + '</label><input type="number" min="1" class="textInput" id="' + id + '" value="' + escAttr(value != null ? value : 1) + '"></div>';
+  }
+  if (f.type === "checkbox") {
+    return '<div class="field span2"><label class="checkRow"><input type="checkbox" id="' + id + '" ' + (value ? "checked" : "") + '> ' + f.label + '</label></div>';
+  }
+  if (f.type === "date") {
+    return '<div class="field"><label>' + f.label + '</label><input type="date" class="textInput" id="' + id + '" value="' + escAttr(value || "") + '"></div>';
+  }
+  if (f.type === "images") {
+    return '<div class="field span2"><label>' + f.label + '</label><div class="reportImgs" id="modalImgs_' + f.key + '"></div>' +
+      '<div class="hint">সর্বোচ্চ ' + MAX_REPORT_IMAGES + 'টি ছবি · JPG/PNG/WebP · সর্বোচ্চ ' + formatBytes(IMAGE_UPLOAD_RULES.maxBytes) + ' · পুরো ছবি থাকবে (ক্রপ হবে না)</div></div>';
+  }
+  if (f.type === "image") {
+    return '<div class="field span2"><label>' + f.label + '</label><div class="imgUpload">' +
+      '<div class="imgUploadPreview" id="modalPrev_' + f.key + '">' + (value ? '<img src="' + escAttr(value) + '" alt="">' : '<i class="fa-solid fa-image" aria-hidden="true"></i>') + '</div>' +
+      '<div class="imgUploadBtns">' +
+      '<button type="button" class="btn small" data-modal-imgpick="' + f.key + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> আপলোড</button>' +
+      '<button type="button" class="btn small danger" data-modal-imgclear="' + f.key + '"><i class="fa-solid fa-trash" aria-hidden="true"></i> মুছুন</button>' +
+      '</div></div></div>';
+  }
+  return '<div class="field span2"><label>' + f.label + '</label><input type="text" class="textInput" id="' + id + '" value="' + escAttr(value || "") + '"></div>';
+}
+
+function openItemModal(type, item) {
+  const schema = SCHEMAS[type];
+  if (!schema) return;
+  currentModalType = type;
+  currentModalItem = item ? Object.assign({}, item) : schema.blank();
+  // Backward-compat: certificate records auto-synced from the donor-
+  // management app (list.html) stored their date under "donationDate"
+  // before "date" existed on that side too — fall back to it here so
+  // older synced records still show their date when edited.
+  if (type === "donationRecord" && !currentModalItem.date && currentModalItem.donationDate) {
+    currentModalItem.date = currentModalItem.donationDate;
+  }
+  itemModalTitle.textContent = (item ? "এডিট — " : "নতুন ") + schema.title;
+  itemModalBody.innerHTML = '<div class="formGrid">' + schema.fields.map(f => fieldRowHtml(f, currentModalItem[f.key])).join("") + '</div>';
+  itemModalDeleteBtn.style.display = item ? "inline-flex" : "none";
+
+  itemModalBody.querySelectorAll("[data-modal-imgpick]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      pendingModalImgKey = btn.getAttribute("data-modal-imgpick");
+      pendingCropKey = currentModalType + "." + pendingModalImgKey;
+      pendingScalarImgKey = null;
+      hiddenFileInput.click();
+    });
+  });
+  itemModalBody.querySelectorAll("[data-modal-imgclear]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-modal-imgclear");
+      currentModalItem[key] = "";
+      const prev = document.getElementById("modalPrev_" + key);
+      if (prev) prev.innerHTML = '<i class="fa-solid fa-image" aria-hidden="true"></i>';
+    });
+  });
+
+  schema.fields.filter(f => f.type === "images").forEach(f => renderImagesField(f.key));
+  itemModalOverlay.classList.add("show");
+  if (type === "donationRecord" && !item) {
+    const nameInput = document.getElementById("mf_name");
+    if (nameInput) { nameInput.focus(); nameInput.setSelectionRange(0, 0); }
+  }
+}
+function closeItemModal() {
+  itemModalOverlay.classList.remove("show");
+  currentModalType = null;
+  currentModalItem = null;
+}
+document.getElementById("itemModalCloseBtn").addEventListener("click", closeItemModal);
+document.getElementById("itemModalCancelBtn").addEventListener("click", closeItemModal);
+itemModalOverlay.addEventListener("click", e => { if (e.target === itemModalOverlay) closeItemModal(); });
+
+document.querySelectorAll("[data-add-item]").forEach(btn => {
+  btn.addEventListener("click", () => openItemModal(btn.getAttribute("data-add-item"), null));
+});
+document.addEventListener("click", e => {
+  const editBtn = e.target.closest("[data-edit-item]");
+  if (!editBtn) return;
+  const type = editBtn.getAttribute("data-edit-item");
+  const id = editBtn.getAttribute("data-id");
+  const schema = SCHEMAS[type];
+  const list = landingData[schema.listKey];
+  const item = list.find(x => x.id === id);
+  if (item) openItemModal(type, item);
+});
+
+/* view button now links straight to the public record page
+   (https://ourbnb.org/?id=<donationNo>) via a plain <a>
+   tag rendered in renderDonationsList() above — no in-panel modal
+   needed anymore. */
+
+function renderListByKey(listKey) {
+  if (listKey === "news") renderNewsList();
+  else if (listKey === "hospitals") renderHospitalsList();
+  else if (listKey === "team") renderTeamList();
+  else if (listKey === "faqs") renderFaqList();
+  else if (listKey === "partners") renderPartnersList();
+  else if (listKey === "sponsors") renderSponsorsList();
+  else if (listKey === "donationPhotos") renderGalleryList();
+  else if (listKey === "donationRecords") renderDonationsList();
+  else if (listKey === "processStepsRecipient" || listKey === "processStepsDonor") renderStepsLists();
+  renderDashboardStats();
+}
+
+document.getElementById("itemModalSaveBtn").addEventListener("click", () => {
+  const schema = SCHEMAS[currentModalType];
+  if (!schema) return;
+  if (uploadsInFlight > 0) { showToast("আপলোড শেষ হওয়া পর্যন্ত একটু অপেক্ষা করুন"); return; }
+  schema.fields.forEach(f => {
+    if (f.type === "image" || f.type === "images") return; // already tracked live on currentModalItem
+    const el = document.getElementById("mf_" + f.key);
+    if (!el) return;
+    if (f.type === "checkbox") currentModalItem[f.key] = el.checked;
+    else if (f.type === "number") currentModalItem[f.key] = parseInt(el.value, 10) || 1;
+    else currentModalItem[f.key] = el.value.trim();
+  });
+  if (currentModalType === "news") {
+    if (!currentModalItem.title) { showToast("সংবাদের শিরোনাম লিখুন"); return; }
+    if (!currentModalItem.content) { showToast("সংবাদের বিবরণ লিখুন"); return; }
+    if (!currentModalItem.date || isNaN(new Date(currentModalItem.date).getTime())) { showToast("সঠিক তারিখ দিন"); return; }
+    currentModalItem.reportImages = (currentModalItem.reportImages || []).filter(Boolean);
+  }
+  if (currentModalType === "donationRecord") {
+    if (!currentModalItem.name) { showToast("নাম লিখুন"); return; }
+    if (currentModalItem.hidePhoto) currentModalItem.imageBackup = currentModalItem.image;
+  }
+  if ((currentModalType === "team" || currentModalType === "faq" || currentModalType === "partner") && !currentModalItem.name && !currentModalItem.q) {
+    // no hard validation beyond donation records — keep it forgiving for a professional but low-friction UI
+  }
+
+  /* লিংক ফিল্ড: স্কিম না থাকলে https:// যোগ হয়; http:// কে https:// করা হয় (পাবলিক সাইটে শুধু https লিংক চলে) */
+  const fixUrl = u => {
+    u = String(u || "").trim();
+    if (!u) return "";
+    if (/^http:\/\//i.test(u)) return "https://" + u.slice(7);
+    if (/^https:\/\//i.test(u)) return u;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return "";   // javascript:, data: ইত্যাদি বাদ
+    return "https://" + u.replace(/^\/+/, "");
+  };
+  if (currentModalType === "sponsor") {
+    if (!currentModalItem.name) { showToast("স্পনসরের নাম লিখুন"); return; }
+    currentModalItem.link = fixUrl(currentModalItem.link);
+  }
+  if (currentModalType === "team") currentModalItem.facebook = fixUrl(currentModalItem.facebook);
+
+  const list = landingData[schema.listKey];
+  const idx = list.findIndex(x => x.id === currentModalItem.id);
+  if (currentModalType === "donationRecord" && idx < 0) {
+    // One card per donor: a new manual card must not duplicate an existing one.
+    const nm = (currentModalItem.name || "").trim().toLowerCase();
+    const dup = list.find(r => (r.donationNo && r.donationNo === currentModalItem.donationNo) ||
+      (nm && nm !== "ভাই" && nm !== "বোন" && (r.name || "").trim().toLowerCase() === nm && r.bloodGroup === currentModalItem.bloodGroup));
+    if (dup) { showToast("এই ডোনারের কার্ড আগে থেকেই আছে (" + dup.donationNo + ") — সেটি এডিট করুন"); return; }
+    if (!window.confirm("ডোনার কার্ড সাধারণত list.html-এ রক্তদান যোগ করলেই নিজে থেকে তৈরি/আপডেট হয়। তবুও ম্যানুয়াল কার্ড বানাবেন?")) return;
+  }
+  if (idx >= 0) list[idx] = currentModalItem;
+  else if (currentModalType === "team" || currentModalType === "sponsor") list.push(currentModalItem); // ক্রম গুরুত্বপূর্ণ — নতুনটি শেষে, তীর দিয়ে সরানো যাবে
+  else list.unshift(currentModalItem);
+
+  syncListToFirebase(schema.listKey, list);
+  renderListByKey(schema.listKey);
+  showToast(idx >= 0 ? "হালনাগাদ করা হয়েছে" : "যোগ করা হয়েছে");
+  closeItemModal();
+});
+
+document.getElementById("itemModalDeleteBtn").addEventListener("click", () => {
+  const schema = SCHEMAS[currentModalType];
+  if (!schema || !currentModalItem) return;
+  if (!window.confirm("আপনি কি নিশ্চিত এটি মুছে ফেলতে চান?")) return;
+  landingData[schema.listKey] = landingData[schema.listKey].filter(x => x.id !== currentModalItem.id);
+  syncListToFirebase(schema.listKey, landingData[schema.listKey]);
+  renderListByKey(schema.listKey);
+  showToast("মুছে ফেলা হয়েছে");
+  closeItemModal();
+});
+
+/* Shared hidden file input — routes to whichever upload target (a
+   scalar image field, or a field inside the open item modal) was
+   clicked most recently. Every pick is validated, then cropped to that
+   field's configured ratio (IMAGE_CROP_CONFIG) before it is uploaded. */
+function setUploadingState(el, on) { if (el) el.classList.toggle("isUploading", !!on); }
+
+hiddenFileInput.addEventListener("change", async function () {
+  const file = this.files && this.files[0];
+  this.value = "";
+  if (!file) return;
+  const scalarKey = pendingScalarImgKey;
+  const modalKey = pendingModalImgKey;
+  const cropKey = pendingCropKey;
+  pendingScalarImgKey = null;
+  pendingModalImgKey = null;
+  pendingCropKey = null;
+  if (!scalarKey && !modalKey) return;
+  const itemRef = currentModalItem;   // the item this upload belongs to
+  const schemaRef = SCHEMAS[currentModalType];
+  const fieldDef = modalKey && schemaRef ? schemaRef.fields.find(f => f.key === modalKey) : null;
+  const isMulti = !!(fieldDef && fieldDef.type === "images");
+  if (isMulti && (itemRef[modalKey] || []).length >= MAX_REPORT_IMAGES) { showToast("সর্বোচ্চ " + MAX_REPORT_IMAGES + "টি ছবি দেওয়া যাবে"); return; }
+  const cropped = await cropImageFile(file, cropKey);
+  if (!cropped) return; // invalid file, unreadable, or the user cancelled the crop
+  const uiId = () => isMulti ? "imgAdd_" + modalKey : (scalarKey ? "prev_" + scalarKey : "modalPrev_" + modalKey);
+  setUploadingState(document.getElementById(uiId()), true);
+  uploadsInFlight++;
+  showToast("ছবি আপলোড হচ্ছে…");
+  try {
+    const url = await uploadImageToDrive(cropped, "img-" + Date.now() + ".jpg");
+    if (scalarKey) {
+      landingData[scalarKey] = url;
+      renderImagePreview(scalarKey);
+      if (firebaseAvailable && landingPageRef) landingPageRef.child(scalarKey).set(url).catch(() => {});
+    } else if (isMulti && itemRef) {
+      itemRef[modalKey] = (itemRef[modalKey] || []).concat(url);
+      if (currentModalItem === itemRef) renderImagesField(modalKey);
+    } else if (modalKey && itemRef) {
+      itemRef[modalKey] = url;
+      // only touch the preview if the same item's modal is still open
+      const prev = currentModalItem === itemRef ? document.getElementById("modalPrev_" + modalKey) : null;
+      if (prev) prev.innerHTML = '<img src="' + escAttr(url) + '" alt="">';
+    }
+    showToast("ছবি যোগ হয়েছে");
+  } catch (err) {
+    console.log("Image upload failed:", err);
+    showToast("ছবি আপলোড ব্যর্থ: " + String((err && err.message) || err).replace(/^Error:\s*/, "").slice(0, 160));
+  } finally {
+    uploadsInFlight = Math.max(0, uploadsInFlight - 1);
+    setUploadingState(document.getElementById(uiId()), false);
+  }
+});
+
+/* ============================================================
+   রিপোর্টের ছবি (সংবাদ) — একাধিক ছবি; প্রতিটি আলাদাভাবে আপলোড হয়,
+   Firebase-এ শুধু লিংকের তালিকা (reportImages) সেভ হয়।
+   ============================================================ */
+function renderImagesField(key) {
+  const box = document.getElementById("modalImgs_" + key);
+  if (!box || !currentModalItem) return;
+  const list = (currentModalItem[key] || []).filter(Boolean);
+  currentModalItem[key] = list;
+  box.innerHTML = list.map((u, i) =>
+    '<div class="reportImgItem"><img src="' + escAttr(u) + '" alt="">' +
+    '<button type="button" class="reportImgDel" data-imgs-del="' + key + '" data-i="' + i + '" aria-label="মুছুন"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>'
+  ).join("") + (list.length < MAX_REPORT_IMAGES
+    ? '<button type="button" class="reportImgAdd" id="imgAdd_' + key + '" data-imgs-add="' + key + '"><i class="fa-solid fa-plus" aria-hidden="true"></i>ছবি যোগ</button>' : "");
+}
+itemModalBody.addEventListener("click", e => {
+  const add = e.target.closest("[data-imgs-add]");
+  if (add) {
+    pendingModalImgKey = add.getAttribute("data-imgs-add");
+    pendingCropKey = currentModalType + "." + pendingModalImgKey;
+    pendingScalarImgKey = null;
+    hiddenFileInput.click();
+    return;
+  }
+  const del = e.target.closest("[data-imgs-del]");
+  if (del && currentModalItem) {
+    const key = del.getAttribute("data-imgs-del");
+    const i = parseInt(del.getAttribute("data-i"), 10);
+    currentModalItem[key] = (currentModalItem[key] || []).filter((_, idx) => idx !== i);
+    renderImagesField(key);
+  }
+});
+
+/* ============================================================
+   GALLERY — BULK UPLOAD (unlimited images at once)
+   ============================================================ */
+const galleryBulkFileInput = document.getElementById("galleryBulkFileInput");
+const galleryUploadProgress = document.getElementById("galleryUploadProgress");
+document.getElementById("galleryBulkUploadBtn").addEventListener("click", () => galleryBulkFileInput.click());
+
+galleryBulkFileInput.addEventListener("change", async function () {
+  const files = Array.from(this.files || []);
+  this.value = "";
+  if (!files.length) return;
+
+  galleryUploadProgress.style.display = "block";
+  let done = 0, failed = 0, skipped = 0;
+  const total = files.length;
+  const updateProgress = () => {
+    galleryUploadProgress.textContent = "প্রসেস হচ্ছে… " + (done + failed + skipped) + " / " + total +
+      (failed ? " (" + failed + "টি ব্যর্থ)" : "") + (skipped ? " (" + skipped + "টি বাদ দেওয়া)" : "");
+  };
+  updateProgress();
+
+  for (const file of files) {
+    const cropped = await cropImageFile(file, "galleryPhoto.src");
+    if (!cropped) { skipped++; updateProgress(); continue; } // invalid file, or the user cancelled this one's crop
+    try {
+      const url = await uploadImageToDrive(cropped, "gallery-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6) + ".jpg");
+      landingData.donationPhotos.unshift({ id: genId(), src: url });
+      done++;
+    } catch (err) {
+      console.log("Gallery bulk upload item failed:", err);
+      failed++;
+    }
+    updateProgress();
+    renderGalleryList();
+  }
+
+  syncListToFirebase("donationPhotos", landingData.donationPhotos);
+  renderDashboardStats();
+  galleryUploadProgress.textContent = "সম্পন্ন — " + done + "টি ছবি যোগ হয়েছে" +
+    (failed ? ", " + failed + "টি ব্যর্থ হয়েছে" : "") + (skipped ? ", " + skipped + "টি বাদ দেওয়া হয়েছে" : "");
+  setTimeout(() => { galleryUploadProgress.style.display = "none"; }, 3500);
+  showToast(done + "টি ছবি গ্যালারিতে যোগ হয়েছে");
+});
+
+/* ============================================================
+   AUTH — login screen gates the whole dashboard
+   ============================================================ */
+const loaderScreen = document.getElementById("loaderScreen");
+const loginScreen = document.getElementById("loginScreen");
+const appShell = document.getElementById("appShell");
+const loginEmail = document.getElementById("loginEmail");
+const loginPass = document.getElementById("loginPass");
+const loginError = document.getElementById("loginError");
+const loginBtn = document.getElementById("loginBtn");
+
+function showLoginError(msg) {
+  if (msg) loginError.textContent = msg;
+  loginError.classList.remove("show");
+  void loginError.offsetWidth;
+  loginError.classList.add("show");
+}
+
+/* ---- Login rate limit (see /assets/js/login-guard.js) ---- */
+const guard = window.LoginGuard ? LoginGuard.create({ ns: "admin" }) : null;
+if (guard) {
+  guard.honeypot(document.querySelector("#loginScreen .loginCard"));
+  let wasLocked = false;
+  guard.watch(c => {
+    if (c.locked && c.wait > 0) {
+      wasLocked = true;
+      loginBtn.disabled = true;
+      loginBtn.textContent = "সাময়িক বন্ধ";
+      loginError.textContent = guard.message(c);
+      loginError.classList.add("show");
+    } else if (wasLocked) {
+      wasLocked = false;
+      loginBtn.disabled = false;
+      loginBtn.textContent = "লগইন করুন";
+      loginError.classList.remove("show");
+    }
+  });
+}
+
+async function attemptLogin() {
+  const email = loginEmail.value.trim();
+  const password = loginPass.value;
+  if (!email || !password) return;
+  if (guard) {
+    const c = guard.check();
+    if (c.wait > 0) {
+      if (!c.locked) showLoginError(guard.message(c));
+      guard.refresh();
+      return;
+    }
+    if (guard.isBot()) {           // honeypot filled -> not a human
+      guard.fail({ code: "honeypot" });
+      showLoginError("ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।");
+      guard.refresh();
+      return;
+    }
+  }
+  if (!firebaseAvailable) { showLoginError("সার্ভিস প্রস্তুত নয়, একটু পরে চেষ্টা করুন।"); return; }
+  if (guard) guard.begin();
+  loginBtn.disabled = true;
+  loginBtn.textContent = "লগইন হচ্ছে…";
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    if (guard) guard.success();
+  } catch (err) {
+    console.log("Login failed:", err);
+    const c = guard ? guard.fail(err) : { locked: false };
+    if (!c.locked) {
+      showLoginError(err && err.code === "auth/network-request-failed"
+        ? "ইন্টারনেট সংযোগ নেই, সংযোগ পরীক্ষা করুন।"
+        : "ইমেইল বা পাসওয়ার্ড ভুল, আবার চেষ্টা করুন।");
+    }
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = "লগইন করুন";
+    if (guard) guard.refresh();   // re-applies the lock + countdown if just locked
+  }
+}
+loginBtn.addEventListener("click", attemptLogin);
+loginEmail.addEventListener("keydown", e => { if (e.key === "Enter") attemptLogin(); });
+loginPass.addEventListener("keydown", e => { if (e.key === "Enter") attemptLogin(); });
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  if (firebaseAvailable && auth) auth.signOut().catch(() => {});
+});
+
+function showDashboard(user) {
+  loginScreen.style.display = "none";
+  appShell.style.display = "block";
+  const email = (user && user.email) || "Admin";
+  document.getElementById("adminAvatar").textContent = email.charAt(0).toUpperCase();
+  document.getElementById("adminAvatar").title = email;
+  fetchLandingOnce();
+  fetchDonorsOnce();
+}
+function showLogin() {
+  appShell.style.display = "none";
+  loginScreen.style.display = "flex";
+  loginEmail.value = ""; loginPass.value = "";
+}
+
+/* ============================================================
+   FIREBASE DATA FETCH
+   ============================================================ */
+function fetchDonorsOnce() {
+  return donorsRef.once("value").then(snapshot => {
+    const val = snapshot.val() || {};
+    donorsCount = Object.keys(val).length;
+    renderDashboardStats();
+  }).catch(err => console.log("Donors fetch failed:", err));
+}
+function fetchLandingOnce() {
+  return landingPageRef.once("value").then(snapshot => {
+    const val = snapshot.val() || {};
+    landingData = Object.assign({}, DEFAULT_LANDING, val);
+    renderAll();
+  }).catch(err => console.log("Landing fetch failed:", err));
+}
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    auth = firebase.auth();
+    donorsRef = db.ref("donors");
+    appConfigRef = db.ref("appConfig");
+    landingPageRef = db.ref("landingPage");
+    visitorRef = db.ref("siteStats/visitorCount");
+    firebaseAvailable = true;
+
+    visitorRef.on("value", snapshot => {
+      visitorCount = snapshot.val() || 0;
+      renderDashboardStats();
+    });
+
+    /* অ্যাপ ইনস্টল — কতগুলো ডিভাইসে অ্যাপ ইনস্টল হয়েছে (লাইভ) */
+    db.ref("siteStats/appInstalls").on("value", snap => { appInstallCount = Number(snap.val()) || 0; renderDashboardStats(); },
+      err => console.log("appInstalls read failed:", err));
+
+    /* লাইভ দর্শক ও ভিউ গ্রাফ */
+    db.ref(".info/serverTimeOffset").on("value", snap => { serverOffset = snap.val() || 0; renderLiveCount(); });
+    db.ref("siteStats/live").on("value", snap => { liveEntries = snap.val() || {}; renderLiveCount(); },
+      err => console.log("Live read failed:", err));
+    db.ref("siteStats/totalViews").on("value", snap => { totalViews = snap.val() || 0; renderViewsChart(); },
+      err => console.log("totalViews read failed:", err));
+    attachDailyListener();
+
+    /* সংবাদের লাইক — লাইভ: পাবলিক সাইটে কেউ লাইক দিলেই এখানে সংখ্যা বদলে যায় */
+    db.ref("newsLikes").on("value", snapshot => {
+      newsLikes = snapshot.val() || {};
+      renderNewsList();
+    });
+
+    auth.onAuthStateChanged(user => {
+      loaderScreen.style.opacity = "0";
+      setTimeout(() => { loaderScreen.style.display = "none"; }, 320);
+      if (user) { showDashboard(user); migrateOldViewsOnce(); }
+      else showLogin();
+    });
+  } catch (err) {
+    console.log("Firebase init failed:", err);
+    loaderScreen.style.display = "none";
+    showLoginError("সার্ভিস চালু করা যায়নি, ইন্টারনেট সংযোগ পরীক্ষা করুন।");
+    loginScreen.style.display = "flex";
+  }
+}
+
+loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js")
+  .then(() => Promise.all([
+    loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"),
+    loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js")
+  ]))
+  .then(initFirebase)
+  .catch(err => {
+    console.log("Firebase SDK failed to load:", err);
+    loaderScreen.style.display = "none";
+    loginScreen.style.display = "flex";
+    showLoginError("সার্ভিস লোড করা যায়নি, ইন্টারনেট সংযোগ পরীক্ষা করুন।");
+  });
+</script>
+</body>
+</html>

@@ -1,4 +1,24 @@
 /* ============================================================
+   SITE ROOT — worked out from this script's own URL (…/assets/js/app.js),
+   so internal links/images work on ourbnb.org, on localhost, and when the
+   files are opened straight from a folder (file://).
+   ============================================================ */
+const SITE_BASE = (function () {
+  try {
+    const s = document.currentScript && document.currentScript.src;
+    if (s) return s.replace(/assets\/js\/[^\/?#]*(?:[?#].*)?$/, "");
+  } catch (e) { /* ignore */ }
+  return "/";
+})();
+/* Links meant to be SHARED (QR codes, canonical, share buttons) always use the real domain. */
+const SITE_ORIGIN = location.protocol === "file:" ? "https://ourbnb.org" : location.origin;
+function sitePage(path, query) {
+  let p = path || "";
+  if (location.protocol === "file:" && (p === "" || /\/$/.test(p))) p += "index.html";
+  return SITE_BASE + p + (query || "");
+}
+
+/* ============================================================
    FIREBASE INIT (same project/database as the main Donor List app)
    ============================================================ */
 const _cfgB64 = "eyJhcGlLZXkiOiJBSXphU3lDSDVvSEZ6dUM2cWJBalY3Y2dIV1FvcEh0R0ExODBqaVUiLCJhdXRoRG9tYWluIjoiYmxvb2QtbmV0d29yay1hODUxYi5maXJlYmFzZWFwcC5jb20iLCJkYXRhYmFzZVVSTCI6Imh0dHBzOi8vYmxvb2QtbmV0d29yay1hODUxYi1kZWZhdWx0LXJ0ZGIuYXNpYS1zb3V0aGVhc3QxLmZpcmViYXNlZGF0YWJhc2UuYXBwIiwicHJvamVjdElkIjoiYmxvb2QtbmV0d29yay1hODUxYiIsInN0b3JhZ2VCdWNrZXQiOiJibG9vZC1uZXR3b3JrLWE4NTFiLmZpcmViYXNlc3RvcmFnZS5hcHAiLCJtZXNzYWdpbmdTZW5kZXJJZCI6IjcxMzA1ODg2ODQyNCIsImFwcElkIjoiMTo3MTMwNTg4Njg0MjQ6d2ViOjU5OTQ0MWM5NTQ0OTBjYTVjYjE5ZmQiLCJtZWFzdXJlbWVudElkIjoiRy1TTDE2VEJKMkZRIn0=";
@@ -55,9 +75,31 @@ function isCacheFresh(key) {
    ক্যাশ থাকলে (রিপিট ভিজিট) কনটেন্ট সঙ্গে সঙ্গে ক্যাশ থেকে আসে, তাই
    স্কেলিটন লাগেই না।
    ============================================================ */
+/* পেজ-লোডিং স্কেলিটন স্ক্রিন (index.html #pageSkel, CSS: html.pageLoading)।
+   ডেটা প্রস্তুত (ক্যাশ/Firebase/ব্যর্থ) আর পেজ লোড শেষ হলে ফেড-আউট হয়ে সরে যায়। */
+const pageSkel = (function () {
+  let started = false, done = false;
+  function hide() {
+    if (done) return;
+    done = true;
+    const h = document.documentElement;
+    h.classList.add("pageSkelOut");
+    setTimeout(() => h.classList.remove("pageLoading", "pageSkelOut"), 280);
+  }
+  function go() { requestAnimationFrame(() => requestAnimationFrame(hide)); }
+  return {
+    ready: function () {
+      if (started) return;
+      started = true;
+      if (document.readyState === "complete") go();
+      else { window.addEventListener("load", go, { once: true }); setTimeout(go, 2500); }
+    }
+  };
+})();
 let skeletonDone = false; // নিচে landingReady-এর সঙ্গে মেলানো হয়
 function isSkeletonLoading() { return !skeletonDone; }
 function endSkeleton(rerender) {
+  pageSkel.ready();
   if (skeletonDone) return;
   skeletonDone = true;
   document.documentElement.classList.remove("skelMode");
@@ -178,6 +220,7 @@ let landingData = Object.assign({}, DEFAULT_LANDING, readCache(CACHE_LANDING_KEY
 let landingReady = Object.keys(readCache(CACHE_LANDING_KEY, {})).length > 0;
 let landingLoadFailed = false;
 skeletonDone = landingReady;
+if (landingReady) pageSkel.ready();
 if (skeletonDone) document.documentElement.classList.remove("skelMode");
 else setTimeout(() => endSkeleton(true), 9000); // ইন্টারনেট খুব ধীর/বন্ধ হলেও স্কেলিটন আটকে থাকবে না
 let appConfigData = readCache(CACHE_APPCONFIG_KEY, { logoImage: "" });
@@ -258,7 +301,11 @@ function safeImgUrl(u) {
   if (!u || u.length > 2000000) return "";
   if (/^https:\/\/[^\s'"()<>\\]+$/i.test(u) && u.length <= 2048) return u;
   if (/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/i.test(u)) return u;
-  if (/^[A-Za-z0-9_][A-Za-z0-9_.\/-]{0,100}$/.test(u)) return u;
+  /* সাইটের নিজের ছবি: শুধু ফাইলের নাম (fav.jpeg) দিলে assets/images ফোল্ডার থেকে নেয়,
+     ফলে /news/, /hospitals/ ইত্যাদি যেকোনো পেজ থেকে ঠিকঠাক লোড হয়। */
+  if (/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,100}$/.test(u)) return SITE_BASE + "assets/images/" + u;
+  if (/^\/assets\/[A-Za-z0-9_.\/-]{1,100}$/.test(u)) return SITE_BASE + u.slice(1);
+  if (/^[A-Za-z0-9_][A-Za-z0-9_.\/-]{0,100}$/.test(u)) return "/" + u;
   return "";
 }
 /* Bengali / Arabic-Indic digits -> 0-9 (people type phone numbers on Bangla keyboards) */
@@ -324,19 +371,34 @@ function donorSerialNo(record) {
   return idx < 0 ? 0 : idx + 1;
 }
 function donationNoNum(no) { const m = String(no || "").match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : 0; }
+/* সার্চের জন্য লেখা এক রকম করে নেয়: বাংলা সংখ্যা → ইংরেজি (১২ = 12), ছোট হাতের অক্ষর, অদৃশ্য চিহ্ন ও বাড়তি স্পেস বাদ */
+function normSearch(s) {
+  return String(s == null ? "" : s).normalize("NFKC")
+    .replace(/[\u200b-\u200d\ufeff]/g, "")
+    .replace(/[\u09e6-\u09ef]/g, d => String(d.charCodeAt(0) - 0x09e6))
+    .toLowerCase().replace(/\s+/g, " ").trim();
+}
+/* "এ+", "a positive", "এবি নেগেটিভ", "o-" ... → "A+", "AB-", "O-"; রক্তের গ্রুপ না হলে "" */
+function canonicalBloodGroup(q) {
+  let t = normSearch(q).replace(/[\s_.()]/g, "");
+  t = t.replace(/positive|pos|পজিটিভ|পজেটিভ|পজিটিব/g, "+").replace(/negative|neg|নেগেটিভ|নেগাটিভ|নেগেটিব/g, "-");
+  t = t.replace(/^(এবি|ab)/, "ab").replace(/^(এ|a)(?!b)/, "a").replace(/^(বি|b)/, "b").replace(/^(ও|o)/, "o");
+  const m = t.match(/^(ab|a|b|o)([+-])$/);
+  return m ? m[1].toUpperCase() + m[2] : "";
+}
 /* Finds a card by Donor ID ("ABN-0001"), plain number ("1" / "0001"), or an old
    legacy number that was merged into the donor's single card. */
 function findRecordByNo(q) {
-  q = String(q || "").trim().toLowerCase();
+  q = normSearch(q);
   if (!q) return null;
   const recs = landingData.donationRecords || [];
-  let f = recs.find(r => (r.donationNo || "").trim().toLowerCase() === q);
+  let f = recs.find(r => normSearch(r.donationNo) === q);
   if (f) return f;
-  f = recs.find(r => (r.legacyNos || []).some(x => String(x).trim().toLowerCase() === q));
+  f = recs.find(r => (r.legacyNos || []).some(x => normSearch(x) === q));
   if (f) return f;
   if (/^\d+$/.test(q)) {
     const padded = "abn-" + q.padStart(4, "0");
-    f = recs.find(r => (r.donationNo || "").trim().toLowerCase() === padded);
+    f = recs.find(r => normSearch(r.donationNo) === padded);
   }
   return f || null;
 }
@@ -435,7 +497,7 @@ function driveUrlCandidates(url) {
    and any placeholder icon. */
 /* ---- website logo shown on the top-left corner of donor photos ---- */
 function donorLogoSrc() {
-  return (appConfigData && appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : "fav.jpeg";
+  return (appConfigData && appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
 }
 const DONOR_LOGO_HTML = '<img class="donorPhotoLogo" alt="" aria-hidden="true" draggable="false">';
 function syncDonorLogos(root) {
@@ -650,7 +712,10 @@ const DONATION_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
    এডমিন প্যানেলের "ডোনেশন রেকর্ড" ম্যানেজারও ব্যবহার করে — তাই আলাদা
    কোনো Firebase রিড লাগে না, সবসময় সিঙ্কে থাকে।
    ============================================================ */
-const recordsFilterState = { q: "", bg: "" };
+const recordsFilterState = {
+  q: (function () { try { return (new URLSearchParams(location.search).get("q") || "").slice(0, 100); } catch (e) { return ""; } })(),
+  bg: ""
+};
 
 function recordDateBn(dateStr) {
   if (!dateStr) return "";
@@ -676,7 +741,7 @@ function recordCardTemplate(r) {
         '<span class="recordCardName">' + escAttr(r.name || "") + '</span>' +
       '</div>' +
       '<div class="recordCardBody">' +
-        '<div class="recordCardHospital"><i class="fa-solid fa-hospital" aria-hidden="true"></i>' + escAttr(r.hospitalName || "—") + '</div>' +
+        '<div class="recordCardHospital"><i class="fa-solid fa-hospital" aria-hidden="true"></i><span class="recordCardHospitalText" title="' + escAttr(r.hospitalName || "") + '">' + escAttr(r.hospitalName || "—") + '</span></div>' +
         '<div class="recordCardMetaRow">' +
           (dateBn ? '<span><i class="fa-regular fa-calendar" aria-hidden="true"></i>' + escAttr(dateBn) + '</span>' : "<span></span>") +
           '<span><i class="fa-solid fa-droplet" aria-hidden="true"></i>' + ordinalShortBn(r.visitCount || 1) + ' বার</span>' +
@@ -760,15 +825,17 @@ function renderRecordsGrid() {
 
   /* সর্বশেষ রক্তদানের তারিখ অনুযায়ী — সবচেয়ে নতুন আগে */
   const all = (landingData.donationRecords || []).slice().sort((a, b) => donationDateCompare(b, a));
-  const q = recordsFilterState.q.trim().toLowerCase();
+  const q = normSearch(recordsFilterState.q);
+  const qBg = canonicalBloodGroup(recordsFilterState.q);
   const bg = recordsFilterState.bg;
   const filtered = all.filter(r => {
     if (bg && (r.bloodGroup || "") !== bg) return false;
     if (!q) return true;
     return (
-      (r.name || "").toLowerCase().includes(q) ||
-      (r.donationNo || "").toLowerCase().includes(q) ||
-      (r.hospitalName || "").toLowerCase().includes(q)
+      normSearch(r.name).includes(q) ||
+      normSearch(r.donationNo).includes(q) ||
+      normSearch(r.hospitalName).includes(q) ||
+      (qBg && (r.bloodGroup || "") === qBg)
     );
   });
 
@@ -814,6 +881,7 @@ function renderRecordsGrid() {
   if (!grid) return;
   const searchInput = document.getElementById("recordsSearchInput");
   const bgFilter = document.getElementById("recordsBgFilter");
+  if (searchInput && recordsFilterState.q) searchInput.value = recordsFilterState.q;   // /donations/?q=… থেকে আসা খোঁজা
   if (searchInput) {
     searchInput.addEventListener("input", () => {
       recordsFilterState.q = searchInput.value || "";
@@ -1176,7 +1244,7 @@ function toggleNewsLike(id) {
 /* A shareable deep link straight to one news post — opened later, it
    lands on the news page and scrolls/highlights that exact card. */
 function buildNewsShareUrl(id) {
-  return location.origin + location.pathname + "#news/" + encodeURIComponent(id);
+  return SITE_ORIGIN + "/news/?post=" + encodeURIComponent(id);
 }
 
 function formatNewsDateBn(dateStr) {
@@ -1189,7 +1257,7 @@ function formatNewsDateBn(dateStr) {
 }
 
 function newsCardTemplate(n) {
-  const href = "#news/" + encodeURIComponent(n.id);
+  const href = sitePage("news/", "?post=" + encodeURIComponent(n.id));
   const id = escAttr(n.id);
   return (
     '<article class="newsCard newsCardCompact" data-news-id="' + id + '">' +
@@ -1266,7 +1334,7 @@ function renderNewsSection() {
 }
 
 /* ============================================================
-   NEWS DETAIL PAGE (#news/<id>) — full description, larger photo and,
+   NEWS DETAIL PAGE (/news/?post=<id>) — full description, larger photo and,
    when the admin attached them, the report images (last
    month's donation history). Re-rendered whenever news / likes change.
    ============================================================ */
@@ -1298,6 +1366,13 @@ function renderNewsDetail() {
     else box.innerHTML = newsDetailStateHtml("fa-circle-question", "এই সংবাদটি খুঁজে পাওয়া যায়নি — এটি সরিয়ে ফেলা হয়ে থাকতে পারে।");
     return;
   }
+
+  /* ব্রাউজার ট্যাব ও সার্চ ফলাফলের জন্য সংবাদের শিরোনাম */
+  try {
+    document.title = (n.title ? n.title + " — " : "") + "Blood Network Baraikhali";
+    const canon = document.querySelector('link[rel="canonical"]');
+    if (canon) canon.setAttribute("href", SITE_ORIGIN + "/news/?post=" + encodeURIComponent(n.id));
+  } catch (err) { /* ignore */ }
 
   const sig = JSON.stringify([n.id, n.title, n.date, n.category, n.content, n.newsImage, newsReportImages(n), window.I18N ? I18N.lang : "bn"]);
   if (box.getAttribute("data-sig") !== sig) {
@@ -1745,6 +1820,29 @@ function renderSponsorsSection() {
   fitSponsorRow();
 }
 
+/* Email / Facebook in the footer and on the About page are real links: the visible text comes from the admin
+   panel (data-key), and the href is rebuilt from that same text, so editing the text updates the link. */
+function updateLinkFields() {
+  document.querySelectorAll("a[data-link-key]").forEach(link => {
+    const field = link.querySelector(".editable-field");
+    const text = ((field ? field.textContent : link.textContent) || "").trim();
+    let href = "";
+    if (link.getAttribute("data-link-kind") === "mailto") {
+      if (/^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(text)) href = "mailto:" + text;
+    } else if (text) {
+      href = safeHttpsUrl(/^https?:\/\//i.test(text) ? text.replace(/^http:\/\//i, "https://") : "https://" + text.replace(/^\/+/, ""));
+    }
+    if (href) link.setAttribute("href", href); else link.removeAttribute("href");
+  });
+}
+document.addEventListener("input", e => {
+  if (e.target && e.target.closest && e.target.closest("a[data-link-key]")) updateLinkFields();
+});
+document.addEventListener("click", e => {          // admin is typing inside the link text: don't navigate away
+  const l = e.target && e.target.closest && e.target.closest("a[data-link-key]");
+  if (l && isAdmin) e.preventDefault();
+});
+
 function renderLanding() {
   normalizeLandingData();
   renderNoticeBar();
@@ -1754,6 +1852,7 @@ function renderLanding() {
     const key = el.getAttribute("data-key");
     if (landingData[key] !== undefined) el.textContent = landingData[key];
   });
+  updateLinkFields();
 
   const aboutWrap = document.getElementById("aboutImageWrap");
   const aboutImg = document.getElementById("aboutImageEl");
@@ -1820,7 +1919,7 @@ function renderLanding() {
     }
   });
 
-  const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+  const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
   loadImageWithFallback(document.getElementById("heroBrandLogo"), logoSrc);
   loadImageWithFallback(document.getElementById("footerBrandLogo"), logoSrc);
   loadImageWithFallback(document.getElementById("callingCardBrandLogo"), logoSrc);
@@ -2047,21 +2146,28 @@ renderLanding();
 })();
 
 /* ============================================================
-   ইন-পেজ রাউটার — কীভাবে কাজ করে / সংবাদ / রক্তের গ্রুপ চার্ট ইত্যাদি
-   এই পেজগুলো আলাদা .html ফাইল নয়, একই index.html-এর ভেতরেই আছে।
-   URL হ্যাশ (#process, #news, #news/<id>, #blood-group) দেখে হোম পেজ
-   লুকিয়ে সংশ্লিষ্ট রুট পেজ দেখানো হয়।
+   রুট পেজ — কীভাবে কাজ করে / সংবাদ / রক্তের গ্রুপ চার্ট ইত্যাদি
+   প্রতিটি পেজের নিজস্ব URL আছে (/how-it-works/, /news/, /hospitals/ …),
+   আর <body data-route="…"> বলে দেয় কোন পেজ খোলা। হোম পেজে data-route নেই।
    ============================================================ */
 (function initRoutePages() {
-  const ROUTES = ["process", "blood-group", "news", "news-detail", "donations", "hospitals", "gallery"];
+  const ROUTES = ["process", "blood-group", "news", "news-detail", "donations", "hospitals", "gallery", "about", "privacy"];
   const ROUTE_TITLES = {
     "process": "কীভাবে কাজ করে",
     "blood-group": "রক্তের গ্রুপ চার্ট",
     "news": "সংবাদ ও আপডেট",
+    "about": "আমাদের সম্পর্কে",
+    "privacy": "গোপনীয়তা নীতি",
     "news-detail": "সংবাদ",
     "donations": "সকল রক্তদান রেকর্ড",
     "hospitals": "হাসপাতাল ও ব্লাড ব্যাংক",
     "gallery": "সব রক্তদানের ছবি"
+  };
+  /* রুট → ফোল্ডার (build_pages.py এর PAGES এর সাথে মিলতে হবে) */
+  const ROUTE_PATHS = {
+    "process": "how-it-works/", "blood-group": "blood-group-chart/", "donations": "donations/",
+    "news": "news/", "news-detail": "news/", "hospitals": "hospitals/", "gallery": "gallery/",
+    "about": "about/", "privacy": "privacy/"
   };
   const heroEl = document.getElementById("top");
   const mainEl = document.getElementById("main");
@@ -2071,6 +2177,9 @@ renderLanding();
   const routeBackTitleEl = document.getElementById("siteNavRouteBackTitle");
   const routeBackEl = document.getElementById("siteNavRouteBrand");
   const navLinks = document.querySelectorAll("[data-nav-route]");
+  /* ডিস্কে/ফাইল থেকে খুললে (file://) পেজ-বদলে history API চলে না — তখন আগের মতোই পুরো পেজ লোড হয় */
+  const SPA_OK = !!(window.history && history.pushState) && location.protocol !== "file:";
+  const REDUCED_MOTION = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   function markActiveNav(currentRoute) {
     navLinks.forEach(link => {
@@ -2078,55 +2187,255 @@ renderLanding();
     });
   }
 
-  /* "#news" opens the news list page; "#news/<id>" (also what the share
-     buttons link to — see buildNewsShareUrl) opens that one news item's
-     detail page. A raw hash of "blood-group" must NOT be mistaken for a
-     "news" route, so only an exact "news" or a "news/" prefix counts. */
-  function parseHash(rawHash) {
-    const hash = (rawHash || "").replace("#", "");
-    if (hash.indexOf("news/") === 0 && hash.length > 5) {
-      let id = hash.slice(5);
-      try { id = decodeURIComponent(id); } catch (err) { /* malformed % sequence — use raw */ }
-      return { route: "news-detail", newsId: id };
+  /* সাইটের মূল পাথ (যেমন "/") */
+  const BASE_PATH = (function () {
+    try { return new URL(SITE_BASE, location.href).pathname.replace(/\/?$/, "/"); } catch (e) { return "/"; }
+  })();
+
+  /* একটি URL কোন রুট — মিললে { route, newsId, search }, না মিললে null (তখন সাধারণ লিংকের মতো পুরো পেজ খোলে) */
+  function routeFromUrl(u) {
+    if (u.origin !== location.origin || u.pathname.indexOf(BASE_PATH) !== 0) return null;
+    const rest = u.pathname.slice(BASE_PATH.length).replace(/index\.html$/, "").replace(/\/+$/, "");
+    let route = null;
+    if (rest === "") route = "home";
+    else Object.keys(ROUTE_PATHS).forEach(k => { if (k !== "news-detail" && ROUTE_PATHS[k].replace(/\/$/, "") === rest) route = k; });
+    if (!route) return null;
+    let newsId = null;
+    if (route === "news") {
+      const post = (u.searchParams.get("post") || "").trim();
+      if (post) { route = "news-detail"; newsId = post; }
     }
-    if (hash === "news" || hash === "news/") return { route: "news", newsId: null };
-    return { route: hash, newsId: null };
+    return { route: route, newsId: newsId, search: u.search };
   }
 
-  function showRoute(hash) {
-    const parsed = parseHash(hash);
-    const isRoute = ROUTES.includes(parsed.route);
+  /* প্রথম লোডে খোলা পেজ কোনটা: <body data-route="…"> থেকে। সংবাদের বিস্তারিত পেজ হলো
+     /news/?post=<id> (শেয়ার বাটনের লিংক — buildNewsShareUrl দেখুন)। */
+  function initialRoute() {
+    let route = (document.body.getAttribute("data-route") || "").trim();
+    if (!route && SPA_OK) {                 // অফলাইনে index.html দিয়ে /news/ ইত্যাদি খুললে URL দেখে রুট ঠিক করি
+      const fromUrl = routeFromUrl(new URL(location.href));
+      if (fromUrl && fromUrl.route !== "home") return fromUrl;
+    }
+    route = route || "home";
+    if (route === "news") {
+      let post = "";
+      try { post = (new URLSearchParams(location.search).get("post") || "").trim(); } catch (err) { /* ignore */ }
+      if (post) return { route: "news-detail", newsId: post, search: location.search };
+    }
+    return { route: route, newsId: null, search: location.search };
+  }
+
+  /* ---------- ট্যাব বদলালে title / description / canonical ঠিক রাখা ---------- */
+  function setMetaContent(selector, value) {
+    const el = document.querySelector(selector);
+    if (el && value) el.setAttribute("content", value);
+  }
+  function updateHead(info) {
+    const src = info.route === "home" ? heroEl : document.getElementById("route-" + (info.route === "news-detail" ? "news" : info.route));
+    if (!src) return;
+    const title = src.getAttribute("data-title") || "";
+    const desc = src.getAttribute("data-desc") || "";
+    const descEn = src.getAttribute("data-desc-en") || "";
+    const path = info.route === "home" ? "" : (ROUTE_PATHS[info.route] || "");
+    const url = SITE_ORIGIN + "/" + path;
+    const detail = info.route === "news-detail";
+    if (title && !detail) document.title = title;
+    const canon = document.querySelector('link[rel="canonical"]');
+    if (canon) canon.setAttribute("href", detail ? SITE_ORIGIN + "/news/?post=" + encodeURIComponent(info.newsId) : url);
+    if (detail) return;       // সংবাদের শিরোনাম/বিবরণ renderNewsDetail() বসায়
+    const m = document.querySelector('meta[name="description"]');
+    if (m) {
+      m.setAttribute("data-bn", desc);
+      if (descEn) m.setAttribute("data-en", descEn);
+      m.setAttribute("content", (window.I18N && I18N.lang === "en" && descEn) ? descEn : desc);
+    }
+    setMetaContent('meta[property="og:title"]', title);
+    setMetaContent('meta[property="og:description"]', desc);
+    setMetaContent('meta[property="og:url"]', url);
+    setMetaContent('meta[name="twitter:title"]', title);
+    setMetaContent('meta[name="twitter:description"]', desc);
+  }
+
+  /* রুট পেজের শিরোনাম ও ভূমিকা-লেখা: রুট-ফোল্ডারের পেজে এগুলো আগে থেকেই থাকে,
+     হোম থেকে (বা অন্য পেজ থেকে) এলে এখানে বসানো হয়। */
+  function ensureIntro(sec) {
+    const inner = sec && sec.querySelector(".routePageInner");
+    if (!inner || inner.querySelector(".routeIntro")) return;
+    const h1 = sec.getAttribute("data-h1");
+    if (!h1) return;
+    const head = document.createElement("header");
+    head.className = "routeIntro";
+    const t = document.createElement("h1"); t.className = "routeIntroTitle"; t.textContent = h1;
+    head.appendChild(t);
+    inner.insertBefore(head, inner.firstChild);
+  }
+
+  function animateIn(el) {
+    if (!el || REDUCED_MOTION) return;
+    el.classList.remove("routeEnter");
+    void el.offsetWidth;
+    el.classList.add("routeEnter");
+    el.addEventListener("animationend", () => el.classList.remove("routeEnter"), { once: true });
+  }
+
+  function showRoute(info, opts) {
+    opts = opts || {};
+    const isRoute = ROUTES.includes(info.route);
     ROUTES.forEach(r => {
       const page = document.getElementById("route-" + r);
-      if (page) page.classList.toggle("active", isRoute && parsed.route === r);
+      if (page) {
+        const on = isRoute && info.route === r;
+        if (on) ensureIntro(page);
+        page.classList.toggle("active", on);
+        if (on) page.setAttribute("role", "main"); else page.removeAttribute("role");
+      }
     });
     heroEl.style.display = isRoute ? "none" : "";
     mainEl.style.display = isRoute ? "none" : "";
-    markActiveNav(!isRoute ? "home" : (parsed.route === "news-detail" ? "news" : parsed.route));
-    if (siteNavEl) siteNavEl.classList.toggle("inRoutePage", isRoute);
-    if (routeBackTitleEl) routeBackTitleEl.textContent = isRoute ? (ROUTE_TITLES[parsed.route] || "") : "হোম";
+    if (isRoute) document.body.setAttribute("data-route", info.route === "news-detail" ? "news" : info.route);
+    else document.body.removeAttribute("data-route");
+    document.documentElement.classList.toggle("newsDetailMode", info.route === "news-detail");
+    markActiveNav(!isRoute ? "home" : (info.route === "news-detail" ? "news" : info.route));
+    if (siteNavEl) {
+      siteNavEl.classList.toggle("inRoutePage", isRoute);
+      siteNavEl.classList.remove("navOpen");
+      const tg = document.getElementById("siteNavToggle");
+      if (tg) { tg.setAttribute("aria-expanded", "false"); const ic = tg.querySelector("i"); if (ic) ic.className = "fa-solid fa-bars"; }
+    }
+    if (routeBackTitleEl) routeBackTitleEl.textContent = isRoute ? (ROUTE_TITLES[info.route] || "") : "হোম";
     if (routeBackEl) {
-      const toNews = parsed.route === "news-detail";
-      routeBackEl.setAttribute("href", toNews ? "#news" : "#top");
+      const toNews = info.route === "news-detail";
+      routeBackEl.setAttribute("href", toNews ? sitePage("news/") : sitePage(""));
       routeBackEl.setAttribute("aria-label", toNews ? "সংবাদ তালিকায় ফিরে যান" : "হোমে ফিরে যান");
     }
-    if (parsed.route === "gallery") {
+    if (opts.spa) updateHead(info);
+
+    if (info.route === "gallery") {
       galleryPageState.page = 1;
       renderGalleryAll();
     }
-    if (parsed.route === "news-detail") {
-      currentNewsDetailId = parsed.newsId;
-      renderNewsDetail();
+    currentNewsDetailId = info.route === "news-detail" ? info.newsId : null;
+    if (info.route === "news-detail") renderNewsDetail();
+    if (opts.spa && info.route === "donations") {       // /donations/?q=… — খোঁজা শব্দ বসিয়ে তালিকা ফিল্টার
+      let q = "";
+      try { q = (new URLSearchParams(info.search || "").get("q") || "").slice(0, 100); } catch (err) { /* ignore */ }
+      if (q) {
+        recordsFilterState.q = q;
+        recordsPageState.page = 1;
+        const inp = document.getElementById("recordsSearchInput");
+        if (inp) inp.value = q;
+        renderRecordsGrid();
+      }
     }
-    window.scrollTo(0, 0);
+    if (opts.spa && info.route === "home" && typeof window.tryAutoOpenDonationCardFromUrl === "function") {
+      window.tryAutoOpenDonationCardFromUrl();            // /?id=0001 লিংক
+    }
+
+    const y = opts.pop ? ((history.state && history.state.y) || 0) : 0;
+    window.scrollTo({ top: y, left: 0, behavior: "instant" });
+
+    if (opts.spa) {
+      /* শুধু মাঝের কনটেন্ট নতুন করে আসে — উপরের বার ও নিচের মেনু যেমন ছিল তেমনই থাকে */
+      if (isRoute) animateIn(document.getElementById("route-" + info.route));
+      else { animateIn(heroEl); animateIn(mainEl); }
+      window.dispatchEvent(new Event("resize"));           // হিডেন থাকা অংশের মাপ-নির্ভর কোড নতুন করে হিসাব করে
+      const focusTarget = isRoute ? document.getElementById("route-" + info.route) : heroEl;
+      if (focusTarget) { focusTarget.setAttribute("tabindex", "-1"); focusTarget.focus({ preventScroll: true }); }
+    }
   }
 
-  function handleHash() {
-    showRoute(location.hash || "");
+  /* ---------- রিলোড ছাড়া পেজ বদল (history API) ---------- */
+  const trail = [];                           // trail[i] = i-তম history এন্ট্রির URL (পেছনের-তীর বোতামের জন্য)
+  const keyOf = u => u.pathname + u.search;
+  let lastKey = keyOf(location);
+
+  function saveScroll() {
+    try { history.replaceState(Object.assign({}, history.state || { spa: true, i: 0 }, { y: window.scrollY }), ""); } catch (e) { /* ignore */ }
   }
 
-  window.addEventListener("hashchange", handleHash);
-  handleHash();
+  function targetUrl(u, info) {
+    const path = BASE_PATH + (info.route === "home" ? "" : ROUTE_PATHS[info.route]);
+    return path + u.search;
+  }
+
+  function go(u, info, opts) {
+    opts = opts || {};
+    const target = targetUrl(u, info);
+    if (target === location.pathname + location.search) {       // একই পেজে আবার ট্যাপ → উপরে ওঠে
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      return;
+    }
+    const i = history.state && typeof history.state.i === "number" ? history.state.i : 0;
+    if (opts.back && i > 0 && trail[i - 1] === target) { history.back(); return; }
+    saveScroll();
+    trail.length = i + 1;
+    trail[i + 1] = target;
+    try {
+      history.pushState({ spa: true, i: i + 1, y: 0 }, "", target);
+    } catch (e) { location.href = u.href; return; }
+    lastKey = location.pathname + location.search;
+    showRoute(info, { spa: true });
+  }
+
+  /* অন্য কোড (যেমন রক্তদান খোঁজা) থেকে ডাকার জন্য: true = রিলোড ছাড়া খুলেছে */
+  window.spaNavigate = function (url) {
+    if (!SPA_OK) return false;
+    let u; try { u = new URL(url, location.href); } catch (e) { return false; }
+    const info = routeFromUrl(u);
+    if (!info) return false;
+    go(u, info);
+    return true;
+  };
+
+  function scrollToTop() { window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); }
+
+  if (SPA_OK) {
+    /* ভেতরের সব লিংক পুরো (absolute) URL করে রাখি — যাতে পেজের ঠিকানা বদলালেও (/news/ থেকে /donations/) ভাঙে না */
+    document.querySelectorAll("a[href]").forEach(a => {
+      const h = a.getAttribute("href");
+      if (!h || /^(#|[a-z][a-z0-9+.-]*:|\/\/)/i.test(h)) return;
+      a.setAttribute("href", a.href);
+    });
+
+    try { history.scrollRestoration = "manual"; } catch (e) { /* ignore */ }
+    trail[0] = keyOf(location);
+    try { history.replaceState(Object.assign({ spa: true, i: 0, y: 0 }, history.state || {}), ""); } catch (e) { /* ignore */ }
+    const startI = history.state && typeof history.state.i === "number" ? history.state.i : 0;
+    trail[startI] = keyOf(location);
+
+    let st = null;
+    window.addEventListener("scroll", () => {
+      clearTimeout(st);
+      st = setTimeout(saveScroll, 150);
+    }, { passive: true });
+
+    document.addEventListener("click", e => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest && e.target.closest("a[href]");
+      if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download")) return;
+      const h = a.getAttribute("href") || "";
+      if (h.charAt(0) === "#") {
+        if (h === "#top" || /^#route-/.test(h)) { e.preventDefault(); scrollToTop(); }   // ফুটারের "উপরে ফিরে যান"
+        return;
+      }
+      let u; try { u = new URL(a.href, location.href); } catch (err) { return; }
+      const info = routeFromUrl(u);
+      if (!info) return;                       // /admin/, /list/, বাইরের সাইট … → সাধারণ লিংক
+      e.preventDefault();
+      go(u, info, { back: a === routeBackEl });
+    });
+
+    window.addEventListener("popstate", () => {
+      const key = keyOf(location);
+      if (key === lastKey) return;             // শুধু #hash বদলেছে
+      lastKey = key;
+      const info = routeFromUrl(new URL(location.href));
+      if (!info) { location.reload(); return; }
+      showRoute(info, { spa: true, pop: true });
+    });
+  }
+
+  showRoute(initialRoute(), { scrollTop: true });
 })();
 
 /* ============================================================
@@ -2570,6 +2879,9 @@ document.addEventListener("click", e => {
   if (!searchInput || !searchBtn || !resultOverlay) return;
 
   let currentDonationRecord = null; // last successfully found record, for the JPEG filename
+  const cardActions = document.getElementById("donationResultActions");
+  const cardSaveBtn = document.getElementById("donationCardSaveBtn");
+  const cardShareBtn = document.getElementById("donationCardShareBtn");
 
   function iconRow(iconClass, label, value) {
     const row = document.createElement("div");
@@ -2610,17 +2922,18 @@ document.addEventListener("click", e => {
   searchInput.setAttribute("aria-expanded", "false");
   let sugList = [], sugActive = -1;
 
-  const lc = s => String(s == null ? "" : s).toLowerCase();
+  const lc = normSearch;   // (normSearch is defined once at the top level, next to findRecordByNo)
 
   /* নাম, ID (পুরনো নাম্বারসহ) ও হাসপাতালের নামে মিলিয়ে দেখে; শুরুতে মিললে আগে, তারপর নতুন রক্তদান আগে */
   function searchRecords(raw) {
     const q = lc(String(raw || "").trim());
     if (!q) return [];
+    const qBg = canonicalBloodGroup(raw);
     const out = [];
     (landingData.donationRecords || []).forEach(r => {
       if (!r || !(r.name || r.donationNo)) return;
       const fields = [r.name, r.donationNo, r.hospitalName].concat(r.legacyNos || []).map(lc);
-      let best = 0;
+      let best = qBg && (r.bloodGroup || "") === qBg ? 2 : 0;
       fields.forEach(f => {
         if (!f) return;
         const i = f.indexOf(q);
@@ -2740,12 +3053,9 @@ document.addEventListener("click", e => {
 
   /* একাধিক ফলাফল হলে রক্তদান রেকর্ড পেজে ওই খোঁজা অনুযায়ী ফিল্টার করে নিয়ে যায় */
   function openRecordsFiltered(q) {
-    recordsFilterState.q = q;
-    recordsPageState.page = 1;
-    const ri = document.getElementById("recordsSearchInput");
-    if (ri) ri.value = q;
-    renderRecordsGrid();
-    location.hash = "#donations";
+    /* রক্তদান রেকর্ড এখন আলাদা পেজ (/donations/) — খোঁজা শব্দটি ?q= দিয়ে সেখানে পাঠানো হয় */
+    const dUrl = sitePage("donations/", "?q=" + encodeURIComponent(q));
+    if (!(window.spaNavigate && window.spaNavigate(dUrl))) location.href = dUrl;
   }
 
   function chooseRecord(r) {
@@ -2802,7 +3112,7 @@ document.addEventListener("click", e => {
     if (resultModal) resultModal.classList.remove("sharpMode");
 
     /* ---- watermark (logo + "BNB") behind everything in the card ---- */
-    const watermarkLogoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+    const watermarkLogoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
     const watermark = document.createElement("div");
     watermark.className = "donationResultWatermark";
     watermark.setAttribute("aria-hidden", "true");
@@ -2848,7 +3158,7 @@ document.addEventListener("click", e => {
       logoImg.alt = (landingData.siteName || "Blood Network").trim();
       brandRow.appendChild(logoImg);
       headBand.appendChild(brandRow);
-      const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : "fav.jpeg";
+      const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
       loadImageWithFallback(logoImg, logoSrc);
 
       /* ---- donor photo is set as the head band's OWN background (not a separate element) ---- */
@@ -2975,7 +3285,7 @@ document.addEventListener("click", e => {
       body.appendChild(stamp);
 
       /* ---- dynamic card URL + QR code ---- */
-      const cardUrl = window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(found.donationNo);
+      const cardUrl = SITE_ORIGIN + "/?id=" + encodeURIComponent(found.donationNo);
       const qrWrap = document.createElement("div");
       qrWrap.className = "donationResultQrWrap";
       const qrImg = document.createElement("img");
@@ -2993,6 +3303,8 @@ document.addEventListener("click", e => {
       resultContent.appendChild(body);
     }
     resultOverlay.style.display = "flex";
+    if (cardActions) cardActions.hidden = !found;
+    if (found && navigator.share) { const warm = prepareCardFile(found); if (warm) warm.catch(() => {}); } // ready before the tap (share needs a fresh tap)
   }
 
   /* Re-renders the currently open card (if any) against whatever is
@@ -3173,21 +3485,96 @@ document.addEventListener("click", e => {
     const words = String(text || "").split(/\s+/).filter(Boolean);
     const lines = [];
     let line = "";
-    for (const word of words) {
-      const test = line ? line + " " + word : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = test;
+    /* স্পেস ছাড়া খুব লম্বা একটি শব্দ (লম্বা নাম/হাসপাতাল) লাইনে না ধরলে অক্ষর ধরে ভেঙে নেয় — কার্ডের বাইরে যাবে না */
+    const pushWord = word => {
+      if (ctx.measureText(word).width <= maxWidth) return [word];
+      const parts = []; let cur = "";
+      for (const ch of Array.from(word)) {
+        if (cur && ctx.measureText(cur + ch).width > maxWidth) { parts.push(cur); cur = ch; } else cur += ch;
+      }
+      if (cur) parts.push(cur);
+      return parts;
+    };
+    for (const rawWord of words) {
+      const pieces = pushWord(rawWord);
+      for (let i = 0; i < pieces.length; i++) {
+        const word = pieces[i];
+        const test = line ? line + " " + word : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+        if (i < pieces.length - 1) { lines.push(line); line = ""; }
       }
     }
     if (line) lines.push(line);
     return lines.length ? lines : [""];
   }
 
+  /* হাসপাতালের নাম / নেটওয়ার্কের নাম আলাদা স্টাইলে (বোল্ড + গাঢ় লাল) আঁকার জন্য:
+     runs = [{text, strong}] — শব্দ ধরে লাইনে ভাগ করে, প্রতিটি শব্দে নিজের ফন্ট মেপে নেয় */
+  function wrapStyledRuns(ctx, runs, maxWidth, fontFor) {
+    const tokens = [];
+    runs.forEach(r => String(r.text || "").split(/\s+/).filter(Boolean).forEach(w => tokens.push({ text: w, strong: !!r.strong })));
+    const wOf = t => { ctx.font = fontFor(t.strong); return ctx.measureText(t.text).width; };
+    ctx.font = fontFor(false);
+    const spaceW = ctx.measureText(" ").width;
+    const lines = [];
+    let line = [], lineW = 0;
+    const pushLine = () => { if (line.length) lines.push(line); line = []; lineW = 0; };
+    tokens.forEach(tok => {
+      let pieces = [tok];
+      if (wOf(tok) > maxWidth) {           // স্পেস ছাড়া খুব লম্বা শব্দ — অক্ষর ধরে ভাঙি
+        pieces = []; let cur = "";
+        for (const ch of Array.from(tok.text)) {
+          if (cur && wOf({ text: cur + ch, strong: tok.strong }) > maxWidth) { pieces.push({ text: cur, strong: tok.strong }); cur = ch; } else cur += ch;
+        }
+        if (cur) pieces.push({ text: cur, strong: tok.strong });
+      }
+      pieces.forEach((pc, i) => {
+        const w = wOf(pc);
+        const add = line.length ? spaceW + w : w;
+        if (line.length && lineW + add > maxWidth) pushLine();
+        lineW += line.length ? spaceW + w : w;
+        line.push(pc);
+        if (i < pieces.length - 1) pushLine();
+      });
+    });
+    pushLine();
+    return lines.length ? lines : [[{ text: "", strong: false }]];
+  }
+
+  function drawStyledLine(ctx, line, x, y, fontFor, normalColor, strongColor) {
+    ctx.font = fontFor(false);
+    const spaceW = ctx.measureText(" ").width;
+    line.forEach((tok, i) => {
+      ctx.font = fontFor(tok.strong);
+      ctx.fillStyle = tok.strong ? strongColor : normalColor;
+      ctx.fillText(tok.text, x, y);
+      x += ctx.measureText(tok.text).width + spaceW;
+    });
+  }
+
+  /* একটি বাক্যের ভেতরে নির্দিষ্ট নামটি খুঁজে বোল্ড রান বানায় (ট্রান্সলেশনের পরেও কাজ করে) */
+  function splitStrongRuns(fullText, strongText) {
+    const name = String(strongText || "").trim();
+    const idx = name ? fullText.indexOf(name) : -1;
+    if (idx < 0) return [{ text: fullText, strong: false }];
+    return [
+      { text: fullText.slice(0, idx), strong: false },
+      { text: name, strong: true },
+      { text: fullText.slice(idx + name.length), strong: false }
+    ];
+  }
+
   function roundRectPath(ctx, x, y, w, h, r) {
     if (typeof r === "number") r = { tl: r, tr: r, br: r, bl: r };
+    /* a radius bigger than half the shorter side (e.g. 999 for a pill) must be clamped,
+       otherwise arcTo() draws a huge arc that paints over the whole card */
+    const maxR = Math.max(0, Math.min(w, h) / 2);
+    r = { tl: Math.min(r.tl, maxR), tr: Math.min(r.tr, maxR), br: Math.min(r.br, maxR), bl: Math.min(r.bl, maxR) };
     ctx.beginPath();
     ctx.moveTo(x + r.tl, y);
     ctx.lineTo(x + w - r.tr, y);
@@ -3226,6 +3613,18 @@ document.addEventListener("click", e => {
     const contentW = CARD_W - PAD * 2;
     const scale = 3; // render at 3x for a crisp download regardless of screen DPI
 
+    /* canvas-এ আঁকার ফন্টগুলো আগে থেকে লোড করে নিই — না হলে মাপ ভুল হয়ে লেখা/লাল ব্যাজ সরে যায় */
+    try {
+      if (document.fonts && document.fonts.load) {
+        const sample = (record.name || "") + (record.hospitalName || "") + "অআকখ রক্তদান ABab01";
+        await Promise.race([Promise.all([
+          document.fonts.load("600 14.5px 'Noto Sans Bengali'", sample), document.fonts.load("700 12.5px 'Noto Sans Bengali'", sample),
+          document.fonts.load("700 23px 'Fraunces'", sample), document.fonts.load("italic 600 14.5px 'Fraunces'", sample),
+          document.fonts.load("700 12px 'IBM Plex Mono'", "#ID 0123456789")
+        ]), new Promise(r => setTimeout(r, 2500))]);
+      }
+    } catch (e) { /* ignore */ }
+
     const measure = document.createElement("canvas").getContext("2d");
     const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
     const T = (x) => (window.I18N ? I18N.t(x) : x);
@@ -3234,16 +3633,27 @@ document.addEventListener("click", e => {
     const emojiText = T((record.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।");
     const stampText = T("রক্ত দিন • জীবন বাঁচান");
 
-    measure.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
-    const hospitalLines = wrapCanvasText(measure, hospitalText, contentW);
-    measure.font = "italic 600 14.5px 'Fraunces',Georgia,serif";
-    const thanksLines = wrapCanvasText(measure, thanksText, contentW);
+    /* স্ক্রিনের কার্ডের মতোই: হাসপাতালের নাম বোল্ড + গাঢ় লাল, নেটওয়ার্কের নামও বোল্ড (ইটালিক নয়) + গাঢ় লাল */
+    const hospitalFont = strong => (strong ? "700" : "600") + " 14.5px 'Noto Sans Bengali','Inter',sans-serif";
+    const thanksFont = strong => strong ? "700 14.5px 'Fraunces','Noto Sans Bengali',Georgia,serif" : "italic 600 14.5px 'Fraunces','Noto Sans Bengali',Georgia,serif";
+    const hospitalLines = wrapStyledRuns(measure, splitStrongRuns(hospitalText, record.hospitalName), contentW, hospitalFont);
+    const thanksLines = wrapStyledRuns(measure, splitStrongRuns(thanksText, networkName), contentW, thanksFont);
+
+    /* নাম + রক্তের গ্রুপ ব্যাজ: এক লাইনে ধরলে পাশাপাশি, না ধরলে নাম ভেঙে/ব্যাজ নিচে — স্ক্রিনের কার্ডের মতোই */
+    const nameText = (record.name || "").trim();
+    const bgText = record.bloodGroup || "—";
+    measure.font = "700 23px 'Fraunces',Georgia,serif";
+    const nameLines = wrapCanvasText(measure, nameText, contentW);
+    const lastNameW = measure.measureText(nameLines[nameLines.length - 1]).width;
+    measure.font = "700 14.5px 'Fraunces',Georgia,serif";
+    const bgBadgeW = measure.measureText(bgText).width + 26, bgBadgeH = 28;
+    const badgeFits = lastNameW + 10 + bgBadgeW <= contentW;
 
     const serialNoCv = donorSerialNo(record);
     let bodyH = 18;   // top padding
     bodyH += 30;      // #ID row
     bodyH += serialNoCv > 0 ? 20 : 0; // serial row
-    bodyH += 32;      // name + blood-group row
+    bodyH += (nameLines.length - 1) * 30 + 32 + (badgeFits ? 0 : 30);      // name + blood-group row
     bodyH += 26;      // visit-count row
     if (record.date) bodyH += 22; // last donation date row
     bodyH += hospitalLines.length * 24 + 12;
@@ -3274,8 +3684,9 @@ document.addEventListener("click", e => {
 
     // ---- watermark: drawn FIRST so it naturally sits behind everything
     //      else painted after it — no z-index trick needed at all. ----
-    const logoSrc = (appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : "fav.jpeg";
-    const watermarkImg = await loadDrawableImage(logoSrc);
+    const logoSrc = (appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
+    let watermarkImg = await loadDrawableImage(logoSrc);
+    if (!watermarkImg) watermarkImg = await loadDrawableImage(SITE_BASE + "assets/images/fav.jpeg"); // কাস্টম লোগো লোড না হলে ডিফল্ট লোগো
     ctx.save();
     ctx.globalAlpha = 0.07;
     if (watermarkImg) {
@@ -3304,14 +3715,16 @@ document.addEventListener("click", e => {
         const br = CARD_W / HEAD_H;
         let dw, dh, dx, dy;
         if (ir > br) { dh = HEAD_H; dw = dh * ir; dx = (CARD_W - dw) / 2; dy = 0; }
-        else { dw = CARD_W; dh = dw / ir; dx = 0; dy = (HEAD_H - dh) / 2; }
+        else { dw = CARD_W; dh = dw / ir; dx = 0; dy = (HEAD_H - dh) * 0.3; }  // লম্বা ছবিতে মুখ উপরের দিকে থাকে, তাই উপরের অংশ বেশি রাখি
         ctx.drawImage(photoImg, dx, dy, dw, dh);
       }
     }
-    const headGrad = ctx.createLinearGradient(0, 0, CARD_W * 0.6, HEAD_H);
+    const headGrad = ctx.createLinearGradient(0, 0, 0, HEAD_H);
     if (hasPhoto) {
-      headGrad.addColorStop(0, "rgba(158,27,50,0.82)");
-      headGrad.addColorStop(1, "rgba(110,18,32,0.88)");
+      /* ছবির ওপর লাল পর্দা নয় — শুধু নিচে হালকা ছায়া, যাতে ছবি স্বাভাবিক রঙে স্পষ্ট দেখা যায় */
+      headGrad.addColorStop(0, "rgba(33,22,19,0)");
+      headGrad.addColorStop(0.6, "rgba(33,22,19,0)");
+      headGrad.addColorStop(1, "rgba(33,22,19,0.28)");
     } else {
       headGrad.addColorStop(0, "#9E1B32");
       headGrad.addColorStop(1, "#6E1220");
@@ -3330,7 +3743,7 @@ document.addEventListener("click", e => {
 
     // ribbon ("VERIFIED"), rotated 45° across the top-right corner
     ctx.save();
-    ctx.translate(CARD_W - 34 + 75, 16 + 12);
+    ctx.translate(CARD_W - 36, 36);   // centre of the diagonal band across the top-right corner
     ctx.rotate(Math.PI / 4);
     const ribbonGrad = ctx.createLinearGradient(-75, -12, 75, 12);
     ribbonGrad.addColorStop(0, "#F3D8A8");
@@ -3391,14 +3804,13 @@ document.addEventListener("click", e => {
 
     ctx.font = "700 23px 'Fraunces',Georgia,serif";
     ctx.fillStyle = "#211613";
-    const nameText = (record.name || "").trim();
-    ctx.fillText(nameText, PAD, y);
-    const nameW = ctx.measureText(nameText).width;
-    const bgText = record.bloodGroup || "—";
-    ctx.font = "700 14.5px 'Fraunces',Georgia,serif";
-    const bgTextW = ctx.measureText(bgText).width;
-    const bgBadgeW = bgTextW + 26, bgBadgeH = 28;
-    const bgBadgeX = PAD + nameW + 10, bgBadgeY = y - 20;
+    nameLines.forEach((ln, i) => {
+      ctx.fillText(ln, PAD, y);
+      if (i < nameLines.length - 1) y += 30;
+    });
+    let bgBadgeX, bgBadgeY;
+    if (badgeFits) { bgBadgeX = PAD + lastNameW + 10; bgBadgeY = y - 20; }
+    else { bgBadgeX = PAD; bgBadgeY = y + 10; }
     roundRectPath(ctx, bgBadgeX, bgBadgeY, bgBadgeW, bgBadgeH, 999);
     const badgeGrad = ctx.createLinearGradient(bgBadgeX, bgBadgeY, bgBadgeX + bgBadgeW, bgBadgeY + bgBadgeH);
     badgeGrad.addColorStop(0, "#9E1B32");
@@ -3406,10 +3818,11 @@ document.addEventListener("click", e => {
     ctx.fillStyle = badgeGrad;
     ctx.fill();
     ctx.fillStyle = "#fff";
+    ctx.font = "700 14.5px 'Fraunces',Georgia,serif";
     ctx.textBaseline = "middle";
     ctx.fillText(bgText, bgBadgeX + 13, bgBadgeY + bgBadgeH / 2 + 1);
     ctx.textBaseline = "alphabetic";
-    y += 28;
+    y += badgeFits ? 28 : 58;
 
     ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
     ctx.fillStyle = "#7A4A18";
@@ -3423,10 +3836,8 @@ document.addEventListener("click", e => {
       y += 22;
     }
 
-    ctx.font = "600 14.5px 'Noto Sans Bengali','Inter',sans-serif";
-    ctx.fillStyle = "#211613";
     for (const line of hospitalLines) {
-      ctx.fillText(line, PAD, y);
+      drawStyledLine(ctx, line, PAD, y, hospitalFont, "#211613", "#6E1220");
       y += 24;
     }
     y += 12;
@@ -3445,10 +3856,8 @@ document.addEventListener("click", e => {
     drawTeardrop(ctx, CARD_W / 2, y, 4, "#B9722E");
     y += 24;
 
-    ctx.font = "italic 600 14.5px 'Fraunces',Georgia,serif";
-    ctx.fillStyle = "#211613";
     for (const line of thanksLines) {
-      ctx.fillText(line, PAD, y);
+      drawStyledLine(ctx, line, PAD, y, thanksFont, "#211613", "#6E1220");
       y += 25;
     }
     y += 4;
@@ -3476,7 +3885,7 @@ document.addEventListener("click", e => {
     y += 44;
 
     // QR code
-    const cardUrl = window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(record.donationNo || "");
+    const cardUrl = SITE_ORIGIN + "/?id=" + encodeURIComponent(record.donationNo || "");
     const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(cardUrl);
     const qrImgEl = await loadDrawableImage(qrUrl);
     const qrSize = 140;
@@ -3554,6 +3963,87 @@ document.addEventListener("click", e => {
   if (resultDownloadBtn) {
     resultDownloadBtn.addEventListener("click", downloadDonationCardPNG);
   }
+
+  /* ============================================================
+     রক্তদানের ডিজিটাল কার্ড — সবার জন্য: ছবি (PNG) হিসেবে সেভ ও শেয়ার।
+     কার্ডটা আগের মতোই canvas-এ হাতে আঁকা (buildDonationCardCanvas);
+     এখানে শুধু সেটাকে ফাইল বানিয়ে ডাউনলোড বা ফোনের শেয়ার মেনুতে দেওয়া হয়।
+     ============================================================ */
+  let cardFileCache = { key: "", promise: null };
+  function cardFileName(rec) { return "donation-card-" + String(rec.donationNo || "card").replace(/[^A-Za-z0-9_-]/g, "") + ".png"; }
+  function prepareCardFile(rec) {
+    if (!rec) return null;
+    const key = [rec.id, rec.donationNo, rec.name, rec.date, rec.hospitalName, rec.bloodGroup, rec.photo || rec.image || ""].join("|");
+    if (cardFileCache.key === key && cardFileCache.promise) return cardFileCache.promise;
+    const p = (async () => {
+      if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]);
+      const canvas = await buildDonationCardCanvas(rec);
+      const blob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error("toBlob failed")), "image/png"));
+      return new File([blob], cardFileName(rec), { type: "image/png" });
+    })();
+    cardFileCache = { key: key, promise: p };
+    p.catch(() => { if (cardFileCache.promise === p) cardFileCache = { key: "", promise: null }; });
+    return p;
+  }
+  function setActBusy(btn, busy) {
+    if (!btn) return;
+    btn.disabled = busy;
+    const ic = btn.querySelector("i");
+    if (!ic) return;
+    if (busy) { btn.dataset.ic = ic.className; ic.className = "fa-solid fa-spinner fa-spin"; }
+    else if (btn.dataset.ic) ic.className = btn.dataset.ic;
+  }
+  async function saveDonationCard() {
+    const rec = currentDonationRecord;
+    if (!rec) return;
+    setActBusy(cardSaveBtn, true);
+    try {
+      const file = await prepareCardFile(rec);
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url; link.download = file.name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      showToast("কার্ড সেভ হয়েছে");
+    } catch (err) {
+      console.log("Card save failed:", err);
+      showToast("কার্ডের ছবি তৈরি করা যায়নি, আবার চেষ্টা করুন");
+    } finally { setActBusy(cardSaveBtn, false); }
+  }
+  async function shareDonationCard() {
+    const rec = currentDonationRecord;
+    if (!rec) return;
+    const url = SITE_ORIGIN + "/?id=" + encodeURIComponent(rec.donationNo || "");
+    const net = ((landingData && landingData.siteName) || "Blood Network Baraikhali").trim();
+    const title = net + " — রক্তদান কার্ড";
+    const text = (rec.name ? rec.name + " " : "") + "(" + (rec.bloodGroup || "") + ") রক্তদান কার্ড — " + net;
+    setActBusy(cardShareBtn, true);
+    try {
+      if (navigator.share) {
+        let shared = false;
+        try {
+          const file = await prepareCardFile(rec);
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: title, text: text + "\n" + url });
+            shared = true;
+          }
+        } catch (err) { if (err && err.name === "AbortError") return; }
+        if (!shared) await navigator.share({ title: title, text: text, url: url });
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        showToast("লিংক কপি হয়েছে");
+      } else {
+        window.prompt("কার্ডের লিংক কপি করুন:", url);
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      showToast("শেয়ার করা যায়নি, আবার চেষ্টা করুন");
+    } finally { setActBusy(cardShareBtn, false); }
+  }
+  if (cardSaveBtn) cardSaveBtn.addEventListener("click", saveDonationCard);
+  if (cardShareBtn) cardShareBtn.addEventListener("click", shareDonationCard);
 
   if (manageBtn && manageOverlay) {
     manageBtn.addEventListener("click", () => {
@@ -3657,6 +4147,85 @@ function loadScript(src) {
   });
 }
 
+/* ============================================================
+   মোবাইলের নিচের মেনু বার, "আরও" শিট, অফলাইন বার, স্কিপ লিংক
+   (HTML: index.html এর .bottomNav / .bnSheet / .offlineBar / .skipLink)
+   ============================================================ */
+(function initMobileChrome() {
+  const nav = document.getElementById("bottomNav");
+  const moreBtn = document.getElementById("bnMoreBtn");
+  const sheet = document.getElementById("bnSheet");
+  const overlay = document.getElementById("bnSheetOverlay");
+  const reqBtn = document.getElementById("bnRequestBtn");
+
+  if (nav && moreBtn && sheet && overlay) {
+    const focusables = () => Array.prototype.slice.call(sheet.querySelectorAll("a[href], button"));
+    function setSheet(open) {
+      sheet.hidden = !open;
+      overlay.hidden = !open;
+      moreBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      document.body.classList.toggle("bnSheetOpen", open);
+      if (open) { const f = focusables()[0]; if (f) f.focus(); }
+    }
+    moreBtn.addEventListener("click", () => setSheet(sheet.hidden));
+    overlay.addEventListener("click", () => setSheet(false));
+    sheet.addEventListener("click", e => { if (e.target.closest("a[href], button")) setSheet(false); });
+    document.addEventListener("keydown", e => {
+      if (sheet.hidden) return;
+      if (e.key === "Escape") { setSheet(false); moreBtn.focus(); return; }
+      if (e.key === "Tab") {                       // keep keyboard focus inside the open sheet
+        const f = focusables(); if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    window.addEventListener("resize", () => { if (window.innerWidth > 760 && !sheet.hidden) setSheet(false); });
+
+    // the "More" tab lights up when the open page is one of the pages inside the sheet
+    const syncMore = () => moreBtn.classList.toggle("navLinkActive", !!sheet.querySelector(".navLinkActive"));
+    syncMore();
+    new MutationObserver(syncMore).observe(sheet, { subtree: true, attributes: true, attributeFilter: ["class"] });
+
+    // on-screen keyboard open -> hide the bar so it doesn't float above the keyboard
+    const isField = el => !!(el && el.matches && el.matches("input, textarea, select, [contenteditable='true']"));
+    document.addEventListener("focusin", e => { if (isField(e.target)) document.body.classList.add("kbOpen"); });
+    document.addEventListener("focusout", () => setTimeout(() => { if (!isField(document.activeElement)) document.body.classList.remove("kbOpen"); }, 60));
+  }
+
+  if (reqBtn) {      // centre button = the same "emergency request" form as the hero button
+    reqBtn.addEventListener("click", () => {
+      const t = document.getElementById("heroEmergencyBtn");
+      if (t) t.click();
+    });
+  }
+
+  // offline notice
+  const offBar = document.getElementById("offlineBar");
+  let wasOffline = false;
+  function syncOnline() {
+    const off = !navigator.onLine;
+    if (offBar) offBar.hidden = !off;
+    document.body.classList.toggle("isOffline", off);
+    if (!off && wasOffline && typeof showToast === "function") showToast("আবার অনলাইনে এসেছেন");
+    wasOffline = off;
+  }
+  window.addEventListener("online", syncOnline);
+  window.addEventListener("offline", syncOnline);
+  syncOnline();
+
+  // skip link: on the home page jump to <main>, on inner pages to the open page section
+  const skip = document.getElementById("skipLink");
+  if (skip) skip.addEventListener("click", e => {
+    e.preventDefault();
+    const target = document.querySelector(".routePage.active") || document.getElementById("main");
+    if (!target) return;
+    target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: "auto", block: "start" });
+  });
+})();
+
 /* html2canvas is no longer used — the admin "download card as PNG" button
    now draws the card by hand onto a <canvas> (see buildDonationCardCanvas),
    so there's nothing to lazy-load here anymore. */
@@ -3715,6 +4284,7 @@ function initFirebase() {
       landingReady = true;
       landingLoadFailed = false;
       skeletonDone = true;
+      pageSkel.ready();
       document.documentElement.classList.remove("skelMode");
       landingData = Object.assign({}, DEFAULT_LANDING, val);
       normalizeLandingData();
@@ -3820,7 +4390,7 @@ loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js")
    ============================================================ */
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js")
+    navigator.serviceWorker.register(SITE_BASE + "service-worker.js")
       .catch(err => console.log("Service worker registration failed:", err));
   });
 }

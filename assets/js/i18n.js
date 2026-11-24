@@ -46,6 +46,29 @@
     ["রক্তদাতা হিসেবে যোগ দিন", "Join as a Blood Donor"],
     ["মেনু খুলুন", "Open menu"],
     ["মেনু বন্ধ করুন", "Close menu"],
+    ["রক্ত দেওয়া-নেওয়ার চার্ট", "Blood compatibility chart"],
+    ["রক্তদান", "Donate"],
+    ["অনুরোধ", "Request"],
+    ["গ্রুপ চার্ট", "Blood Chart"],
+    ["আরও", "More"],
+    ["আরও মেনু", "More menu"],
+    ["মোবাইল মেনু", "Mobile menu"],
+    ["গ্যালারি", "Gallery"],
+    ["আমাদের সম্পর্কে ও যোগাযোগ", "About & Contact"],
+    ["গোপনীয়তা নীতি", "Privacy Policy"],
+    ["দ্রুত কল", "Quick call"],
+    ["আমাদের বৈশিষ্ট্য", "Our features"],
+    ["ছবি সেভ করুন", "Save image"],
+    ["শেয়ার করুন", "Share"],
+    ["কার্ড সেভ হয়েছে", "Card saved"],
+    ["কার্ডের ছবি তৈরি করা যায়নি, আবার চেষ্টা করুন", "Could not create the card image, please try again"],
+    ["লিংক কপি হয়েছে", "Link copied"],
+    ["শেয়ার করা যায়নি, আবার চেষ্টা করুন", "Could not share, please try again"],
+    ["আপনি অফলাইনে আছেন — সেভ করা তথ্য দেখানো হচ্ছে", "You are offline — showing saved data"],
+    ["আবার অনলাইনে এসেছেন", "Back online"],
+    ["মূল অংশে যান", "Skip to main content"],
+    ["ID, নাম, হাসপাতাল বা রক্তের গ্রুপ দিয়ে খুঁজুন...", "Search by ID, name, hospital or blood group..."],
+    ["ID, নাম, হাসপাতাল বা রক্তের গ্রুপ দিয়ে খুঁজুন", "Search by ID, name, hospital or blood group"],
     ["হোমে ফিরে যান", "Back to home"],
     ["পেজ নেভিগেশন", "Page navigation"],
     ["উপরে ফিরে যান", "Back to top"],
@@ -60,6 +83,17 @@
     ["নাম, ID বা হাসপাতাল দিয়ে খুঁজুন...", "Search by name, ID or hospital..."],
     ["ID, নাম বা হাসপাতালের নাম লিখুন", "Enter an ID, name or hospital name"],
     ["খুঁজুন", "Search"],
+
+    /* ---- route page intros ---- */
+    ["জরুরি প্রয়োজনে রক্ত খুঁজতে চাইলে, কিংবা স্বেচ্ছায় রক্তদাতা হতে চাইলে নিচের ধাপগুলো অনুসরণ করুন। এই সেবা সম্পূর্ণ বিনামূল্যে।",
+      "Follow the steps below whether you need to find blood in an emergency or want to become a volunteer blood donor. This service is completely free."],
+    ["কোন রক্তের গ্রুপের দাতা কোন গ্রুপের রোগীকে রক্ত দিতে পারেন, তা নিচের চার্টে দেখুন। O- গ্রুপের রক্ত সব গ্রুপের রোগীকে দেওয়া যায়, আর AB+ গ্রুপের রোগী সব গ্রুপের রক্ত নিতে পারেন। তবে রক্ত দেওয়ার আগে চিকিৎসকের পরামর্শ ও ক্রস-ম্যাচিং জরুরি।",
+      "See in the chart below which donor blood group can give blood to which recipient group. O- blood can be given to patients of every group, and AB+ patients can receive blood from every group. Always follow a doctor's advice and cross-matching before a transfusion."],
+    ["আমাদের নেটওয়ার্কের মাধ্যমে হওয়া রক্তদানের তালিকা। নাম, ID বা হাসপাতালের নাম লিখে খুঁজুন, অথবা রক্তের গ্রুপ অনুযায়ী ফিল্টার করুন।",
+      "A list of the blood donations made through our network. Search by name, ID or hospital, or filter by blood group."],
+    ["Blood Network Baraikhali-এর সর্বশেষ সংবাদ, ঘোষণা ও আপডেট।", "The latest news, announcements and updates from Blood Network Baraikhali."],
+    ["জরুরি প্রয়োজনে যোগাযোগ করার জন্য হাসপাতাল ও ব্লাড ব্যাংকের তালিকা।", "A list of hospitals and blood banks you can contact in an emergency."],
+    ["আমাদের নেটওয়ার্কের মাধ্যমে হওয়া রক্তদানের মুহূর্তের ছবি।", "Photos from the blood donations made through our network."],
 
     /* ---- stats ---- */
     ["মোট রক্তদাতা", "Total Donors"],
@@ -489,7 +523,7 @@
     if (!meta) return;
     if (!meta.hasAttribute("data-bn")) meta.setAttribute("data-bn", meta.getAttribute("content") || "");
     meta.setAttribute("content", lang === "en"
-      ? "Blood Network Baraikhali — the easiest way to find a reliable blood donor in an emergency."
+      ? (meta.getAttribute("data-en") || "Blood Network Baraikhali — the easiest way to find a reliable blood donor in an emergency.")
       : meta.getAttribute("data-bn"));
   }
 

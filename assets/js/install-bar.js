@@ -4,6 +4,10 @@
    - ✕ চাপলে ৩ দিন আর দেখাবে না | অ্যাপের ভেতর থেকে খুললে বারটি দেখাবেই না */
 (function () {
   "use strict";
+
+  // site root from this script's own URL (…/assets/js/install-bar.js) — works on the domain, localhost and file://
+  var siteBase = "/";
+  try { var cs = document.currentScript && document.currentScript.src; if (cs) siteBase = cs.replace(/assets\/js\/[^\/?#]*(?:[?#].*)?$/, ""); } catch (e) {}
   var DISMISS_KEY = "bnb_ib_dismissed_at";
   var INSTALLED_KEY = "bnb_app_installed";
   var HIDE_DAYS = 3;
@@ -106,7 +110,7 @@
     bar.setAttribute("role", "region");
     bar.innerHTML =
       '<button class="ibX" type="button" aria-label="বন্ধ করুন">&times;</button>' +
-      '<img class="ibIcon" src="icon-192.png" alt="">' +
+      '<img class="ibIcon" src="' + siteBase + 'assets/images/icon-192.png" alt="">' +
       '<span class="ibText"></span>' +
       '<button class="ibBtn" type="button"></button>';
     document.body.insertBefore(bar, document.body.firstChild);
@@ -138,7 +142,7 @@
   }
 
   function openApp() {
-    var url = location.origin + location.pathname.replace(/[^\/]*$/, "");   // সাইটের মূল ফোল্ডার
+    var url = location.origin + "/";   // সাইটের মূল ফোল্ডার
     if (isAndroid) {
       // Android: সিস্টেমকে বলা হয় এই ঠিকানা খোলার অ্যাপ (ইনস্টল করা B.N.B) চালু করতে
       var intent = "intent://" + url.replace(/^https?:\/\//, "") +
