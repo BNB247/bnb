@@ -37,7 +37,7 @@
   }
   body {
     margin: 0; padding: 0 ;
-    width: 100%; max-width: 100%; overflow-x: hidden;
+    width: 100%; max-width: 100%; overflow-x: clip; /* hidden নয়: html+body দুটোতেই hidden থাকলে অ্যাপ/WebView-এ body আলাদা স্ক্রল-বক্স হয়ে স্ক্রল আটকে যায় */
     font-family: var(--font-bn);
     background-color: var(--cream);
     background-image:
@@ -3285,7 +3285,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 /* হোম-স্ক্রিনে ইনস্টল করা অ্যাপ: টেনে-রিফ্রেশ/ওভারস্ক্রলের লাফ বন্ধ */
 @media (display-mode: standalone) {
-  html, body { overscroll-behavior-y: none; }
+  html { overscroll-behavior-y: none; }
 }
 
 /* ============================================================
