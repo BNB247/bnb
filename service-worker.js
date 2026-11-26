@@ -9,7 +9,7 @@
    - Firebase database traffic, non-GET requests, other origins: never touched.
    BUMP CACHE_VERSION when you change files, so old caches are dropped.
    ============================================================ */
-const CACHE_VERSION = "bnb-v22";
+const CACHE_VERSION = "bnb-v23";
 const CACHE_NAME = "bnb-shell-" + CACHE_VERSION;
 
 const APP_SHELL = [
