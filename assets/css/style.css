@@ -3046,9 +3046,6 @@ a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 8px 22px rg
     .langRowMobile .langSwitch { margin-left: 0; }
     .langRowMobile .langBtn { min-width: 40px; height: 30px; font-size: 12.5px; }
   }
-  @media (max-width: 380px) {
-    
-  }
 
   /* English mode: Latin typography, tighter nav (English labels are longer) */
   html[data-lang="en"] {
@@ -3630,4 +3627,18 @@ html.newsDetailMode body #pageSkel .skText { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
   #donationResultModalOverlay .donationResultModal { animation-duration: .01s; }
+}
+
+/* ============================================================
+   ফিক্স: ফোনে ইনস্টল করা অ্যাপে (standalone) পেজ স্ক্রল হচ্ছিল না।
+   কারণ: html ও body দুটোতেই overflow-x:hidden ছিল, ফলে body নিজেই একটা স্ক্রল-কনটেইনার হয়ে যেত,
+   আর standalone মোডে body-তে overscroll-behavior-y:none থাকায় স্ক্রল ভিউপোর্টে পৌঁছাতো না।
+   সমাধান: body-র overflow-x:clip (স্ক্রল-কনটেইনার বানায় না) + overscroll-behavior শুধু html-এ।
+   ============================================================ */
+@supports (overflow: clip) {
+  body { overflow-x: clip; }
+}
+@media (display-mode: standalone) {
+  html { overscroll-behavior-y: none; }
+  body { overscroll-behavior-y: auto; }
 }
