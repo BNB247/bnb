@@ -37,7 +37,7 @@
   }
   body {
     margin: 0; padding: 0 ;
-    width: 100%; max-width: 100%; overflow-x: clip; /* hidden নয়: html+body দুটোতেই hidden থাকলে অ্যাপ/WebView-এ body আলাদা স্ক্রল-বক্স হয়ে স্ক্রল আটকে যায় */
+    width: 100%; max-width: 100%; overflow-x: hidden;
     font-family: var(--font-bn);
     background-color: var(--cream);
     background-image:
@@ -3047,7 +3047,7 @@ a.spCard:hover, .spCard:hover { border-color: #C9BDB3; box-shadow: 0 8px 22px rg
     .langRowMobile .langBtn { min-width: 40px; height: 30px; font-size: 12.5px; }
   }
   @media (max-width: 380px) {
-    .siteNavBrand span { max-width: 112px; }
+    
   }
 
   /* English mode: Latin typography, tighter nav (English labels are longer) */
@@ -3285,7 +3285,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 /* হোম-স্ক্রিনে ইনস্টল করা অ্যাপ: টেনে-রিফ্রেশ/ওভারস্ক্রলের লাফ বন্ধ */
 @media (display-mode: standalone) {
-  html { overscroll-behavior-y: none; }
+  html, body { overscroll-behavior-y: none; }
 }
 
 /* ============================================================
@@ -3370,3 +3370,264 @@ html.newsDetailMode body #pageSkel .skText { display: block; }
 .recordCardHospital { min-width: 0; max-width: 100%; }
 .recordCardHospitalText { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recordCardMetaRow { min-width: 0; }
+
+/* ============================================================
+   ডিজিটাল রক্তদান কার্ড — নতুন প্রফেশনাল ডিজাইন (v2)
+   ক) ডিটেইল/ডাউনলোড কার্ড (.dc*)   খ) রেকর্ড গ্রিডের ছোট কার্ড (.recordCard*)
+   ডাউনলোড করা PNG (app.js → buildDonationCardCanvas) এর সাথে হুবহু মেলে।
+   ============================================================ */
+#donationResultModalOverlay .donationResultModal {
+  max-width: 400px; background: #FCF8F2; border-radius: 24px;
+  border: 1px solid rgba(185,114,46,0.35);
+}
+.donationResultModal .donationResultClose { top: 10px; right: 10px; }
+
+.dcHead {
+  position: relative; height: 150px; padding: 24px 30px 0; box-sizing: border-box; overflow: hidden;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  background: linear-gradient(135deg, #9E1B32 0%, #6E1220 100%);
+}
+.dcHead::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1.3px); background-size: 14px 14px;
+}
+.dcHead::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: linear-gradient(90deg, #8F5A20, #F3D8A8 35%, #D9A55A 65%, #8F5A20);
+}
+.dcBrand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; min-width: 0; }
+.dcBrand .donationResultLogo {
+  width: 46px; height: 46px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  background: #fff; border: 2.5px solid #fff; box-sizing: border-box;
+}
+.dcBrandText { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: #fff; }
+.dcBrandText b { font: 700 14px var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcBrandText span { font: 600 10.5px var(--font-bn); opacity: .82; }
+.dcVerified {
+  position: relative; z-index: 1; flex-shrink: 0; margin-top: 4px; padding: 5px 12px; border-radius: 999px;
+  background: linear-gradient(135deg, #F6E2BC, #D9A55A); color: #3A2205;
+  font: 700 9.5px var(--font-mono); letter-spacing: .06em; text-transform: uppercase;
+}
+.dcVerified i { margin-right: 4px; }
+
+.dcPhotoWrap { position: relative; z-index: 3; height: 66px; }
+.dcPhoto {
+  position: absolute; left: 50%; top: -58px; transform: translateX(-50%);
+  width: 116px; height: 116px; border-radius: 50%; overflow: hidden; background: #F1E6DC;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 5px #D9A55A, 0 0 0 7px #fff, 0 10px 24px rgba(33,22,19,0.28);
+}
+.dcPhotoImg { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; display: block; }
+.dcPhotoEmpty { display: flex; align-items: center; justify-content: center; background: #F7E3E6; }
+.dcPhotoEmpty i { font-size: 46px; color: #D7A0AA; }
+.donationResultBgBadge.dcSeal {
+  position: absolute; left: calc(50% + 17px); top: 17px; width: 52px; height: 52px; padding: 0; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; border: 3px solid #fff; border-radius: 50%;
+  font: 700 15px var(--font-display); color: #fff; letter-spacing: 0;
+  background: linear-gradient(135deg, #9E1B32, #6E1220); box-shadow: 0 6px 14px rgba(110,18,32,0.35);
+}
+.dcTick {
+  position: absolute; left: calc(50% - 57px); top: 29px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--sage); border: 3px solid #fff;
+  color: #fff; font-size: 9px; box-shadow: 0 3px 8px rgba(33,22,19,0.2);
+}
+.dcHiddenNote { margin: -2px 30px 0; text-align: center; font: 600 11px var(--font-bn); color: var(--muted); }
+
+.donationResultBody.dcBody { padding: 8px 30px 22px; text-align: center; }
+.dcName { text-align: center; margin: 8px 0 0; font: 700 24px/1.25 var(--font-display); color: var(--ink); letter-spacing: 0; }
+.donationResultSerial.dcSerial {
+  display: inline-flex; align-items: center; margin: 10px auto 0; padding: 4px 15px; border-radius: 999px;
+  background: var(--crimson-tint); color: var(--crimson); font: 700 12.5px var(--font-bn);
+}
+.dcSerial b { font: inherit; }
+.donationResultDivider.dcDivider { margin: 16px 0; }
+.dcDivider::before, .dcDivider::after { border-top: 1px solid rgba(185,114,46,0.45); }
+.dcDivider i { font-size: 12px; opacity: 1; }
+
+.dcStats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 18px; padding: 12px 0;
+  background: #fff; border: 1px solid #EADFD2; border-radius: 14px; box-shadow: 0 4px 14px rgba(33,22,19,0.04);
+}
+.dcStat { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0 6px; min-width: 0; }
+.dcStat + .dcStat { border-left: 1px solid #EADFD2; }
+.dcStatLabel { font: 600 10px var(--font-bn); color: #8A7A71; }
+.dcStatVal { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 14px var(--font-bn); color: var(--ink); }
+.dcStatVal.dcCrimson { color: var(--crimson); }
+.dcStatVal.dcMono { font-family: var(--font-mono); font-size: 13.5px; }
+
+.dcCenter { text-align: center; }
+.donationResultHospitalLine.dcCenter { margin: 0; font-size: 14px; line-height: 1.8; }
+.donationResultThanks.dcCenter { margin-top: 8px; font-size: 13.5px; line-height: 1.8; color: #4A3A33; opacity: 1; }
+.donationResultEmojiRow.dcDua { margin-top: 6px; font: 700 14px var(--font-bn); color: var(--ink); }
+
+.dcFoot {
+  display: flex; align-items: center; gap: 22px; margin-top: 22px; padding-top: 16px;
+  border-top: 1.2px dashed rgba(185,114,46,0.5); text-align: left;
+}
+.dcFoot .donationResultQrImg { width: 92px; height: 92px; padding: 0; border: 1px solid #EADFD2; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(33,22,19,0.12); }
+.dcFootText { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dcFootText b { font: 700 13px var(--font-bn); color: var(--crimson); }
+.dcFootText span { font: 500 11px/1.5 var(--font-bn); color: var(--muted); }
+.dcFootText code { font: 600 10.5px var(--font-mono); color: var(--ink); word-break: break-all; }
+
+.donationResultStamp.dcBar {
+  display: flex; justify-content: center; align-items: center; gap: 10px; margin: 0; padding: 0; height: 36px;
+  border: 0; border-top: 1.5px solid #D9A55A; border-radius: 0; transform: none; box-shadow: none;
+  background: linear-gradient(90deg, #9E1B32, #6E1220); color: #fff;
+  font: 700 12px var(--font-bn); letter-spacing: 0; text-transform: none;
+}
+.dcBar i { font-size: 9px; color: #F3D8A8; }
+
+/* ---- রেকর্ড গ্রিডের কার্ড ---- */
+.recordsGrid { gap: 20px; }
+.recordCard {
+  border-radius: 18px; background: #fff; border: 1px solid #EADFD2; box-shadow: 0 2px 10px rgba(33,22,19,0.05);
+}
+.recordCard::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; z-index: 3; pointer-events: none;
+  background: linear-gradient(90deg, #8F5A20, #F3D8A8 35%, #D9A55A 65%, #8F5A20);
+}
+.recordCard:hover { transform: translateY(-5px); box-shadow: 0 18px 36px rgba(110,18,32,0.14); border-color: rgba(185,114,46,0.55); }
+.recordCardBg {
+  top: 11px; right: 10px; width: 36px; height: 36px; padding: 0; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.92); font-size: 11.5px; letter-spacing: 0;
+  background: linear-gradient(135deg, #9E1B32, #6E1220); box-shadow: 0 4px 10px rgba(110,18,32,0.35);
+}
+.recordCardNo { top: 11px; left: 10px; background: rgba(20,12,10,0.48); backdrop-filter: blur(3px); }
+.recordCardName { left: 13px; right: 13px; bottom: 10px; font-size: 16px; }
+.recordCardBody { padding: 12px 14px 14px; gap: 9px; background: linear-gradient(#fff, #FCF8F2); }
+.recordCardHospital { font-size: 12.5px; color: #5E4F48; font-weight: 600; }
+.recordCardMetaRow { border-top: 1px dashed #EADFD2; padding-top: 9px; }
+.recordCardMetaRow .recordCardCount {
+  flex-shrink: 0; padding: 3px 9px; border-radius: 999px; background: var(--crimson-tint); color: var(--crimson); font-weight: 700;
+}
+.recordCardMetaRow .recordCardCount i { color: var(--crimson); }
+.recordCardCta {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; padding: 8px 12px;
+  border-radius: 10px; background: var(--crimson); color: #fff; font: 700 11.5px var(--font-bn);
+  transition: background .18s ease;
+}
+.recordCardCta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recordCardCta i { font-size: 10px; flex-shrink: 0; transition: transform .18s ease; }
+.recordCard:hover .recordCardCta { background: var(--crimson-dark); }
+.recordCard:hover .recordCardCta i { transform: translateX(3px); }
+.recordCardSkel .recordCard::before, .recordCardSkel::before { display: none; }
+@media (max-width: 640px) {
+  .recordsGrid { gap: 12px; }
+  .recordCard { border-radius: 15px; }
+  .recordCardBg { width: 30px; height: 30px; font-size: 10px; top: 8px; right: 7px; }
+  .recordCardNo { top: 9px; left: 7px; }
+  .recordCardName { font-size: 13px; left: 10px; right: 10px; bottom: 7px; }
+  .recordCardBody { padding: 9px 10px 11px; gap: 7px; }
+  .recordCardCta { padding: 6px 9px; font-size: 10.5px; border-radius: 8px; }
+}
+@media (max-width: 420px) { .dcFoot { gap: 16px; } .dcBody { padding-left: 24px !important; padding-right: 24px !important; } }
+.donationResultModal #donationResultContent { background: #FCF8F2; }
+
+/* ---- হেডারের ঝিলিক ---- */
+.dcSpark { position: absolute; z-index: 0; color: rgba(243,216,168,0.85); pointer-events: none; line-height: 1; }
+.donationResultDivider.dcDivider { margin: 14px 0; }
+
+/* ---- সেভ / শেয়ার বার: নিচ থেকে সরিয়ে স্ক্রিনের উপরে (কার্ড যাতে ঢাকা না পড়ে) ---- */
+#donationResultModalOverlay { padding: calc(72px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)); }
+#donationResultModalOverlay .donationResultModal { max-height: calc(100vh - 96px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); max-height: calc(100dvh - 96px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.donationResultActions {
+  top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; flex-wrap: nowrap; align-items: center; gap: 8px; padding: 6px;
+  border-radius: 999px; width: max-content; max-width: calc(100vw - 20px);
+}
+.donationResultActions .drActBtn { min-height: 44px; min-width: 44px; padding: 0 14px; justify-content: center; flex-shrink: 0; }
+@media (max-width: 340px) {
+  .donationResultActions .drActBtn { padding: 0; width: 44px; }
+  .donationResultActions .drActBtn span { display: none; }
+}
+@media (max-width: 760px) { #donationResultModalOverlay { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); } }
+/* ---- কার্ডের উচ্চতা কমানো (মোবাইলে পুরো কার্ড দেখা যাওয়ার জন্য) ---- */
+#donationResultModalOverlay .donationResultModal {
+  max-height: calc(100vh - 88px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - 88px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+.dcHead { height: 134px; padding-top: 20px; }
+.dcPhotoWrap { height: 58px; }
+.dcPhoto { top: -52px; width: 104px; height: 104px; }
+.dcPhotoEmpty i { font-size: 40px; }
+.donationResultBgBadge.dcSeal { left: calc(50% + 12px); top: 12px; width: 48px; height: 48px; font-size: 14px; }
+.dcTick { left: calc(50% - 52px); top: 24px; width: 26px; height: 26px; font-size: 8px; }
+.donationResultBody.dcBody { padding: 4px 26px 16px; }
+.dcName { margin-top: 4px; font-size: 22px; }
+.donationResultSerial.dcSerial { margin-top: 7px; padding: 3px 14px; }
+.donationResultDivider.dcDivider { margin: 11px 0; }
+.dcStats { margin-bottom: 11px; padding: 9px 0; }
+.dcStat { gap: 3px; }
+.donationResultHospitalLine.dcCenter { font-size: 13.5px; line-height: 1.65; }
+.donationResultThanks.dcCenter { margin-top: 4px; font-size: 13px; line-height: 1.6; }
+.donationResultEmojiRow.dcDua { margin-top: 3px; font-size: 13.5px; }
+.dcFoot { margin-top: 12px; padding-top: 11px; gap: 18px; }
+.dcFoot .donationResultQrImg { width: 76px; height: 76px; }
+.donationResultStamp.dcBar { height: 32px; }
+
+/* ---- ডোনারের ছবি: স্কয়ার, ৯px গোল কোণ, গোল্ড ফ্রেম (ডাউনলোড কার্ডের সাথে এক) ---- */
+.dcPhoto {
+  border-radius: 9px; background: #F1E6DC;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 5px #D9A55A, 0 0 0 7px #fff, 0 10px 24px rgba(33,22,19,0.28);
+}
+.dcPhotoImg { border-radius: 9px; }
+.dcPhotoEmpty { border-radius: 9px; }
+.donationResultBgBadge.dcSeal { left: calc(50% + 24px); top: 18px; width: 44px; height: 44px; font-size: 13px; border-width: 3px; }
+.dcTick { left: calc(50% - 58px); top: 28px; width: 26px; height: 26px; }
+
+/* ============================================================
+   ডিজিটাল রক্তদান কার্ড (donationResultModal) — ছবি বামে (v3)
+   [ছবি বামে] [নাম + রক্তদানের সংখ্যা ছবির ডানে] [রক্তের গ্রুপ সিল একদম ডানে]
+   ডাউনলোড করা PNG (buildDonationCardCanvas) এর সাথে মেলানো।
+   ============================================================ */
+.dcIdent { position: relative; z-index: 3; display: flex; align-items: flex-start; gap: 18px; padding: 0 30px; }
+.dcPhotoBox { position: relative; flex: 0 0 auto; width: 180px; height: 67.25px; }   /* ১৬:৯ ছবি (১৮০×১০১.২৫); হেডারে ৩৪px ঢোকা, নিচে দেখা যায় ~৬৭px */
+.dcPhotoBox .dcPhoto {
+  position: absolute; left: 0; top: -34px; transform: none; width: 180px; height: auto; aspect-ratio: 16 / 9; border-radius: 9px;
+}
+.dcPhotoBox .dcPhoto .dcPhotoImg { border-radius: 9px; }
+.dcInfo { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 10px; }
+.dcIdent .dcName {
+  width: 100%; margin: 0; text-align: left; font: 700 19px/1.25 var(--font-display); color: var(--ink); letter-spacing: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
+}
+.dcInfo .dcStatVal {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 12px; border-radius: 999px;
+  background: var(--crimson-tint); color: var(--crimson); font: 700 12.5px var(--font-bn); white-space: nowrap;
+}
+.dcInfo .dcStatVal i { font-size: 10px; }
+.dcStat .donationResultSerial.dcSerial {
+  display: block; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none;
+  font: 700 14px var(--font-bn); color: var(--ink);
+}
+.dcIdent .donationResultBgBadge.dcSeal {
+  position: absolute; left: auto; right: 30px; top: -62px; bottom: auto; margin: 0; width: 44px; height: 44px; z-index: 4;
+  background: #fff; color: var(--crimson); font: 700 14px var(--font-display); border: 2.5px solid #D9A55A;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.28), 0 0 0 3px #fff;
+}
+.dcHiddenNote { margin-top: 4px; }
+.donationResultBody.dcBody { padding-top: 10px; }
+@media (max-width: 420px) { .dcIdent { padding: 0 24px; gap: 14px; } }
+.dcHead { padding-right: 50px; }   /* ওপরে ডানের X বাটনের জায়গা ছেড়ে Verified পিল বামে সরানো */
+
+/* ============================================================
+   মোবাইলে রেকর্ড কার্ড = বটম-শিট (নিচ থেকে উপরে স্লাইড করে ওঠে)
+   ============================================================ */
+@keyframes sheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (max-width: 559px) {
+  #donationResultModalOverlay { align-items: flex-end; padding: calc(72px + env(safe-area-inset-top, 0px)) 0 0; }
+  #donationResultModalOverlay .donationResultModal {
+    width: 100%; border-radius: 24px 24px 0 0; border-bottom: 0;
+    box-shadow: 0 -10px 34px rgba(33,22,19,0.32);
+    animation: sheetSlideUp .42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform;
+  }
+  /* উপরে ছোট গ্র্যাবার (টেনে নামানোর ইঙ্গিত) */
+  #donationResultModalOverlay .donationResultModal::before {
+    content: ""; position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    width: 40px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.6); z-index: 6; pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #donationResultModalOverlay .donationResultModal { animation-duration: .01s; }
+}
