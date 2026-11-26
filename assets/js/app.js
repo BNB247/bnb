@@ -430,6 +430,7 @@ function ordinalShortBn(n) {
   return toBengaliDigits(n) + "তম";
 }
 
+
 /* Composes the fixed announcement text — only name, visit count, blood group and
    hospital come from the admin; everything else is the same every time. */
 function buildDonationMessage(r) {
@@ -744,8 +745,9 @@ function recordCardTemplate(r) {
         '<div class="recordCardHospital"><i class="fa-solid fa-hospital" aria-hidden="true"></i><span class="recordCardHospitalText" title="' + escAttr(r.hospitalName || "") + '">' + escAttr(r.hospitalName || "—") + '</span></div>' +
         '<div class="recordCardMetaRow">' +
           (dateBn ? '<span><i class="fa-regular fa-calendar" aria-hidden="true"></i>' + escAttr(dateBn) + '</span>' : "<span></span>") +
-          '<span><i class="fa-solid fa-droplet" aria-hidden="true"></i>' + ordinalShortBn(r.visitCount || 1) + ' বার</span>' +
+          '<span class="recordCardCount"><i class="fa-solid fa-droplet" aria-hidden="true"></i>' + ordinalShortBn(r.visitCount || 1) + ' বার</span>' +
         '</div>' +
+        '<div class="recordCardCta"><span>কার্ড দেখুন ও ডাউনলোড</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div>' +
       '</div>' +
     '</button>'
   );
@@ -2878,6 +2880,61 @@ document.addEventListener("click", e => {
   const manageCloseBtn = document.getElementById("donationManageCloseBtn");
   if (!searchInput || !searchBtn || !resultOverlay) return;
 
+  /* ---- মোবাইলে বটম-শিট: রেকর্ড কার্ড নিচ থেকে উপরে উঠে আসে (CSS animation);
+     বন্ধ করলে বা নিচের দিকে টেনে (swipe down) ছাড়লে নিচে নেমে যায় ---- */
+  const sheetMQ = window.matchMedia ? window.matchMedia("(max-width: 559px)") : { matches: false };
+  let sheetClosing = false;
+  function resetSheetStyles() {
+    if (resultModal) { resultModal.style.transition = ""; resultModal.style.transform = ""; }
+    resultOverlay.style.transition = "";
+    resultOverlay.style.backgroundColor = "";
+    sheetClosing = false;
+  }
+  function closeResultSheet() {
+    if (resultOverlay.style.display !== "flex" || sheetClosing) return;
+    if (!sheetMQ.matches || !resultModal) { resultOverlay.style.display = "none"; return; }
+    sheetClosing = true;
+    resultModal.style.transition = "transform .26s cubic-bezier(.4,0,1,1)";
+    resultModal.style.transform = "translateY(110%)";
+    resultOverlay.style.transition = "background-color .26s ease";
+    resultOverlay.style.backgroundColor = "rgba(33,22,19,0)";
+    setTimeout(() => { resultOverlay.style.display = "none"; resetSheetStyles(); }, 270);
+  }
+  if (resultModal) {
+    let startY = 0, dragY = 0, startT = 0, armed = false, dragging = false;
+    resultModal.addEventListener("touchstart", e => {
+      if (!sheetMQ.matches || sheetClosing || e.touches.length !== 1) return;
+      startY = e.touches[0].clientY; dragY = 0; startT = Date.now(); armed = true; dragging = false;
+    }, { passive: true });
+    resultModal.addEventListener("touchmove", e => {
+      if (!armed) return;
+      const d = e.touches[0].clientY - startY;
+      if (!dragging) {
+        if (d > 8 && resultModal.scrollTop <= 0) { dragging = true; resultModal.style.transition = "none"; }
+        else { if (d < -8) armed = false; return; }
+      }
+      dragY = Math.max(0, d);
+      resultModal.style.transform = "translateY(" + dragY + "px)";
+      resultOverlay.style.backgroundColor = "rgba(33,22,19," + (0.55 * (1 - Math.min(1, dragY / 420))).toFixed(3) + ")";
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    const endDrag = () => {
+      if (!armed) return;
+      armed = false;
+      if (!dragging) return;
+      dragging = false;
+      const velocity = dragY / Math.max(1, Date.now() - startT);
+      if (dragY > 110 || velocity > 0.6) { closeResultSheet(); return; }
+      resultModal.style.transition = "transform .25s cubic-bezier(.22,1,.36,1)";
+      resultModal.style.transform = "";
+      resultOverlay.style.transition = "background-color .25s ease";
+      resultOverlay.style.backgroundColor = "";
+      setTimeout(() => { resultModal.style.transition = ""; resultOverlay.style.transition = ""; }, 260);
+    };
+    resultModal.addEventListener("touchend", endDrag, { passive: true });
+    resultModal.addEventListener("touchcancel", endDrag, { passive: true });
+  }
+
   let currentDonationRecord = null; // last successfully found record, for the JPEG filename
   const cardActions = document.getElementById("donationResultActions");
   const cardSaveBtn = document.getElementById("donationCardSaveBtn");
@@ -3141,171 +3198,137 @@ document.addEventListener("click", e => {
       wrap.appendChild(msg);
       resultContent.appendChild(wrap);
     } else {
-      /* ---- crimson certificate head band ---- */
-      const headBand = document.createElement("div");
-      headBand.className = "donationResultHeadBand";
-
-      const ribbon = document.createElement("div");
-      ribbon.className = "donationResultRibbon";
-      ribbon.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>Verified';
-      headBand.appendChild(ribbon);
-
-      /* ---- website/organization logo only — brand text + eyebrow removed ---- */
-      const brandRow = document.createElement("div");
-      brandRow.className = "donationResultBrandRow";
-      const logoImg = document.createElement("img");
-      logoImg.className = "donationResultLogo";
-      logoImg.alt = (landingData.siteName || "Blood Network").trim();
-      brandRow.appendChild(logoImg);
-      headBand.appendChild(brandRow);
-      const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
-      loadImageWithFallback(logoImg, logoSrc);
-
-      /* ---- donor photo is set as the head band's OWN background (not a separate element) ---- */
-      if (found.hidePhoto) {
-        const fallback = document.createElement("div");
-        fallback.className = "donationResultAvatarFallback donationResultAvatarHidden";
-        const fbIcon = document.createElement("i");
-        fbIcon.className = "fa-solid fa-eye-slash";
-        fbIcon.setAttribute("aria-hidden", "true");
-        fallback.appendChild(fbIcon);
-        const fbText = document.createElement("span");
-        fbText.className = "donationResultAvatarHiddenText";
-        fbText.textContent = "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়";
-        fallback.appendChild(fbText);
-        headBand.appendChild(fallback);
-      } else if (found.image) {
-        loadBackgroundWithFallback(headBand, found.image, "hasImage");
-      } else {
-        const fallback = document.createElement("div");
-        fallback.className = "donationResultAvatarFallback";
-        const fbIcon = document.createElement("i");
-        fbIcon.className = "fa-solid fa-user";
-        fbIcon.setAttribute("aria-hidden", "true");
-        fallback.appendChild(fbIcon);
-        headBand.appendChild(fallback);
-      }
-      const verifiedBadge = document.createElement("span");
-      verifiedBadge.className = "donationResultVerifiedBadge";
-      verifiedBadge.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
-      headBand.appendChild(verifiedBadge);
-      resultContent.appendChild(headBand);
-
-      /* ---- body ---- */
-      const body = document.createElement("div");
-      body.className = "donationResultBody";
-
-      /* ID — moved below the header band */
-      const noPill = document.createElement("span");
-      noPill.className = "donationResultNo";
-      const noIcon = document.createElement("i");
-      noIcon.className = "fa-solid fa-hashtag";
-      noIcon.setAttribute("aria-hidden", "true");
-      noPill.appendChild(noIcon);
-      noPill.appendChild(document.createTextNode("ID: " + found.donationNo));
-      body.appendChild(noPill);
-
-      /* ---- কত তম ডোনার ---- */
+      /* ============================================================
+         নতুন ডিজিটাল কার্ড (সার্টিফিকেট স্টাইল) — ডাউনলোড করা PNG-র (buildDonationCardCanvas)
+         সাথে একই ডিজাইন: ক্রিমসন হেডার, গোল্ড রিং-এ ছবি, ব্লাড-গ্রুপ সিল, তথ্য-বক্স, QR যাচাই, স্ট্যাম্প বার
+         ============================================================ */
+      const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+      const photoHidden = !!found.hidePhoto;
+      const hasPhoto = !photoHidden && !!found.image;
       const serialNo = donorSerialNo(found);
-      if (serialNo > 0) {
-        const serialEl = document.createElement("div");
-        serialEl.className = "donationResultSerial";
-        serialEl.innerHTML = '<i class="fa-solid fa-ranking-star" aria-hidden="true"></i><b>' + toBengaliDigits(serialNo) + ' নাম্বার</b> ডোনার';
-        body.appendChild(serialEl);
+      const lastDate = found.date ? (recordDateBn(found.date) || found.date) : "—";
+      const cardUrl = SITE_ORIGIN + "/?id=" + encodeURIComponent(found.donationNo);
+      const shortUrl = cardUrl.replace(/^https?:\/\//, "");
+      const logoSrc = appConfigData.logoImage && appConfigData.logoImage.trim() ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
+
+      const head = document.createElement("div");
+      head.className = "dcHead";
+      head.innerHTML =
+        '<div class="dcBrand">' +
+          '<img class="donationResultLogo" alt="' + escAttr(networkName) + '">' +
+          '<div class="dcBrandText"><b>' + escAttr(networkName) + '</b><span>ourbnb.org</span></div>' +
+        '</div>' +
+        '<span class="dcVerified"><i class="fa-solid fa-check" aria-hidden="true"></i>Verified</span>' +
+        '<span class="dcSpark" style="left:16%;top:62%;font-size:15px">✦</span><span class="dcSpark" style="left:29%;top:48%;font-size:10px">✦</span>' +
+        '<span class="dcSpark" style="left:8%;top:84%;font-size:9px">✦</span><span class="dcSpark" style="right:16%;top:62%;font-size:15px">✦</span>' +
+        '<span class="dcSpark" style="right:29%;top:48%;font-size:10px">✦</span><span class="dcSpark" style="right:8%;top:84%;font-size:9px">✦</span>';
+      resultContent.appendChild(head);
+      loadImageWithFallback(head.querySelector(".donationResultLogo"), logoSrc);
+
+      /* ছবি বামে · নাম + রক্তদানের সংখ্যা ছবির ডানে · রক্তের গ্রুপ সিল একদম ডানে */
+      const ident = document.createElement("div");
+      ident.className = "dcIdent";
+      ident.innerHTML =
+        '<div class="dcPhotoBox">' +
+          '<div class="dcPhoto' + (hasPhoto ? "" : " dcPhotoEmpty") + '">' +
+            (hasPhoto ? '<img class="dcPhotoImg" alt="' + escAttr(found.name || "") + '">' : '<i class="fa-solid fa-user" aria-hidden="true"></i>') +
+          '</div>' +
+        '</div>' +
+        '<div class="dcInfo">' +
+          '<h3 class="donationResultName dcName"></h3>' +
+          '<div class="dcStatVal dcCrimson"><i class="fa-regular fa-calendar" aria-hidden="true"></i>' + escAttr(lastDate) + '</div>' +
+        '</div>' +
+        '<span class="donationResultBgBadge dcSeal">' + escAttr(found.bloodGroup || "—") + '</span>';
+      ident.querySelector(".dcName").textContent = (found.name || "").trim();
+      resultContent.appendChild(ident);
+      if (hasPhoto) loadImageWithFallback(ident.querySelector(".dcPhotoImg"), found.image, ident.querySelector(".dcPhoto"));
+      if (photoHidden) {
+        const note = document.createElement("div");
+        note.className = "dcHiddenNote";
+        note.textContent = "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়";
+        resultContent.appendChild(note);
       }
 
-      /* ---- name + blood group, same row ---- */
-      const nameRow = document.createElement("div");
-      nameRow.className = "donationResultNameRow";
-      const nameEl = document.createElement("div");
-      nameEl.className = "donationResultName";
-      nameEl.textContent = (found.name || "").trim();
-      nameRow.appendChild(nameEl);
-      const bgBadge = document.createElement("span");
-      bgBadge.className = "donationResultBgBadge";
-      bgBadge.textContent = found.bloodGroup || "—";
-      nameRow.appendChild(bgBadge);
-      body.appendChild(nameRow);
+      const body = document.createElement("div");
+      body.className = "donationResultBody dcBody";
 
-      /* ---- total donation count, modern pill ---- */
-      const countBadge = document.createElement("div");
-      countBadge.className = "donationResultCountBadge";
-      countBadge.innerHTML =
-        '<i class="fa-solid fa-droplet" aria-hidden="true"></i>' +
-        '<b>' + ordinalShortBn(found.visitCount || 1) + '</b> বারের মতো';
-      body.appendChild(countBadge);
+      const divTop = document.createElement("div");
+      divTop.className = "donationResultDivider dcDivider";
+      divTop.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
+      body.appendChild(divTop);
 
-      /* ---- last donation date (+ optional list of all donation dates) ---- */
-      if (found.date) {
-        const lastRow = document.createElement("div");
-        lastRow.className = "donationResultLastDate";
-        const lastIcon = document.createElement("i");
-        lastIcon.className = "fa-regular fa-calendar";
-        lastIcon.setAttribute("aria-hidden", "true");
-        lastRow.appendChild(lastIcon);
-        lastRow.appendChild(document.createTextNode("সর্বশেষ রক্তদান: " + (recordDateBn(found.date) || found.date)));
-        body.appendChild(lastRow);
-      }
+      const stats = document.createElement("div");
+      stats.className = "dcStats";
+      stats.innerHTML =
+        '<div class="dcStat"><span class="dcStatLabel">রক্তদান</span><b class="dcStatVal dcCrimson">' + ordinalShortBn(found.visitCount || 1) + ' বার</b></div>' +
+        '<div class="dcStat"><span class="dcStatLabel">ডোনেশন নম্বর</span><b class="donationResultSerial dcSerial dcStatVal">' + (serialNo > 0 ? toBengaliDigits(serialNo) + ' নাম্বার' : '—') + '</b></div>' +
+        '<div class="dcStat"><span class="dcStatLabel">ডোনার ID</span><b class="dcStatVal dcMono">#' + escAttr(found.donationNo || "") + '</b></div>';
+      body.appendChild(stats);
 
-      /* হাসপাতাল — plain text line, no icon/box design; hospital name itself is bold */
+      /* হাসপাতাল বার্তা — হাসপাতালের নাম বোল্ড + গাঢ় লাল */
       const hospitalLine = document.createElement("p");
-      hospitalLine.className = "donationResultHospitalLine";
-      hospitalLine.appendChild(document.createTextNode(
-        "(" + (found.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন "
-      ));
+      hospitalLine.className = "donationResultHospitalLine dcCenter";
+      hospitalLine.appendChild(document.createTextNode("(" + (found.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন "));
       const hospitalNameStrong = document.createElement("strong");
       hospitalNameStrong.textContent = (found.hospitalName || "").trim();
       hospitalLine.appendChild(hospitalNameStrong);
       hospitalLine.appendChild(document.createTextNode(window.I18N && I18N.lang === "en" ? "." : " এ।"));
       body.appendChild(hospitalLine);
 
-      const divider = document.createElement("div");
-      divider.className = "donationResultDivider";
-      divider.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
-      body.appendChild(divider);
-
       const thanks = document.createElement("div");
-      thanks.className = "donationResultThanks";
-      const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
+      thanks.className = "donationResultThanks dcCenter";
       const thanksStrong = document.createElement("strong");
       thanksStrong.textContent = networkName;
       thanks.appendChild(thanksStrong);
       thanks.appendChild(document.createTextNode(" এর পক্ষ থেকে অবিরাম ভালোবাসা রইলো।"));
-      thanks.appendChild(document.createElement("br"));
       body.appendChild(thanks);
 
       const emojiRow = document.createElement("div");
-      emojiRow.className = "donationResultEmojiRow";
-      emojiRow.textContent = (found.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।";
+      emojiRow.className = "donationResultEmojiRow dcCenter dcDua";
+      emojiRow.textContent = (found.gender === "বোন" ? "বোন" : "ভাই") + " এর জন্য সবাই দোয়া করবেন।";
       body.appendChild(emojiRow);
 
-      const stamp = document.createElement("div");
-      stamp.className = "donationResultStamp";
-      stamp.innerHTML = '<i class="fa-solid fa-shield-heart" aria-hidden="true"></i>রক্ত দিন • জীবন বাঁচান';
-      body.appendChild(stamp);
-
-      /* ---- dynamic card URL + QR code ---- */
-      const cardUrl = SITE_ORIGIN + "/?id=" + encodeURIComponent(found.donationNo);
-      const qrWrap = document.createElement("div");
-      qrWrap.className = "donationResultQrWrap";
-      const qrImg = document.createElement("img");
-      qrImg.className = "donationResultQrImg";
-      qrImg.alt = "QR কোড — কার্ড লিংক";
-      qrImg.loading = "lazy";
-      qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(cardUrl);
-      qrWrap.appendChild(qrImg);
-      const qrCaption = document.createElement("div");
-      qrCaption.className = "donationResultQrCaption";
-      qrCaption.textContent = "স্ক্যান করে কার্ড দেখুন";
-      qrWrap.appendChild(qrCaption);
-      body.appendChild(qrWrap);
-
+      /* QR + যাচাই */
+      const foot = document.createElement("div");
+      foot.className = "dcFoot";
+      foot.innerHTML =
+        '<div class="donationResultQrWrap"><img class="donationResultQrImg" alt="QR কোড — কার্ড লিংক" loading="lazy" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=4&data=' + encodeURIComponent(cardUrl) + '"></div>' +
+        '<div class="dcFootText"><b>কার্ড যাচাই করুন</b><span>QR কোড স্ক্যান করে এই কার্ডের সত্যতা যাচাই করুন।</span><code>' + escAttr(shortUrl) + '</code></div>';
+      body.appendChild(foot);
       resultContent.appendChild(body);
+
+      const bar = document.createElement("div");
+      bar.className = "donationResultStamp dcBar";
+      bar.innerHTML = '<i class="fa-solid fa-droplet" aria-hidden="true"></i>রক্ত দিন • জীবন বাঁচান<i class="fa-solid fa-droplet" aria-hidden="true"></i>';
+      resultContent.appendChild(bar);
     }
+    if (resultOverlay.style.display !== "flex") resetSheetStyles();
     resultOverlay.style.display = "flex";
     if (cardActions) cardActions.hidden = !found;
+    fitDonationCard();
     if (found && navigator.share) { const warm = prepareCardFile(found); if (warm) warm.catch(() => {}); } // ready before the tap (share needs a fresh tap)
   }
+
+  /* ---- মোবাইলে পুরো কার্ড একসাথে দেখাতে: কার্ড স্ক্রিনের উচ্চতার চেয়ে বড় হলে (zoom দিয়ে) ছোট করে ফিট করি,
+     যাতে স্ক্রল না করেই পুরোটা দেখা যায়। রিসাইজ/রোটেট করলে আবার হিসাব হয়। ---- */
+  let fitRaf = 0;
+  function fitDonationCard() {
+    if (!resultContent || !resultOverlay) return;
+    cancelAnimationFrame(fitRaf);
+    fitRaf = requestAnimationFrame(() => {
+      resultContent.style.zoom = "";
+      if (resultOverlay.style.display !== "flex" || (resultModal && resultModal.style.display === "none")) return;
+      const natural = resultContent.offsetHeight;
+      if (!natural) return;
+      const cs = getComputedStyle(resultOverlay);
+      const availH = resultOverlay.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0) - 4;
+      const z = Math.max(0.5, Math.min(1, availH / natural));
+      resultContent.style.zoom = z < 0.995 ? String(Math.floor(z * 1000) / 1000) : "";
+    });
+  }
+  window.addEventListener("resize", fitDonationCard);
+  window.addEventListener("orientationchange", fitDonationCard);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitDonationCard).catch(() => {});
 
   /* Re-renders the currently open card (if any) against whatever is
      now in landingData.donationRecords — used by the live Firebase
@@ -3323,8 +3346,8 @@ document.addEventListener("click", e => {
 
   searchBtn.addEventListener("click", performDonationSearch);
   searchInput.addEventListener("keydown", e => { if (e.key === "Enter") performDonationSearch(); });
-  if (resultCloseBtn) resultCloseBtn.addEventListener("click", () => { resultOverlay.style.display = "none"; });
-  resultOverlay.addEventListener("click", e => { if (e.target === resultOverlay) resultOverlay.style.display = "none"; });
+  if (resultCloseBtn) resultCloseBtn.addEventListener("click", closeResultSheet);
+  resultOverlay.addEventListener("click", e => { if (e.target === resultOverlay) closeResultSheet(); });
 
   /* ---- hidden gesture: double-tap/double-click the blood group badge
      on the record card to toggle a "clean" look — square corners
@@ -3588,6 +3611,19 @@ document.addEventListener("click", e => {
     ctx.closePath();
   }
 
+  function drawStar(ctx, cx, cy, r, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const ang = (Math.PI / 4) * i - Math.PI / 2, rr = i % 2 === 0 ? r : r * 0.38;
+      const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr;
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
   function drawTeardrop(ctx, cx, cy, size, color) {
     ctx.save();
     ctx.fillStyle = color;
@@ -3607,19 +3643,37 @@ document.addEventListener("click", e => {
      quirks can apply — every pixel is placed explicitly here, matching
      the on-screen card's colors, fonts and layout. ---- */
   async function buildDonationCardCanvas(record) {
+    /* ============================================================
+       ডিজিটাল রক্তদান কার্ড — নতুন প্রফেশনাল ডিজাইন (সার্টিফিকেট স্টাইল)
+       ক্রিমসন হেডার · গোল্ড রিং-এ ডোনারের ছবি · ব্লাড-গ্রুপ সিল ·
+       তিন ঘরের তথ্য-বক্স · QR যাচাই ফুটার · নিচে ক্রিমসন স্ট্যাম্প বার।
+       সবকিছু canvas-এ হাতে আঁকা, তাই ডাউনলোড/শেয়ার করা PNG সবসময় একই রকম আসে।
+       ============================================================ */
     const CARD_W = 400;
-    const HEAD_H = 232;
-    const PAD = 26;
+    const PAD = 30;
     const contentW = CARD_W - PAD * 2;
-    const scale = 3; // render at 3x for a crisp download regardless of screen DPI
+    const HEAD_H = 134;      // ক্রিমসন হেডারের উচ্চতা (স্ক্রিনের কার্ডের সাথে মেলানো, যাতে ডাউনলোড লম্বা না হয়)
+    const PH_W = 180;        // ডোনারের ছবির প্রস্থ (১৬:৯ রেশিও)
+    const PH_H = 101.25;     // ডোনারের ছবির উচ্চতা (১৮০ × ৯/১৬)
+    const PH_X = PAD;        // ছবি বামে — বাম কিনারা
+    const PH_TOP = HEAD_H - 34; // ছবি হেডারে ৩৪px ঢুকে থাকে
+    const SEAL_R = 22;       // রক্তের গ্রুপ সিল (একদম ডানে)
+    const PHOTO_RADIUS = 9;  // ছবির কোণের গোলাকার ভাব (৯px)
+    const QR = 76;           // QR বক্সের মাপ
+    const FOOT_H = 102;
+    const BAR_H = 32;
+    const scale = 3;         // ৩x — যেকোনো স্ক্রিনে ঝকঝকে
 
-    /* canvas-এ আঁকার ফন্টগুলো আগে থেকে লোড করে নিই — না হলে মাপ ভুল হয়ে লেখা/লাল ব্যাজ সরে যায় */
+    const C = { crimson: "#9E1B32", crimsonDark: "#6E1220", tint: "#F7E3E6", ink: "#211613", muted: "#8A7A71",
+                amber: "#B9722E", line: "#EADFD2", ivory: "#FCF8F2", sage: "#3F7A5D" };
+
+    /* canvas-এ আঁকার ফন্টগুলো আগে থেকে লোড করে নিই — না হলে মাপ ভুল হয়ে লেখা সরে যায় */
     try {
       if (document.fonts && document.fonts.load) {
         const sample = (record.name || "") + (record.hospitalName || "") + "অআকখ রক্তদান ABab01";
         await Promise.race([Promise.all([
           document.fonts.load("600 14.5px 'Noto Sans Bengali'", sample), document.fonts.load("700 12.5px 'Noto Sans Bengali'", sample),
-          document.fonts.load("700 23px 'Fraunces'", sample), document.fonts.load("italic 600 14.5px 'Fraunces'", sample),
+          document.fonts.load("700 24px 'Fraunces'", sample), document.fonts.load("italic 600 14.5px 'Fraunces'", sample),
           document.fonts.load("700 12px 'IBM Plex Mono'", "#ID 0123456789")
         ]), new Promise(r => setTimeout(r, 2500))]);
       }
@@ -3629,44 +3683,51 @@ document.addEventListener("click", e => {
     const networkName = (landingData.siteName || "ব্লাড নেটওয়ার্ক").trim();
     const T = (x) => (window.I18N ? I18N.t(x) : x);
     const hospitalText = T("(" + (record.bloodGroup || "") + ") লাল ভালোবাসা দান করলেন " + (record.hospitalName || "").trim() + " এ।");
-    const thanksText = T(networkName + " এর পক্ষে থেকে অবিরাম ভালোবাসা রইলো।".replace("পক্ষে থেকে", "পক্ষ থেকে"));
-    const emojiText = T((record.gender === "বোন" ? "বোন" : "ভাই") +" এর জন্য সবাই দোয়া করবেন।");
+    const thanksText = T(networkName + " এর পক্ষ থেকে অবিরাম ভালোবাসা রইলো।");
+    const duaText = T((record.gender === "বোন" ? "বোন" : "ভাই") + " এর জন্য সবাই দোয়া করবেন।");
     const stampText = T("রক্ত দিন • জীবন বাঁচান");
+    const bn = "'Noto Sans Bengali','Inter',sans-serif";
+    const disp = "'Fraunces','Noto Sans Bengali',Georgia,serif";
+    const mono = "'IBM Plex Mono',monospace";
 
-    /* স্ক্রিনের কার্ডের মতোই: হাসপাতালের নাম বোল্ড + গাঢ় লাল, নেটওয়ার্কের নামও বোল্ড (ইটালিক নয়) + গাঢ় লাল */
-    const hospitalFont = strong => (strong ? "700" : "600") + " 14.5px 'Noto Sans Bengali','Inter',sans-serif";
-    const thanksFont = strong => strong ? "700 14.5px 'Fraunces','Noto Sans Bengali',Georgia,serif" : "italic 600 14.5px 'Fraunces','Noto Sans Bengali',Georgia,serif";
+    const hospitalFont = strong => (strong ? "700" : "600") + " 14px " + bn;
+    const thanksFont = strong => strong ? "700 13.5px " + disp : "italic 600 13.5px " + disp;
     const hospitalLines = wrapStyledRuns(measure, splitStrongRuns(hospitalText, record.hospitalName), contentW, hospitalFont);
     const thanksLines = wrapStyledRuns(measure, splitStrongRuns(thanksText, networkName), contentW, thanksFont);
 
-    /* নাম + রক্তের গ্রুপ ব্যাজ: এক লাইনে ধরলে পাশাপাশি, না ধরলে নাম ভেঙে/ব্যাজ নিচে — স্ক্রিনের কার্ডের মতোই */
     const nameText = (record.name || "").trim();
     const bgText = record.bloodGroup || "—";
-    measure.font = "700 23px 'Fraunces',Georgia,serif";
-    const nameLines = wrapCanvasText(measure, nameText, contentW);
-    const lastNameW = measure.measureText(nameLines[nameLines.length - 1]).width;
-    measure.font = "700 14.5px 'Fraunces',Georgia,serif";
-    const bgBadgeW = measure.measureText(bgText).width + 26, bgBadgeH = 28;
-    const badgeFits = lastNameW + 10 + bgBadgeW <= contentW;
+    /* ছবির ডানে নাম (সর্বোচ্চ ২ লাইন) — ডানে সিলের জায়গা ছেড়ে */
+    const infoX = PH_X + PH_W + 18;
+    const infoW = CARD_W - PAD - infoX;
+    measure.font = "700 19px " + disp;
+    let nameLines = wrapCanvasText(measure, nameText, infoW);
+    if (nameLines.length > 2) {
+      let l2 = nameLines[1];
+      while (l2.length > 1 && measure.measureText(l2 + "…").width > infoW) l2 = l2.slice(0, -1);
+      nameLines = [nameLines[0], l2 + "…"];
+    }
+    const serialNo = donorSerialNo(record);
+    const hidden = !!record.hidePhoto;
 
-    const serialNoCv = donorSerialNo(record);
-    let bodyH = 18;   // top padding
-    bodyH += 30;      // #ID row
-    bodyH += serialNoCv > 0 ? 20 : 0; // serial row
-    bodyH += (nameLines.length - 1) * 30 + 32 + (badgeFits ? 0 : 30);      // name + blood-group row
-    bodyH += 26;      // visit-count row
-    if (record.date) bodyH += 22; // last donation date row
-    bodyH += hospitalLines.length * 24 + 12;
-    bodyH += 24;      // divider
-    bodyH += thanksLines.length * 25 + 4;
-    bodyH += 30;      // emoji row
-    bodyH += 44;      // stamp pill
-    bodyH += 24;      // gap before QR
-    bodyH += 152;     // QR box
-    bodyH += 30;      // bottom padding
-    let totalH = HEAD_H + bodyH;
-    if (!isFinite(totalH) || totalH <= HEAD_H) totalH = HEAD_H + 400; // safety fallback, should never trigger
-    console.log("buildDonationCardCanvas: card size", CARD_W + "x" + totalH, "at " + scale + "x");
+    /* ---- উল্লম্ব বিন্যাস (আঁকার ক্রমের সাথে হুবহু মেলে) ---- */
+    const nameY0 = HEAD_H + 28;
+    const nameYLast = nameY0 + (nameLines.length - 1) * 24;
+    const serialCY = nameYLast + 22;                     // নামের নিচে "X নাম্বার ডোনার" পিলের মাঝ-রেখা
+    const identBottom = Math.max(PH_TOP + PH_H + 12, serialCY + 12 + 8);
+    const yStart = identBottom;
+    const noteH = hidden ? 22 : 0;
+    const divY = yStart + noteH + 28;
+    const statsTop = divY + 16;
+    const statsH = 60;
+    const hospY0 = statsTop + statsH + 28;
+    const hospLastY = hospY0 + (hospitalLines.length - 1) * 23;
+    const thanksY0 = hospLastY + 30;
+    const thanksLastY = thanksY0 + (thanksLines.length - 1) * 22;
+    const duaY = thanksLastY + 26;
+    const footTop = duaY + 18;
+    let totalH = footTop + FOOT_H + BAR_H;
+    if (!isFinite(totalH) || totalH < 400) totalH = 740; // safety fallback
 
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(CARD_W * scale);
@@ -3674,231 +3735,264 @@ document.addEventListener("click", e => {
     const ctx = canvas.getContext("2d");
     ctx.scale(scale, scale);
 
-    // ---- card base + rounded outer corners ----
-    roundRectPath(ctx, 0, 0, CARD_W, totalH, 22);
-    ctx.fillStyle = "#FFFFFF";
+    /* ছোট সহায়ক: মাপে না ধরলে ফন্ট ছোট করে বসায় */
+    const fitFont = (txt, weight, startPx, minPx, maxW, family) => {
+      let px = startPx;
+      ctx.font = weight + " " + px + "px " + family;
+      while (px > minPx && ctx.measureText(txt).width > maxW) { px -= 0.5; ctx.font = weight + " " + px + "px " + family; }
+      return px;
+    };
+    const styledW = (line, fontFor) => {
+      ctx.font = fontFor(false);
+      const sp = ctx.measureText(" ").width;
+      let w = 0;
+      line.forEach((t, i) => { ctx.font = fontFor(t.strong); w += ctx.measureText(t.text).width + (i ? sp : 0); });
+      return w;
+    };
+
+    // ---- কার্ডের ভিত্তি + গোল কোণ ----
+    roundRectPath(ctx, 0, 0, CARD_W, totalH, 24);
+    ctx.fillStyle = C.ivory;
     ctx.fill();
     ctx.save();
-    roundRectPath(ctx, 0, 0, CARD_W, totalH, 22);
+    roundRectPath(ctx, 0, 0, CARD_W, totalH, 24);
     ctx.clip();
 
-    // ---- watermark: drawn FIRST so it naturally sits behind everything
-    //      else painted after it — no z-index trick needed at all. ----
+    // ---- ওয়াটারমার্ক (সবার আগে আঁকা, তাই সবকিছুর পেছনে) ----
     const logoSrc = (appConfigData.logoImage && appConfigData.logoImage.trim()) ? appConfigData.logoImage : SITE_BASE + "assets/images/fav.jpeg";
-    let watermarkImg = await loadDrawableImage(logoSrc);
-    if (!watermarkImg) watermarkImg = await loadDrawableImage(SITE_BASE + "assets/images/fav.jpeg"); // কাস্টম লোগো লোড না হলে ডিফল্ট লোগো
+    let logoImg = await loadDrawableImage(logoSrc);
+    if (!logoImg) logoImg = await loadDrawableImage(SITE_BASE + "assets/images/fav.jpeg");
     ctx.save();
-    ctx.globalAlpha = 0.07;
-    if (watermarkImg) {
-      const wmW = CARD_W * 0.52;
-      const wmH = wmW * (watermarkImg.height / watermarkImg.width || 1);
+    ctx.globalAlpha = 0.055;
+    if (logoImg) {
+      const wmW = CARD_W * 0.56;
+      const wmH = wmW * (logoImg.height / logoImg.width || 1);
       ctx.filter = "grayscale(1)";
-      ctx.drawImage(watermarkImg, (CARD_W - wmW) / 2, totalH / 2 - wmH - 24, wmW, wmH);
+      ctx.drawImage(logoImg, (CARD_W - wmW) / 2, statsTop - 10, wmW, wmH);
       ctx.filter = "none";
     }
-    ctx.font = "800 44px 'Fraunces','Inter',sans-serif";
-    ctx.fillStyle = "#211613";
-    ctx.textAlign = "center";
-    ctx.fillText("BNB", CARD_W / 2, totalH / 2 + 26);
-    ctx.textAlign = "left";
     ctx.restore();
 
-    // ---- head band ----
+    // ---- ক্রিমসন হেডার ----
+    const hg = ctx.createLinearGradient(0, 0, CARD_W, HEAD_H);
+    hg.addColorStop(0, C.crimson);
+    hg.addColorStop(1, C.crimsonDark);
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, 0, CARD_W, HEAD_H);
     ctx.save();
-    roundRectPath(ctx, 0, 0, CARD_W, HEAD_H, { tl: 22, tr: 22, br: 0, bl: 0 });
-    ctx.clip();
-    const hasPhoto = !record.hidePhoto && !!record.image;
-    if (hasPhoto) {
+    ctx.beginPath(); ctx.rect(0, 0, CARD_W, HEAD_H); ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,0.09)";            // হালকা বিন্দুর প্যাটার্ন
+    for (let px = 8; px < CARD_W; px += 14) for (let py = 8; py < HEAD_H; py += 14) { ctx.beginPath(); ctx.arc(px, py, 1, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = "rgba(255,255,255,0.07)";            // কোণার বড় আলোর বৃত্ত
+    ctx.beginPath(); ctx.arc(CARD_W + 10, -20, 110, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-30, HEAD_H + 10, 90, 0, Math.PI * 2); ctx.fill();
+    // উৎসবের ঝিলিক — ছবির দুপাশে সোনালি তারা
+    [[62, 104, 7, 0.9], [112, 82, 4.5, 0.7], [34, 132, 4, 0.6], [338, 104, 7, 0.9], [288, 80, 4.5, 0.7], [368, 130, 4, 0.6], [96, 128, 3.5, 0.55], [306, 132, 3.5, 0.55]]
+      .forEach(st => drawStar(ctx, st[0], st[1], st[2], "rgba(243,216,168," + st[3] + ")"));
+    ctx.restore();
+    // হেডারের নিচে গোল্ড ফয়েল লাইন
+    const gl = ctx.createLinearGradient(0, 0, CARD_W, 0);
+    gl.addColorStop(0, "#8F5A20"); gl.addColorStop(0.35, "#F3D8A8"); gl.addColorStop(0.65, "#D9A55A"); gl.addColorStop(1, "#8F5A20");
+    ctx.fillStyle = gl;
+    ctx.fillRect(0, HEAD_H - 3, CARD_W, 3);
+
+    // ব্র্যান্ড: লোগো + নেটওয়ার্কের নাম + কার্ডের শিরোনাম
+    const lgx = PAD + 21, lgy = 40, lgr = 21;
+    ctx.beginPath(); ctx.arc(lgx, lgy, lgr + 2.5, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(lgx, lgy, lgr, 0, Math.PI * 2); ctx.clip();
+    if (logoImg) {
+      const ir = logoImg.width / logoImg.height || 1;
+      let dw, dh;
+      if (ir > 1) { dh = lgr * 2; dw = dh * ir; } else { dw = lgr * 2; dh = dw / ir; }
+      ctx.drawImage(logoImg, lgx - dw / 2, lgy - dh / 2, dw, dh);
+    }
+    ctx.restore();
+    const brandX = PAD + 54;
+    const brandMaxW = CARD_W - PAD - 92 - brandX - 6;
+    ctx.textAlign = "left";
+    fitFont(networkName, "700", 14, 10, brandMaxW, disp);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(networkName, brandX, 36);
+    ctx.font = "600 10.5px " + bn;
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillText(T("ourbnb.org"), brandX, 53);
+
+    // VERIFIED গোল্ড পিল (ডানে উপরে)
+    const vw = 88, vh = 24, vx = CARD_W - PAD - vw, vy = 28;
+    roundRectPath(ctx, vx, vy, vw, vh, 12);
+    const vg = ctx.createLinearGradient(vx, vy, vx + vw, vy + vh);
+    vg.addColorStop(0, "#F6E2BC"); vg.addColorStop(1, "#D9A55A");
+    ctx.fillStyle = vg; ctx.fill();
+    ctx.fillStyle = "#3A2205";
+    ctx.font = "700 9.5px " + mono;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("✓ VERIFIED", vx + vw / 2, vy + vh / 2 + 1);
+    ctx.textBaseline = "alphabetic";
+
+    // ---- ডোনারের স্কয়ার ছবি — বামে (৯px গোল কোণ, গোল্ড ফ্রেম) ----
+    const cx = CARD_W / 2;
+    const px0 = PH_X, py0 = PH_TOP, pW = PH_W, pH = PH_H;
+    ctx.save();
+    ctx.shadowColor = "rgba(33,22,19,0.25)"; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5;
+    roundRectPath(ctx, px0 - 7, py0 - 7, pW + 14, pH + 14, PHOTO_RADIUS + 7); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.restore();
+    const ringG = ctx.createLinearGradient(px0, py0, px0 + pW, py0 + pH);
+    ringG.addColorStop(0, "#F3D8A8"); ringG.addColorStop(0.5, "#B9722E"); ringG.addColorStop(1, "#F0D29B");
+    roundRectPath(ctx, px0 - 3.5, py0 - 3.5, pW + 7, pH + 7, PHOTO_RADIUS + 3.5); ctx.lineWidth = 3; ctx.strokeStyle = ringG; ctx.stroke();
+
+    ctx.save();
+    roundRectPath(ctx, px0, py0, pW, pH, PHOTO_RADIUS); ctx.clip();
+    let drewPhoto = false;
+    if (!hidden && record.image) {
       const photoImg = await loadDrawableImage(record.image);
       if (photoImg) {
-        const ir = photoImg.width / photoImg.height;
-        const br = CARD_W / HEAD_H;
+        const ir = photoImg.width / photoImg.height || 1;
         let dw, dh, dx, dy;
-        if (ir > br) { dh = HEAD_H; dw = dh * ir; dx = (CARD_W - dw) / 2; dy = 0; }
-        else { dw = CARD_W; dh = dw / ir; dx = 0; dy = (HEAD_H - dh) * 0.3; }  // লম্বা ছবিতে মুখ উপরের দিকে থাকে, তাই উপরের অংশ বেশি রাখি
+        if (ir > pW / pH) { dh = pH; dw = dh * ir; dx = px0 + pW / 2 - dw / 2; dy = py0; }
+        else { dw = pW; dh = dw / ir; dx = px0; dy = py0 - (dh - pH) * 0.25; }  // লম্বা ছবিতে মুখ উপরের দিকে
         ctx.drawImage(photoImg, dx, dy, dw, dh);
+        drewPhoto = true;
       }
     }
-    const headGrad = ctx.createLinearGradient(0, 0, 0, HEAD_H);
-    if (hasPhoto) {
-      /* ছবির ওপর লাল পর্দা নয় — শুধু নিচে হালকা ছায়া, যাতে ছবি স্বাভাবিক রঙে স্পষ্ট দেখা যায় */
-      headGrad.addColorStop(0, "rgba(33,22,19,0)");
-      headGrad.addColorStop(0.6, "rgba(33,22,19,0)");
-      headGrad.addColorStop(1, "rgba(33,22,19,0.28)");
-    } else {
-      headGrad.addColorStop(0, "#9E1B32");
-      headGrad.addColorStop(1, "#6E1220");
+    if (!drewPhoto) {
+      const pcx = px0 + pW / 2, pcy = py0 + pH / 2;
+      ctx.fillStyle = C.tint; ctx.fillRect(px0, py0, pW, pH);
+      ctx.fillStyle = "#D7A0AA";
+      ctx.beginPath(); ctx.arc(pcx, pcy - 12, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(pcx, pcy + 44, 36, 28, 0, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.fillStyle = headGrad;
-    ctx.fillRect(0, 0, CARD_W, HEAD_H);
-
-    if (!hasPhoto) {
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = "600 15.5px 'Noto Sans Bengali','Inter',sans-serif";
-      ctx.textAlign = "center";
-      const msg = record.hidePhoto ? (window.I18N ? I18N.t("ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়") : "ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়") : "";
-      if (msg) ctx.fillText(msg, CARD_W / 2, HEAD_H / 2 + 30);
-      ctx.textAlign = "left";
-    }
-
-    // ribbon ("VERIFIED"), rotated 45° across the top-right corner
-    ctx.save();
-    ctx.translate(CARD_W - 36, 36);   // centre of the diagonal band across the top-right corner
-    ctx.rotate(Math.PI / 4);
-    const ribbonGrad = ctx.createLinearGradient(-75, -12, 75, 12);
-    ribbonGrad.addColorStop(0, "#F3D8A8");
-    ribbonGrad.addColorStop(0.55, "#B9722E");
-    ribbonGrad.addColorStop(1, "#8F5A20");
-    ctx.fillStyle = ribbonGrad;
-    ctx.fillRect(-75, -12, 150, 24);
-    ctx.fillStyle = "#3A2205";
-    ctx.font = "700 9.5px 'IBM Plex Mono',monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("✓ VERIFIED", 0, 1);
     ctx.restore();
+
+    // ---- নাম (ছবির ডানে) ----
     ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
+    ctx.font = "700 19px " + disp; ctx.fillStyle = C.ink;
+    nameLines.forEach((ln, i) => ctx.fillText(ln, infoX, nameY0 + i * 24));
 
-    // brand logo circle, top-left of head band
-    const logoCx = PAD + 21, logoCy = 30 + 21, logoR = 21;
+    // ---- সর্বশেষ রক্তদানের তারিখ — নামের নিচে হালকা লাল পিল ----
+    {
+      const dTxt = record.date ? (recordDateBn(record.date) || record.date) : "—";
+      let dSize = 12.5;
+      ctx.font = "700 " + dSize + "px " + bn;
+      while (ctx.measureText(dTxt).width > infoW - 36 && dSize > 9) { dSize -= 0.5; ctx.font = "700 " + dSize + "px " + bn; }
+      const dw = Math.min(infoW + 4, ctx.measureText(dTxt).width + 36);
+      roundRectPath(ctx, infoX, serialCY - 12.5, dw, 25, 12.5);
+      ctx.fillStyle = C.tint; ctx.fill();
+      // ছোট ক্যালেন্ডার আইকন
+      const ix = infoX + 10, iy = serialCY - 5;
+      ctx.strokeStyle = C.crimson; ctx.lineWidth = 1.4; ctx.lineJoin = "round";
+      roundRectPath(ctx, ix, iy, 11, 10, 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ix, iy + 3.5); ctx.lineTo(ix + 11, iy + 3.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ix + 3, iy - 1.5); ctx.lineTo(ix + 3, iy + 1); ctx.moveTo(ix + 8, iy - 1.5); ctx.lineTo(ix + 8, iy + 1); ctx.stroke();
+      ctx.fillStyle = C.crimson; ctx.textBaseline = "middle";
+      ctx.fillText(dTxt, infoX + 26, serialCY + 1);
+      ctx.textBaseline = "alphabetic";
+    }
+
+    // ---- রক্তের গ্রুপ সিল — হেডারের নিচে-ডানে (ছবি পরিষ্কার দেখা যায়) ----
+    const sr = SEAL_R, sx = CARD_W - PAD - sr - 3, sy = HEAD_H - 40;
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
-    ctx.clip();
-    if (watermarkImg) {
-      const ir2 = watermarkImg.width / watermarkImg.height || 1;
-      let ldw, ldh;
-      if (ir2 > 1) { ldh = logoR * 2; ldw = ldh * ir2; } else { ldw = logoR * 2; ldh = ldw / ir2; }
-      ctx.drawImage(watermarkImg, logoCx - ldw / 2, logoCy - ldh / 2, ldw, ldh);
-    }
+    ctx.shadowColor = "rgba(0,0,0,0.30)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    ctx.beginPath(); ctx.arc(sx, sy, sr + 3, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
     ctx.restore();
-
-    // verified droplet badge, bottom-right of head band
-    const vbx = CARD_W - 14 - 13, vby = HEAD_H - 10 - 13;
-    ctx.beginPath();
-    ctx.arc(vbx, vby, 13, 0, Math.PI * 2);
-    ctx.fillStyle = "#3F7A5D";
-    ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.stroke();
-    drawTeardrop(ctx, vbx, vby + 1, 5, "#ffffff");
-
-    ctx.restore(); // end head-band clip
-
-    // ---- body ----
-    let y = HEAD_H + 26;
-    ctx.fillStyle = "#211613";
-    ctx.font = "700 12px 'IBM Plex Mono',monospace";
-    ctx.fillText("#ID: " + (record.donationNo || ""), PAD, y);
-    y += 24;
-    if (serialNoCv > 0) {
-      ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
-      ctx.fillStyle = "#9E1B32";
-      ctx.fillText(window.I18N ? I18N.t(toBengaliDigits(serialNoCv) + " নাম্বার ডোনার") : toBengaliDigits(serialNoCv) + " নাম্বার ডোনার", PAD, y);
-      y += 28;
-    } else {
-      y += 8;
-    }
-
-    ctx.font = "700 23px 'Fraunces',Georgia,serif";
-    ctx.fillStyle = "#211613";
-    nameLines.forEach((ln, i) => {
-      ctx.fillText(ln, PAD, y);
-      if (i < nameLines.length - 1) y += 30;
-    });
-    let bgBadgeX, bgBadgeY;
-    if (badgeFits) { bgBadgeX = PAD + lastNameW + 10; bgBadgeY = y - 20; }
-    else { bgBadgeX = PAD; bgBadgeY = y + 10; }
-    roundRectPath(ctx, bgBadgeX, bgBadgeY, bgBadgeW, bgBadgeH, 999);
-    const badgeGrad = ctx.createLinearGradient(bgBadgeX, bgBadgeY, bgBadgeX + bgBadgeW, bgBadgeY + bgBadgeH);
-    badgeGrad.addColorStop(0, "#9E1B32");
-    badgeGrad.addColorStop(1, "#6E1220");
-    ctx.fillStyle = badgeGrad;
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.font = "700 14.5px 'Fraunces',Georgia,serif";
-    ctx.textBaseline = "middle";
-    ctx.fillText(bgText, bgBadgeX + 13, bgBadgeY + bgBadgeH / 2 + 1);
+    const sg = ctx.createLinearGradient(sx - sr, sy - sr, sx + sr, sy + sr);
+    sg.addColorStop(0, "#F3D8A8"); sg.addColorStop(0.5, "#B9722E"); sg.addColorStop(1, "#F0D29B");
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.lineWidth = 2.5; ctx.strokeStyle = sg; ctx.stroke();
+    ctx.fillStyle = C.crimson; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    fitFont(bgText, "700", 15, 10, sr * 2 - 10, disp);
+    ctx.fillText(bgText, sx, sy + 1);
     ctx.textBaseline = "alphabetic";
-    y += badgeFits ? 28 : 58;
 
-    ctx.font = "700 12.5px 'Noto Sans Bengali','Inter',sans-serif";
-    ctx.fillStyle = "#7A4A18";
-    drawTeardrop(ctx, PAD + 5, y - 5, 5, "#B9722E");
-    ctx.fillText(window.I18N ? I18N.t(ordinalShortBn(record.visitCount || 1) + " বারের মতো") : ordinalShortBn(record.visitCount || 1) + " বারের মতো", PAD + 16, y);
-    y += 26;
-    if (record.date) {
-      ctx.font = "600 12px 'Noto Sans Bengali','Inter',sans-serif";
-      ctx.fillStyle = "#6B5B53";
-      ctx.fillText(window.I18N ? I18N.t("সর্বশেষ রক্তদান: " + (recordDateBn(record.date) || record.date)) : "সর্বশেষ রক্তদান: " + (recordDateBn(record.date) || record.date), PAD, y - 4);
-      y += 22;
+    ctx.textAlign = "center";
+    if (hidden) {
+      ctx.font = "600 11px " + bn; ctx.fillStyle = C.muted;
+      ctx.fillText(T("ডোনার ছবি প্রকাশ করতে ইচ্ছুক নয়"), cx, yStart + 14);
     }
 
-    for (const line of hospitalLines) {
-      drawStyledLine(ctx, line, PAD, y, hospitalFont, "#211613", "#6E1220");
-      y += 24;
-    }
-    y += 12;
+    // ---- গোল্ড ডিভাইডার + রক্তের ফোঁটা ----
+    ctx.strokeStyle = "rgba(185,114,46,0.45)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, divY); ctx.lineTo(cx - 16, divY); ctx.moveTo(cx + 16, divY); ctx.lineTo(CARD_W - PAD, divY); ctx.stroke();
+    drawTeardrop(ctx, cx, divY, 5, C.amber);
 
-    // divider
-    ctx.strokeStyle = "#E7DCD4";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(PAD, y);
-    ctx.lineTo(CARD_W - PAD, y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(CARD_W / 2 - 10, y - 6, 20, 12);
-    drawTeardrop(ctx, CARD_W / 2, y, 4, "#B9722E");
-    y += 24;
+    // ---- তথ্য-বক্স: রক্তদানের সংখ্যা | সর্বশেষ রক্তদান | ID ----
+    roundRectPath(ctx, PAD, statsTop, contentW, statsH, 14);
+    ctx.fillStyle = "#FFFFFF"; ctx.fill();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.stroke();
+    const cellW = contentW / 3;
+    const cells = [
+      { label: T("রক্তদান"), value: T(ordinalShortBn(record.visitCount || 1) + " বার"), font: bn },
+      { label: T("ডোনেশন নম্বর"), value: serialNo > 0 ? T(toBengaliDigits(serialNo) + " নাম্বার") : "—", font: bn },
+      { label: T("ডোনার ID"), value: "#" + (record.donationNo || ""), font: mono }
+    ];
+    cells.forEach((cell, i) => {
+      const ccx = PAD + cellW * i + cellW / 2;
+      if (i > 0) {
+        ctx.strokeStyle = C.line; ctx.beginPath();
+        ctx.moveTo(PAD + cellW * i, statsTop + 12); ctx.lineTo(PAD + cellW * i, statsTop + statsH - 12); ctx.stroke();
+      }
+      ctx.fillStyle = C.muted; ctx.font = "600 10px " + bn;
+      ctx.fillText(cell.label, ccx, statsTop + 22);
+      fitFont(cell.value, "700", 14, 9.5, cellW - 14, cell.font);
+      ctx.fillStyle = i === 0 ? C.crimson : C.ink;
+      ctx.fillText(cell.value, ccx, statsTop + 43);
+    });
 
-    for (const line of thanksLines) {
-      drawStyledLine(ctx, line, PAD, y, thanksFont, "#211613", "#6E1220");
-      y += 25;
-    }
-    y += 4;
+    // ---- হাসপাতাল বার্তা (মাঝখানে) — রান ধরে আঁকি তাই left-align + নিজে মাঝে বসাই ----
+    ctx.textAlign = "left";
+    hospitalLines.forEach((line, i) => {
+      const w = styledW(line, hospitalFont);
+      drawStyledLine(ctx, line, cx - w / 2, hospY0 + i * 23, hospitalFont, C.ink, C.crimsonDark);
+    });
+    thanksLines.forEach((line, i) => {
+      const w = styledW(line, thanksFont);
+      drawStyledLine(ctx, line, cx - w / 2, thanksY0 + i * 22, thanksFont, "#4A3A33", C.crimsonDark);
+    });
+    ctx.textAlign = "center";
+    ctx.font = "700 14px " + bn; ctx.fillStyle = C.ink;
+    ctx.fillText(duaText, cx, duaY);
 
-    ctx.font = "700 15px 'Noto Sans Bengali','Inter',sans-serif";
-    ctx.fillStyle = "#211613";
-    ctx.fillText(emojiText, PAD, y);
-    y += 30;
-
-    // stamp pill
-    ctx.font = "700 11px 'Noto Sans Bengali','Inter',sans-serif";
-    const stampTextW = ctx.measureText(stampText).width;
-    const stampW = stampTextW + 40;
-    roundRectPath(ctx, PAD, y - 20, stampW, 34, 999);
-    const stampGrad = ctx.createLinearGradient(PAD, y, PAD + stampW, y);
-    stampGrad.addColorStop(0, "#F7EAD8");
-    stampGrad.addColorStop(1, "#F0DCB6");
-    ctx.fillStyle = stampGrad;
-    ctx.fill();
-    ctx.strokeStyle = "#B9722E";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "#7A4A18";
-    ctx.fillText(stampText, PAD + 18, y + 3);
-    y += 44;
-
-    // QR code
+    // ---- ফুটার: QR + যাচাইয়ের লেখা ----
+    ctx.strokeStyle = "rgba(185,114,46,0.5)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD, footTop); ctx.lineTo(CARD_W - PAD, footTop); ctx.stroke(); ctx.setLineDash([]);
     const cardUrl = SITE_ORIGIN + "/?id=" + encodeURIComponent(record.donationNo || "");
-    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=" + encodeURIComponent(cardUrl);
+    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=4&data=" + encodeURIComponent(cardUrl);
     const qrImgEl = await loadDrawableImage(qrUrl);
-    const qrSize = 140;
-    const qrX = (CARD_W - qrSize) / 2;
-    roundRectPath(ctx, qrX - 6, y - 6, qrSize + 12, qrSize + 12, 10);
-    ctx.fillStyle = "#fff";
-    ctx.shadowColor = "rgba(33,22,19,0.12)";
-    ctx.shadowBlur = 16;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    if (qrImgEl) ctx.drawImage(qrImgEl, qrX, y, qrSize, qrSize);
+    const qx = PAD, qy = footTop + 13;
+    roundRectPath(ctx, qx - 5, qy - 5, QR + 10, QR + 10, 12);
+    ctx.save(); ctx.shadowColor = "rgba(33,22,19,0.14)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = "#fff"; ctx.fill(); ctx.restore();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.stroke();
+    if (qrImgEl) ctx.drawImage(qrImgEl, qx, qy, QR, QR);
+
+    const tx0 = qx + QR + 20, tw = CARD_W - PAD - tx0;
+    ctx.textAlign = "left";
+    ctx.font = "700 13px " + bn; ctx.fillStyle = C.crimson;
+    ctx.fillText(T("কার্ড যাচাই করুন"), tx0, qy + 13);
+    ctx.font = "500 11px " + bn; ctx.fillStyle = C.muted;
+    wrapCanvasText(ctx, T("QR কোড স্ক্যান করে এই কার্ডের সত্যতা যাচাই করুন।"), tw).slice(0, 3)
+      .forEach((ln, i) => ctx.fillText(ln, tx0, qy + 31 + i * 15));
+    const shortUrl = cardUrl.replace(/^https?:\/\//, "");
+    fitFont(shortUrl, "600", 10.5, 8, tw, mono);
+    ctx.fillStyle = C.ink;
+    ctx.fillText(shortUrl, tx0, qy + QR - 2);
+
+    // ---- নিচের ক্রিমসন স্ট্যাম্প বার ----
+    const by = totalH - BAR_H;
+    const bg2 = ctx.createLinearGradient(0, by, CARD_W, by);
+    bg2.addColorStop(0, C.crimson); bg2.addColorStop(1, C.crimsonDark);
+    ctx.fillStyle = bg2; ctx.fillRect(0, by, CARD_W, BAR_H);
+    ctx.fillStyle = gl; ctx.fillRect(0, by, CARD_W, 1.5);
+    ctx.font = "700 12px " + bn; ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(stampText, cx, by + BAR_H / 2 + 1);
+    const stW = ctx.measureText(stampText).width;
+    drawTeardrop(ctx, cx - stW / 2 - 16, by + BAR_H / 2, 4.5, "#F3D8A8");
+    drawTeardrop(ctx, cx + stW / 2 + 16, by + BAR_H / 2, 4.5, "#F3D8A8");
+    ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
 
     ctx.restore(); // end outer card clip
+    // কার্ডের চারপাশে হালকা বর্ডার
+    roundRectPath(ctx, 0.5, 0.5, CARD_W - 1, totalH - 1, 24);
+    ctx.strokeStyle = "rgba(185,114,46,0.35)"; ctx.lineWidth = 1; ctx.stroke();
     return canvas;
   }
 
@@ -3973,7 +4067,7 @@ document.addEventListener("click", e => {
   function cardFileName(rec) { return "donation-card-" + String(rec.donationNo || "card").replace(/[^A-Za-z0-9_-]/g, "") + ".png"; }
   function prepareCardFile(rec) {
     if (!rec) return null;
-    const key = [rec.id, rec.donationNo, rec.name, rec.date, rec.hospitalName, rec.bloodGroup, rec.photo || rec.image || ""].join("|");
+    const key = [rec.id, rec.donationNo, rec.name, rec.date, rec.hospitalName, rec.bloodGroup, rec.visitCount, rec.hidePhoto ? 1 : 0, rec.photo || rec.image || ""].join("|");
     if (cardFileCache.key === key && cardFileCache.promise) return cardFileCache.promise;
     const p = (async () => {
       if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]);
@@ -4044,6 +4138,7 @@ document.addEventListener("click", e => {
   }
   if (cardSaveBtn) cardSaveBtn.addEventListener("click", saveDonationCard);
   if (cardShareBtn) cardShareBtn.addEventListener("click", shareDonationCard);
+
 
   if (manageBtn && manageOverlay) {
     manageBtn.addEventListener("click", () => {
